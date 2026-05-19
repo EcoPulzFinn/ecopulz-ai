@@ -1,5 +1,735 @@
 <!DOCTYPE html>
-<html>
-<head><title>Ecopulz Command Center1</title></head>
-<body><h1>Ecopulz Command Center</h1></body>
-</html>
+<html lang="nl"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ecopulz — Command Center</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal:#00B593; --teal-dim:rgba(0,181,147,.12); --teal-b:rgba(0,181,147,.24); --teal-glow:0 0 22px rgba(0,181,147,.22);
+      --salmon:#FF8072; --sal-dim:rgba(255,128,114,.11); --sal-b:rgba(255,128,114,.24);
+      --blue:#A8E0E0; --blue-dim:rgba(168,224,224,.09); --blue-b:rgba(168,224,224,.22);
+      --yellow:#F5C542; --red:#E53535;
+      --bg:#1c1e1c; --sb:#252725; --card:#212321; --ch:#282b28; --inp:#191b19;
+      --t1:#eef0ee; --t2:#96a496; --t3:#576057;
+      --bd:rgba(255,255,255,.062); --bdm:rgba(255,255,255,.11);
+      --sbw:220px; --sbw-col:56px; --tbh:60px;
+      --f:'Poppins',sans-serif; --r:3px;
+    }
+    html,body { height:100%; font-family:var(--f); background:var(--bg); color:var(--t1); -webkit-font-smoothing:antialiased; }
+    .app { display:flex; height:100vh; overflow:hidden; }
+    .sidebar { width:var(--sbw); min-width:var(--sbw); background:var(--sb); border-right:1px solid var(--bd); display:flex; flex-direction:column; z-index:100; flex-shrink:0; transition:width .22s ease,min-width .22s ease; overflow:hidden; }
+    .sidebar.collapsed { width:var(--sbw-col); min-width:var(--sbw-col); }
+    .sb-logo { padding:16px 14px; border-bottom:1px solid var(--bd); display:flex; align-items:center; gap:9px; min-height:64px; cursor:pointer; }
+    .sidebar.collapsed .sb-logo { justify-content:center; padding:16px 0; }
+    .logo-pulse { width:7px; height:7px; border-radius:50%; background:var(--teal); box-shadow:0 0 6px var(--teal),0 0 14px rgba(0,181,147,.28); flex-shrink:0; animation:pulse 2.8s ease-in-out infinite; }
+    .sidebar.collapsed .logo-pulse { display:none; }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .logo-text { overflow:hidden; white-space:nowrap; }
+    .sidebar.collapsed .logo-text { display:none; }
+    .logo-title { font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--t1); }
+    .logo-sub { font-size:9.5px; color:var(--t3); margin-top:1px; }
+    .logo-ast { width:28px; height:28px; flex-shrink:0; background:var(--teal-dim); border:1px solid var(--teal-b); border-radius:2px; display:none; align-items:center; justify-content:center; }
+    .sidebar.collapsed .logo-ast { display:flex; }
+    .logo-ast svg { width:16px; height:16px; color:var(--teal); }
+    .sb-nav { flex:1; padding:6px 0; overflow-y:auto; overflow-x:hidden; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:9px 14px 9px 15px; cursor:pointer; position:relative; transition:background .12s; user-select:none; white-space:nowrap; }
+    .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; }
+    .nav-item:hover { background:rgba(255,255,255,.03); }
+    .nav-item.active { background:var(--teal-dim); }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2.5px; background:var(--teal); box-shadow:var(--teal-glow); }
+    .sidebar.collapsed .nav-item.active::before { display:none; }
+    .nav-icon { width:16px; height:16px; flex-shrink:0; color:var(--t3); transition:color .12s; }
+    .nav-item.active .nav-icon { color:var(--teal); }
+    .nav-item:hover .nav-icon { color:var(--t2); }
+    .nav-label { font-size:12.5px; font-weight:500; color:var(--t2); flex:1; transition:color .12s; overflow:hidden; }
+    .sidebar.collapsed .nav-label { display:none; }
+    .nav-item.active .nav-label { color:var(--teal); font-weight:600; }
+    .nav-item:hover .nav-label { color:var(--t1); }
+    .nav-badge { background:var(--red); color:#fff; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; }
+    .sidebar.collapsed .nav-badge { position:absolute; top:4px; right:4px; font-size:8px; padding:1px 4px; min-width:14px; }
+    .sb-user { padding:11px 13px; border-top:1px solid var(--bd); display:flex; align-items:center; gap:10px; }
+    .sidebar.collapsed .sb-user { justify-content:center; padding:11px 0; }
+    .user-av { width:30px; height:30px; border-radius:50%; background:var(--teal-dim); border:1.5px solid var(--teal-b); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--teal); flex-shrink:0; }
+    .user-info { overflow:hidden; }
+    .sidebar.collapsed .user-info { display:none; }
+    .user-name { font-size:12.5px; font-weight:600; color:var(--t1); white-space:nowrap; }
+    .user-role { font-size:10px; color:var(--t3); }
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+    .topbar { height:var(--tbh); border-bottom:1px solid var(--bd); display:flex; align-items:center; padding:0 24px; gap:12px; flex-shrink:0; }
+    .tb-left { flex:1; min-width:0; }
+    .page-title { font-size:15px; font-weight:700; color:var(--t1); }
+    .page-date { font-size:10.5px; color:var(--t3); margin-top:1px; }
+    .tb-actions { display:flex; gap:8px; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; font-family:var(--f); font-size:12px; font-weight:600; border-radius:var(--r); border:1.5px solid transparent; cursor:pointer; transition:all .13s; white-space:nowrap; line-height:1; }
+    .btn-ghost { background:transparent; border-color:var(--bdm); color:var(--t2); }
+    .btn-ghost:hover { border-color:rgba(255,255,255,.2); color:var(--t1); background:rgba(255,255,255,.04); }
+    .btn-teal { background:var(--teal); border-color:var(--teal); color:#fff; }
+    .btn-teal:hover { background:#00cba6; box-shadow:0 0 18px rgba(0,181,147,.32); }
+    .btn-sm { padding:5px 11px; font-size:11px; }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .content-area { flex:1; overflow-y:auto; padding:24px; }
+    .filter-row { display:flex; margin-bottom:18px; border-bottom:1px solid var(--bd); }
+    .fbtn { padding:7px 14px; font-family:var(--f); font-size:12px; font-weight:600; color:var(--t3); background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .13s; }
+    .fbtn:hover { color:var(--t1); }
+    .fbtn.active { color:var(--teal); border-bottom-color:var(--teal); }
+    .w-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+    .widget { background:var(--card); border:1px solid var(--bd); padding:18px 18px 15px; position:relative; }
+    .widget::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+    .w-teal::before { background:var(--teal); box-shadow:2px 0 12px rgba(0,181,147,.28); }
+    .w-sal::before { background:var(--salmon); }
+    .w-blue::before { background:var(--blue); }
+    .w-gray::before { background:var(--t3); }
+    .w-num { font-size:38px; font-weight:800; line-height:1; margin-bottom:5px; font-variant-numeric:tabular-nums; }
+    .w-teal .w-num{color:var(--teal);} .w-sal .w-num{color:var(--salmon);} .w-blue .w-num{color:var(--blue);} .w-gray .w-num{color:var(--t2);}
+    .w-label { font-size:13px; font-weight:600; color:var(--t1); margin-bottom:2px; }
+    .w-sub { font-size:10.5px; color:var(--t3); }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
+    .card { background:var(--card); border:1px solid var(--bd); padding:18px; }
+    .card-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); margin-bottom:14px; }
+    .prev-item { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--bd); }
+    .prev-item:last-child { border-bottom:none; padding-bottom:0; }
+    .l-av { width:32px; height:32px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+    .l-av.t1{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .l-av.t2{background:var(--sal-dim);color:var(--salmon);border:1px solid var(--sal-b);}
+    .prev-inf { flex:1; min-width:0; }
+    .prev-n { font-size:13px; font-weight:600; color:var(--t1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .prev-c { font-size:11px; color:var(--t3); }
+    .tier-b { font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:2px; flex-shrink:0; }
+    .tier-b.t1{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .tier-b.t2{background:var(--sal-dim);color:var(--salmon);border:1px solid var(--sal-b);}
+    .score-n { font-size:11px; color:var(--t3); flex-shrink:0; }
+    .tp-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--bd); }
+    .tp-item:last-child { border-bottom:none; }
+    .t-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .t-dot.urgent{background:var(--salmon);box-shadow:0 0 6px rgba(255,128,114,.45);}
+    .t-dot.normal{background:var(--t3);}
+    .t-txt { font-size:12px; color:var(--t1); flex:1; line-height:1.4; }
+    .t-txt.urgent{color:var(--salmon);}
+    .t-dl { font-size:10.5px; color:var(--t3); flex-shrink:0; }
+    .t-dl.urgent{color:var(--salmon);font-weight:600;}
+    .sig-item { display:flex; align-items:center; gap:13px; padding:12px 0; border-bottom:1px solid var(--bd); }
+    .sig-item:last-child { border-bottom:none; }
+    .sig-b { font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:2px; white-space:nowrap; flex-shrink:0; }
+    .sig-b.aanbesteding{background:var(--sal-dim);color:var(--salmon);border:1px solid var(--sal-b);}
+    .sig-b.nieuws{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-b);}
+    .sig-b.kans{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .sig-b.concurrent{background:rgba(255,255,255,.05);color:var(--t2);border:1px solid var(--bdm);}
+    .sig-inf { flex:1; min-width:0; }
+    .sig-t { font-size:13px; font-weight:500; color:var(--t1); line-height:1.35; }
+    .sig-m { font-size:10.5px; color:var(--t3); margin-top:2px; }
+    .sig-sc { text-align:right; flex-shrink:0; }
+    .sig-v { font-size:12px; font-weight:700; color:var(--teal); }
+    .sig-s { font-size:9px; color:var(--t3); }
+    .phase-nav { display:grid; grid-template-columns:1fr 28px 1fr 28px 1fr; align-items:stretch; margin-bottom:22px; }
+    .phase-step { background:var(--card); border:1px solid var(--bd); padding:16px 16px 14px; cursor:pointer; transition:background .14s; position:relative; }
+    .phase-step:hover { background:var(--ch); }
+    .phase-step.active { background:var(--teal-dim); border-color:var(--teal-b); }
+    .phase-arrow { background:var(--card); border-top:1px solid var(--bd); border-bottom:1px solid var(--bd); display:flex; align-items:center; justify-content:center; }
+    .phase-arrow svg { color:var(--t3); }
+    .p-num { font-size:9px; font-weight:800; letter-spacing:.15em; color:var(--t3); margin-bottom:4px; }
+    .phase-step.active .p-num { color:var(--teal); }
+    .p-label { font-size:14px; font-weight:700; color:var(--t1); display:block; margin-bottom:2px; }
+    .p-sub { font-size:10.5px; color:var(--t3); }
+    .p-count { font-size:10px; color:var(--t2); margin-top:6px; }
+    .phase-step.active .p-count { color:var(--teal); }
+    .this-sys { position:absolute; top:12px; right:12px; font-size:8px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; padding:2px 7px; border-radius:2px; background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+    .leads-list { display:flex; flex-direction:column; gap:2px; }
+    .lead-row { background:var(--card); border:1px solid var(--bd); transition:border-color .14s; }
+    .lead-row:hover { border-color:var(--bdm); }
+    .lead-row.open { border-color:var(--teal-b); }
+    .lead-hdr { display:flex; align-items:center; gap:12px; padding:13px 15px; cursor:pointer; user-select:none; }
+    .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .sdot.nieuw{background:var(--blue);}
+    .sdot.benaderd{background:var(--yellow);}
+    .sdot.gereageerd{background:var(--teal);box-shadow:0 0 5px rgba(0,181,147,.5);}
+    .l-name-blk { flex:1; min-width:0; }
+    .l-name { font-size:13.5px; font-weight:600; color:var(--t1); }
+    .l-co { font-size:11px; color:var(--t3); margin-top:1px; }
+    .chev { color:var(--t3); flex-shrink:0; transition:transform .22s,color .14s; }
+    .lead-row.open .chev { transform:rotate(180deg); color:var(--teal); }
+    .lead-body { max-height:0; overflow:hidden; transition:max-height .32s cubic-bezier(.4,0,.2,1); }
+    .lead-body.show { max-height:900px; }
+    .lead-bdy-inner { padding:0 15px 20px; border-top:1px solid var(--bd); }
+    .icp-row { display:flex; justify-content:space-between; align-items:center; margin:16px 0 6px; }
+    .icp-lbl { font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); }
+    .icp-val { font-size:13px; font-weight:800; color:var(--teal); }
+    .icp-trk { background:rgba(255,255,255,.07); height:5px; border-radius:99px; overflow:hidden; margin-bottom:14px; }
+    .icp-fill { height:100%; background:var(--teal); border-radius:99px; box-shadow:0 0 8px rgba(0,181,147,.38); }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; margin-bottom:16px; }
+    .d-lbl { font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); margin-bottom:3px; }
+    .d-val { font-size:12.5px; color:var(--t1); }
+    .d-val.m { color:var(--t2); font-size:12px; line-height:1.5; }
+    .fspan { grid-column:1/-1; }
+    .msg-blk { background:var(--inp); border:1px solid var(--bd); padding:13px; font-size:11.5px; line-height:1.65; color:var(--t2); white-space:pre-wrap; font-family:var(--f); max-height:170px; overflow-y:auto; margin-top:4px; }
+    .actor-section-lbl { font-size:9px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--t3); margin-bottom:10px; margin-top:18px; }
+    .actor-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+    .actor-col { border:1px solid var(--bd); border-top:2px solid; padding:11px; }
+    .actor-col.klant{border-top-color:var(--salmon);}
+    .actor-col.commercial{border-top-color:var(--teal);}
+    .actor-col.platform{border-top-color:var(--blue);}
+    .actor-col.ai{border-top-color:var(--t2);}
+    .ac-hdr { font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+    .actor-col.klant .ac-hdr{color:var(--salmon);}
+    .actor-col.commercial .ac-hdr{color:var(--teal);}
+    .actor-col.platform .ac-hdr{color:var(--blue);}
+    .actor-col.ai .ac-hdr{color:var(--t2);}
+    .ac-list { list-style:none; }
+    .ac-list li { font-size:11px; color:var(--t2); line-height:1.45; padding:3px 0 3px 11px; position:relative; border-bottom:1px solid var(--bd); }
+    .ac-list li:last-child { border-bottom:none; }
+    .ac-list li::before { content:''; position:absolute; left:0; top:8px; width:4px; height:4px; border-radius:50%; }
+    .actor-col.klant li::before{background:var(--salmon);}
+    .actor-col.commercial li::before{background:var(--teal);}
+    .actor-col.platform li::before{background:var(--blue);}
+    .actor-col.ai li::before{background:var(--t2);}
+    .tools-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .tool-tag { font-size:10px; font-weight:600; padding:3px 9px; border-radius:2px; background:rgba(255,255,255,.05); color:var(--t2); border:1px solid var(--bdm); }
+    .streef-blk { background:rgba(0,181,147,.06); border:1px solid var(--teal-b); padding:12px 14px; margin-bottom:14px; }
+    .streef-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    .streef-lbl { font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--teal); }
+    .streef-pct { font-size:13px; font-weight:800; color:var(--teal); }
+    .streef-trk { background:rgba(255,255,255,.08); height:4px; border-radius:99px; overflow:hidden; margin-bottom:8px; }
+    .streef-fill { height:100%; background:var(--teal); border-radius:99px; }
+    .streef-txt { font-size:10.5px; color:var(--t3); }
+    .streef-txt strong { color:var(--t2); font-weight:600; }
+    .lead-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .c-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+    .c-card { background:var(--card); border:1px solid var(--bd); padding:15px; transition:border-color .13s; }
+    .c-card:hover { border-color:var(--bdm); }
+    .cc-hdr { display:flex; align-items:center; gap:8px; margin-bottom:11px; }
+    .plat-b { font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:2px; }
+    .plat-b.linkedin{background:rgba(10,102,194,.18);color:#5BA4E8;border:1px solid rgba(10,102,194,.24);}
+    .plat-b.instagram{background:rgba(225,48,108,.13);color:#F07090;border:1px solid rgba(225,48,108,.2);}
+    .pillar-tag { font-size:9.5px; font-weight:600; padding:2px 7px; border-radius:2px; background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+    .cc-txt { font-size:12px; line-height:1.6; color:var(--t2); margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .cc-ft { display:flex; align-items:center; justify-content:space-between; }
+    .sp { font-size:9.5px; font-weight:600; padding:2px 8px; border-radius:99px; }
+    .sp.idee{background:rgba(255,255,255,.06);color:var(--t3);border:1px solid var(--bdm);}
+    .sp.concept{background:rgba(245,197,66,.12);color:var(--yellow);border:1px solid rgba(245,197,66,.22);}
+    .sp.gepland{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-b);}
+    .sp.gepost{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .cc-dt { font-size:10.5px; color:var(--t3); }
+    .engage { display:flex; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--bd); }
+    .ei { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--t3); }
+    .tasks-list { display:flex; flex-direction:column; }
+    .task-row { display:flex; align-items:center; gap:12px; padding:11px 15px; background:var(--card); border:1px solid var(--bd); border-top:none; transition:background .12s; }
+    .task-row:first-child { border-top:1px solid var(--bd); }
+    .task-row:hover { background:var(--ch); }
+    .task-row.done { opacity:.4; }
+    .cb { width:16px; height:16px; border-radius:3px; border:1.5px solid var(--bdm); background:transparent; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+    .cb.on { background:var(--teal); border-color:var(--teal); }
+    .cb.on::after { content:''; display:block; width:4px; height:7px; border:2px solid #fff; border-top:none; border-left:none; transform:rotate(45deg) translate(-1px,-1px); }
+    .t-name { font-size:13px; font-weight:500; color:var(--t1); flex:1; }
+    .task-row.done .t-name { text-decoration:line-through; color:var(--t3); }
+    .task-row.urg .t-name { color:var(--salmon); }
+    .tt { font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:2px; flex-shrink:0; }
+    .tt.sdr{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .tt.content{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-b);}
+    .tt.intern{background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--bdm);}
+    .t-dl2 { font-size:11px; color:var(--t3); white-space:nowrap; flex-shrink:0; }
+    .t-dl2.urg { color:var(--salmon); font-weight:600; }
+    .ag-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+    .ag-card { background:var(--card); border:1px solid var(--bd); padding:18px; transition:border-color .15s,box-shadow .15s; }
+    .ag-card:hover { border-color:var(--teal-b); box-shadow:0 0 20px rgba(0,181,147,.07); }
+    .ag-top { display:flex; align-items:center; gap:11px; margin-bottom:11px; }
+    .ag-num { width:34px; height:34px; border-radius:50%; background:var(--teal-dim); border:1.5px solid var(--teal-b); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:var(--teal); flex-shrink:0; }
+    .ag-name { font-size:13.5px; font-weight:700; color:var(--t1); }
+    .ag-desc { font-size:11.5px; line-height:1.55; color:var(--t3); margin-bottom:14px; }
+    .ag-ft { display:flex; align-items:center; justify-content:space-between; }
+    .ag-pill { font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:99px; }
+    .ag-pill.gereed{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .ag-pill.idle{background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--bdm);}
+    .ag-act { font-size:10px; color:var(--t3); }
+    .toast { position:fixed; bottom:22px; right:22px; z-index:999; background:var(--sb); border:1px solid var(--teal-b); color:var(--t1); font-family:var(--f); font-size:12px; font-weight:500; padding:10px 16px; border-radius:var(--r); box-shadow:0 8px 24px rgba(0,0,0,.45); transition:opacity .3s; pointer-events:none; }
+    .empty { text-align:center; padding:40px 20px; color:var(--t3); font-size:13px; }
+    .loading { text-align:center; padding:40px 20px; color:var(--t3); font-size:13px; }
+    .loading::after { content:''; display:inline-block; width:14px; height:14px; border:2px solid var(--bd); border-top-color:var(--teal); border-radius:50%; animation:spin .7s linear infinite; margin-left:8px; vertical-align:middle; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .err { background:rgba(229,53,53,.1); border:1px solid rgba(229,53,53,.25); color:#ff8080; font-size:12px; padding:10px 14px; border-radius:var(--r); margin-bottom:16px; }
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; align-items:center; justify-content:center; }
+    .modal-bg.open { display:flex; }
+    .modal { background:var(--sb); border:1px solid var(--bdm); padding:24px; width:480px; max-width:96vw; border-radius:var(--r); }
+    .modal h3 { font-size:15px; font-weight:700; margin-bottom:18px; }
+    .form-row { margin-bottom:14px; }
+    .form-row label { display:block; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--t3); margin-bottom:5px; }
+    .form-row input, .form-row select, .form-row textarea { width:100%; background:var(--inp); border:1px solid var(--bdm); color:var(--t1); font-family:var(--f); font-size:12.5px; padding:8px 11px; border-radius:var(--r); outline:none; transition:border-color .13s; }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color:var(--teal); }
+    .form-row textarea { resize:vertical; min-height:80px; }
+    .form-row select option { background:var(--sb); }
+    .modal-ft { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sb">
+    <div class="sb-logo" onclick="toggleSb()">
+      <div class="logo-ast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+      </div>
+      <div class="logo-pulse"></div>
+      <div class="logo-text">
+        <div class="logo-title">Command Center</div>
+        <div class="logo-sub">Ecopulz Platform</div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sbNav"></nav>
+    <div class="sb-user">
+      <div class="user-av">F</div>
+      <div class="user-info">
+        <div class="user-name">Finn</div>
+        <div class="user-role">Admin</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="tb-left">
+        <div class="page-title" id="pgTitle">Overzicht</div>
+        <div class="page-date" id="pgDate"></div>
+      </div>
+      <div class="tb-actions">
+        <button class="btn btn-ghost" onclick="openLeadModal()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Lead toevoegen
+        </button>
+        <button class="btn btn-teal" onclick="runPipe()">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run pipeline
+        </button>
+      </div>
+    </header>
+    <div class="content-area" id="ca"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="leadModal">
+  <div class="modal">
+    <h3>Lead toevoegen</h3>
+    <div class="form-row"><label>Naam</label><input id="lm-naam" placeholder="Voornaam Achternaam"></div>
+    <div class="form-row"><label>Organisatie</label><input id="lm-org" placeholder="Bedrijfsnaam"></div>
+    <div class="form-row"><label>Functie</label><input id="lm-functie" placeholder="Directeur Operaties"></div>
+    <div class="form-row"><label>LinkedIn URL</label><input id="lm-li" placeholder="https://linkedin.com/in/..."></div>
+    <div class="form-row"><label>Tier</label>
+      <select id="lm-tier"><option value="1">Tier 1 — Top prioriteit</option><option value="2">Tier 2 — Secundair</option></select>
+    </div>
+    <div class="form-row"><label>ICP Score (0–100)</label><input id="lm-score" type="number" min="0" max="100" placeholder="85"></div>
+    <div class="form-row"><label>Notities</label><textarea id="lm-notities" placeholder="Reden om aan te schrijven..."></textarea></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeLeadModal()">Annuleren</button>
+      <button class="btn btn-teal" id="lm-save" onclick="saveLead()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://knaohykrcxyanhidbhkt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuYW9oeWtyY3h5YW5oaWRiaGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODUzMDUsImV4cCI6MjA5NDY2MTMwNX0.m4wYu4f2JDbWYOm6Ncg8IfDKLl5bceNtNUM063bYqtA';
+const H = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+
+async function sbGet(table, params='') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {headers:H});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(table, id, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'PATCH',headers:H,body:JSON.stringify(body)});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPost(table, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST',headers:H,body:JSON.stringify(body)});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle';
+let expanded=new Set();
+
+const PH = {
+  leads:{
+    actors:{
+      klant:['Bezoekt website of ontvangt LinkedIn-bericht','Reageert op outreach-bericht','Geeft interesse aan voor kennismaking'],
+      commercial:['Identificeert en kwalificeert lead (Finn/Olaf)','Verstuurt gepersonaliseerd outreach-bericht','Plant kennismakingsgesprek in','Legt contactmoment vast in CRM'],
+      platform:['AFAS CRM — contactbeheer & activiteiten','LinkedIn Sales Navigator — prospecting','Ecopulz website — inbound kanaal'],
+      ai:['Lead-scoring op basis van ICP-criteria','Prioritering op basis van koopsignalen','Contactpersoon matching (rol/functie)','Outreach-bericht personalisatie']
+    },
+    tools:['AFAS CRM','LinkedIn Sales Navigator','Ecopulz website','Claude API'],
+    streef:'≥25% bezoeker → gekwalificeerde lead',streef2:'Reactietijd <24 uur',pct:62,
+    actions:[
+      {l:'Kopieer bericht',t:'ghost',fn:'copyMsg'},
+      {l:'Open LinkedIn',t:'ghost',fn:'openLI'},
+      {l:'Markeer benaderd',t:'ghost',fn:'markBen'},
+      {l:'Doorsturen naar Offerte',t:'teal',fn:'toOfferte'}
+    ]
+  },
+  offerte:{
+    actors:{
+      klant:['Deelt info via diepte-interview','Reviewt offertedocument','Ondertekent via DocuSign'],
+      commercial:['Voert situatieanalyse uit','Selecteert passende diensten','Genereert en verstuurt offerte','Voert WCW-compliance check uit'],
+      platform:['Offerte generator (Tool Portal)','DocuSign — digitale handtekening','AFAS — offertearchief','Juridische check tool'],
+      ai:['Offertegeneratie op basis van klantprofiel','Juridische check & contractvertaling','Risicosignalering','Prijsindicatie op basis van scope']
+    },
+    tools:['Offerte generator','Juridische check tool','DocuSign','AFAS CRM'],
+    streef:'≥40% offerte → contract',streef2:'Doorlooptijd <1 werkdag',pct:78,
+    actions:[
+      {l:'Genereer offerte',t:'teal',fn:'genOfferte'},
+      {l:'Juridische check',t:'ghost',fn:'jurCheck'},
+      {l:'Doorsturen naar Onboarding',t:'teal',fn:'toOnboarding'}
+    ]
+  },
+  onboarding:{
+    actors:{
+      klant:['Ontvangt gepersonaliseerde onboarding-link','Bekijkt introductie-trailer','Doorloopt 6-staps onboarding','Reviewt AI-gegenereerd implementatieplan'],
+      commercial:['Genereert gepersonaliseerde onboarding-link','Monitort voortgang via dashboard','Wijst vaste contactpersoon toe','Bespreekt implementatieplan met klant'],
+      platform:['Onboarding portal (Altima)','Supabase — data & authenticatie','n8n — workflow-automatie','AFAS — klantdossier aanmaken'],
+      ai:['Genereert gepersonaliseerd implementatieplan','Stelt tijdlijn & mijlpalen op','Beveelt eerste acties aan','Wijst contactpersoon toe op basis van profiel']
+    },
+    tools:['Onboarding portal','Altima','Claude API','Supabase','n8n','AFAS CRM'],
+    streef:'100% klanten met AI-plan binnen 48u',streef2:'Klanttevredenheid ≥8/10',pct:91,
+    actions:[
+      {l:'Genereer implementatieplan',t:'teal',fn:'genPlan'},
+      {l:'Wijs contactpersoon toe',t:'ghost',fn:'assignC'},
+      {l:'Trigger n8n workflow',t:'ghost',fn:'n8nTrigger'}
+    ]
+  }
+};
+
+const NAV=[
+  {id:'overzicht',label:'Overzicht',icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'},
+  {id:'leadfunnel',label:'Lead funnel',icon:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'},
+  {id:'content',label:'Content machine',icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'},
+  {id:'taken',label:'Taken',icon:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
+  {id:'radar',label:'Sector radar',icon:'<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.49-.01a6 6 0 0 1 0-8.49m11.32-2.82a10 10 0 0 1 0 14.14m-14.15 0a10 10 0 0 1 0-14.14"/>'},
+  {id:'agents',label:'Agent status',icon:'<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/><circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="15" cy="16" r="1" fill="currentColor"/>'}
+];
+
+const AGENTS=[
+  {num:1,name:'ICP Scanner',status:'gereed',activity:'3 min geleden',desc:'Scant nieuwe profielen en berekent ICP-scores op basis van sector, grootte en koopsignalen.'},
+  {num:2,name:'Profile Reader',status:'gereed',activity:'7 min geleden',desc:'Leest LinkedIn-profielen uit en verrijkt leaddata met functie, activiteit en bedrijfscontext.'},
+  {num:3,name:'Signal Detector',status:'gereed',activity:'5 min geleden',desc:'Monitort TenderNed, ACM.nl en LinkedIn op relevante sectorsignalen en aanbestedingen.'},
+  {num:4,name:'Competitor Monitor',status:'gereed',activity:'11 min geleden',desc:'Volgt concurrenten in de warmtemarkt op uitbreiding, vacatures en public statements.'},
+  {num:5,name:'Message Writer',status:'gereed',activity:'20 min geleden',desc:'Genereert gepersonaliseerde outreach-berichten op basis van ICP-score en koopsignalen.'},
+  {num:6,name:'Follow-up Manager',status:'idle',activity:'2 uur geleden',desc:'Bewaakt follow-up timing en stuurt herinneringen aan het sales-team via taaklijst.'},
+  {num:7,name:'Demo Qualifier',status:'idle',activity:'4 uur geleden',desc:'Kwalificeert demo-aanvragen en bereidt gepersonaliseerde presentatie-input voor.'}
+];
+
+function init(){
+  document.getElementById('pgDate').textContent=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderNav(); render(tab);
+}
+function renderNav(){
+  document.getElementById('sbNav').innerHTML=NAV.map(n=>`
+    <div class="nav-item${tab===n.id?' active':''}" onclick="go('${n.id}')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${n.icon}</svg>
+      <span class="nav-label">${n.label}</span>
+    </div>`).join('');
+}
+function go(id){tab=id;document.getElementById('pgTitle').textContent=NAV.find(n=>n.id===id).label;renderNav();render(id);}
+function render(id){
+  document.getElementById('ca').innerHTML='<div class="loading">Data ophalen</div>';
+  ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents})[id]();
+}
+
+// ── OVERZICHT ──────────────────────────────────────────
+async function tOvz(){
+  try{
+    const [leads,tasks,signals,content]=await Promise.all([
+      sbGet('leads','select=id,fase'),
+      sbGet('tasks','select=id,status,urgent'),
+      sbGet('sector_signals','select=id,datum&order=datum.desc&limit=3'),
+      sbGet('content_posts','select=id,status')
+    ]);
+    const open=tasks.filter(t=>t.status!=='done'&&t.status!=='klaar');
+    const urg=open.filter(t=>t.urgent);
+    const gepland=content.filter(c=>c.status==='gepland').length;
+    const [topL,topT,topS]=await Promise.all([
+      sbGet('leads','select=naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
+      sbGet('tasks','select=titel,urgent,deadline,status&order=urgent.desc,deadline.asc&limit=5'),
+      sbGet('sector_signals','select=type,titel,bron,datum,relevantie_score&order=datum.desc&limit=3')
+    ]);
+    document.getElementById('ca').innerHTML=`
+      <div class="w-grid">
+        <div class="widget w-teal"><div class="w-num">${leads.length}</div><div class="w-label">Actieve leads</div><div class="w-sub">In pipeline</div></div>
+        <div class="widget w-sal"><div class="w-num">${open.length}</div><div class="w-label">Openstaande taken</div><div class="w-sub">Incl. ${urg.length} urgent</div></div>
+        <div class="widget w-blue"><div class="w-num">${gepland}</div><div class="w-label">Content gepland</div><div class="w-sub">Wacht op publicatie</div></div>
+        <div class="widget w-gray"><div class="w-num">${signals.length}</div><div class="w-label">Verse signalen</div><div class="w-sub">Laatste ophaalronde</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Top leads</div>
+          ${topL.map(l=>`<div class="prev-item">
+            <div class="l-av ${l.tier===1?'t1':'t2'}">${ini(l.naam)}</div>
+            <div class="prev-inf"><div class="prev-n">${l.naam}</div><div class="prev-c">${l.organisatie}</div></div>
+            <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier}</span>
+            <span class="score-n">${l.icp_score??'–'}</span>
+          </div>`).join('')}
+        </div>
+        <div class="card">
+          <div class="card-title">Openstaande taken</div>
+          ${topT.filter(t=>t.status!=='done'&&t.status!=='klaar').slice(0,4).map(t=>`
+            <div class="tp-item">
+              <div class="t-dot ${t.urgent?'urgent':'normal'}"></div>
+              <span class="t-txt ${t.urgent?'urgent':''}">${t.titel}</span>
+              <span class="t-dl ${t.urgent?'urgent':''}">${fmtDate(t.deadline)}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="card"><div class="card-title">Verse sector-signalen</div>${topS.map(sigRow).join('')}</div>`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+// ── LEAD FUNNEL ────────────────────────────────────────
+async function tLead(){
+  try{
+    const all=await sbGet('leads','select=fase');
+    const c={leads:0,offerte:0,onboarding:0};
+    all.forEach(l=>{if(c[l.fase]!==undefined)c[l.fase]++;});
+    let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,reden,outreach_bericht,linkedin_url&fase=eq.${lFase}&order=icp_score.desc`;
+    if(lFase==='leads'&&lFilter!=='alle') q+=`&status=eq.${lFilter}`;
+    const leads=await sbGet('leads',q);
+    document.getElementById('ca').innerHTML=`
+      <div class="phase-nav">
+        ${ps('leads','01','Leads','Instroom & kwalificatie',c.leads,false)}
+        <div class="phase-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        ${ps('offerte','02','Offerte','Analyse & voorstel',c.offerte,false)}
+        <div class="phase-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        ${ps('onboarding','03','Onboarding','Portal & AI-plan',c.onboarding,true)}
+      </div>
+      ${lFase==='leads'?`<div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>`:''}
+      <div class="leads-list">${leads.length?leads.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function ps(id,num,label,sub,count,isSys){
+  return `<div class="phase-step${lFase===id?' active':''}" onclick="setPhase('${id}')">
+    ${isSys?'<span class="this-sys">DIT SYSTEEM</span>':''}
+    <div class="p-num">FASE ${num}</div>
+    <span class="p-label">${label}</span>
+    <div class="p-sub">${sub}</div>
+    <div class="p-count">${count} ${count===1?'klant':'klanten'}</div>
+  </div>`;
+}
+function setPhase(p){lFase=p;lFilter='alle';render('leadfunnel');}
+function setLF(f){lFilter=f;render('leadfunnel');}
+
+function leadRow(l){
+  const exp=expanded.has(l.id);
+  const ph=PH[l.fase]||PH.leads;
+  return `<div class="lead-row${exp?' open':''}" id="lr-${l.id}">
+    <div class="lead-hdr" onclick="toggleL('${l.id}')">
+      <div class="sdot ${l.status||'nieuw'}"></div>
+      <div class="l-name-blk"><div class="l-name">${l.naam}</div><div class="l-co">${l.organisatie}</div></div>
+      <span class="tier-b ${l.tier===1?'t1':'t2'}">Tier ${l.tier}</span>
+      <span class="score-n" style="margin-right:4px">${l.icp_score??'–'}/100</span>
+      <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="lead-body${exp?' show':''}" id="lb-${l.id}">
+      <div class="lead-bdy-inner">
+        ${leadCtx(l)}
+        <div class="actor-section-lbl">Actoren & activiteiten</div>
+        <div class="actor-grid">
+          ${['klant','commercial','platform','ai'].map(a=>`
+            <div class="actor-col ${a}">
+              <div class="ac-hdr">${a==='ai'?'AI':cap(a)}</div>
+              <ul class="ac-list">${ph.actors[a].map(x=>`<li>${x}</li>`).join('')}</ul>
+            </div>`).join('')}
+        </div>
+        <div class="tools-row">${ph.tools.map(t=>`<span class="tool-tag">${t}</span>`).join('')}</div>
+        <div class="streef-blk">
+          <div class="streef-top"><span class="streef-lbl">Streefwaarden</span><span class="streef-pct">${ph.pct}%</span></div>
+          <div class="streef-trk"><div class="streef-fill" style="width:${ph.pct}%"></div></div>
+          <div class="streef-txt"><strong>${ph.streef}</strong> · ${ph.streef2}</div>
+        </div>
+        <div class="lead-actions">
+          ${ph.actions.map(a=>`<button class="btn ${a.t==='teal'?'btn-teal':'btn-ghost'} btn-sm" onclick="${a.fn}('${l.id}','${l.naam}','${l.linkedin_url||''}','${encodeURIComponent(l.outreach_bericht||'')}')">${a.l}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function leadCtx(l){
+  return `
+    <div class="icp-row"><span class="icp-lbl">ICP Score</span><span class="icp-val">${l.icp_score??'–'} / 100</span></div>
+    <div class="icp-trk"><div class="icp-fill" style="width:${l.icp_score??0}%"></div></div>
+    <div class="detail-grid">
+      <div><div class="d-lbl">Functie</div><div class="d-val">${l.functie||'–'}</div></div>
+      <div><div class="d-lbl">Status</div><div class="d-val" style="text-transform:capitalize">${l.status||'nieuw'}</div></div>
+      ${l.reden?`<div class="fspan"><div class="d-lbl">Reden tot aanschrijven</div><div class="d-val m">${l.reden}</div></div>`:''}
+      ${l.outreach_bericht?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
+    </div>`;
+}
+
+function toggleL(id){
+  const body=document.getElementById(`lb-${id}`);
+  const row=document.getElementById(`lr-${id}`);
+  if(!body||!row)return;
+  if(expanded.has(id)){expanded.delete(id);body.classList.remove('show');row.classList.remove('open');}
+  else{expanded.add(id);body.classList.add('show');row.classList.add('open');}
+}
+
+async function copyMsg(id,naam,li,msgEnc){
+  const msg=decodeURIComponent(msgEnc);
+  if(msg&&navigator.clipboard){await navigator.clipboard.writeText(msg);toast('Bericht gekopieerd ✓');}
+  else toast('Geen bericht beschikbaar voor deze lead');
+}
+async function openLI(id,naam,liUrl){
+  const url=liUrl&&liUrl!=='undefined'?liUrl:'https://www.linkedin.com/search/results/people/?keywords='+encodeURIComponent(naam);
+  window.open(url,'_blank');
+}
+async function markBen(id){
+  try{await sbPatch('leads',id,{status:'benaderd'});toast('Status → Benaderd opgeslagen ✓');render('leadfunnel');}
+  catch(e){toast('Fout: '+e.message);}
+}
+async function toOfferte(id){
+  try{
+    await sbPatch('leads',id,{fase:'offerte',offerte_at:new Date().toISOString()});
+    expanded.delete(id);toast('Lead doorgestuurd naar Offerte →');render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+async function toOnboarding(id){
+  try{
+    await sbPatch('leads',id,{fase:'onboarding',onboarding_at:new Date().toISOString()});
+    expanded.delete(id);toast('Lead doorgestuurd naar Onboarding →');render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+function genOfferte(){toast('Offerte generator — koppeling in aanbouw');}
+function jurCheck(){toast('Juridische check — koppeling in aanbouw');}
+function genPlan(){toast('Implementatieplan via Claude API — in aanbouw');}
+function assignC(){toast('Contactpersoon toewijzen — in aanbouw');}
+function n8nTrigger(){toast('n8n workflow — koppeling in aanbouw');}
+
+// ── CONTENT ────────────────────────────────────────────
+async function tContent(){
+  try{
+    let q='select=id,platform,pilaar,tekst,status,datum_gepland,datum_gepost,likes,comments,shares&order=created_at.desc';
+    if(cFilter!=='alle'){const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost'};q+=`&status=eq.${fm[cFilter]||cFilter}`;}
+    const posts=await sbGet('content_posts',q);
+    document.getElementById('ca').innerHTML=`
+      <div class="filter-row">${['Alle','Ideeën','Concept','Gepland','Gepost'].map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
+      <div class="c-grid">${posts.length?posts.map(p=>`
+        <div class="c-card">
+          <div class="cc-hdr">
+            <span class="plat-b ${p.platform}">${cap(p.platform)}</span>
+            ${p.pilaar?`<span class="pillar-tag">${p.pilaar}</span>`:''}
+          </div>
+          <div class="cc-txt">${p.tekst||'–'}</div>
+          ${p.status==='gepost'&&(p.likes||p.comments||p.shares)?`
+            <div class="engage">
+              <span class="ei">♥ ${p.likes||0}</span>
+              <span class="ei">💬 ${p.comments||0}</span>
+              <span class="ei">↗ ${p.shares||0}</span>
+            </div>`:''}
+          <div class="cc-ft" style="margin-top:8px">
+            <span class="sp ${p.status}">${cap(p.status)}</span>
+            <span class="cc-dt">${p.datum_gepland||p.datum_gepost||'–'}</span>
+          </div>
+        </div>`).join(''):'<div class="empty">Geen content in deze categorie</div>'}
+      </div>`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+function setCF(f){cFilter=f;render('content');}
+
+// ── TAKEN ──────────────────────────────────────────────
+async function tTaken(){
+  try{
+    let q='select=id,titel,type,status,urgent,deadline&order=urgent.desc,deadline.asc';
+    if(tFilter==='open') q+='&status=neq.klaar&status=neq.done';
+    if(tFilter==='klaar') q+='&or=(status.eq.klaar,status.eq.done)';
+    const tasks=await sbGet('tasks',q);
+    document.getElementById('ca').innerHTML=`
+      <div class="filter-row">${['Open','Bezig','Klaar'].map(f=>`<button class="fbtn${tFilter===f.toLowerCase()?' active':''}" onclick="setTF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
+      <div class="tasks-list">${tasks.length?tasks.map(t=>{
+        const done=t.status==='klaar'||t.status==='done';
+        const urg=t.urgent&&!done;
+        return `<div class="task-row${done?' done':''}${urg?' urg':''}">
+          <div class="cb${done?' on':''}" onclick="togT('${t.id}','${t.status}')"></div>
+          <span class="t-name">${t.titel}</span>
+          <span class="tt ${t.type||'intern'}">${t.type||'intern'}</span>
+          <span class="t-dl2${urg?' urg':''}">${fmtDate(t.deadline)}</span>
+        </div>`;
+      }).join(''):'<div class="empty">Geen taken in deze categorie</div>'}
+      </div>`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+function setTF(f){tFilter=f;render('taken');}
+async function togT(id,currentStatus){
+  const done=currentStatus==='klaar'||currentStatus==='done';
+  try{await sbPatch('tasks',id,{status:done?'open':'klaar'});render('taken');}
+  catch(e){toast('Fout: '+e.message);}
+}
+
+// ── SECTOR RADAR ───────────────────────────────────────
+async function tRadar(){
+  try{
+    let q='select=id,type,titel,bron,datum,relevantie_score,actie_genomen&order=datum.desc';
+    if(rFilter!=='alle'){const fm={aanbestedingen:'aanbesteding',nieuws:'nieuws',kansen:'kans',concurrent:'concurrent'};q+=`&type=eq.${fm[rFilter]||rFilter}`;}
+    const signals=await sbGet('sector_signals',q);
+    document.getElementById('ca').innerHTML=`
+      <div class="filter-row">${['Alle','Aanbestedingen','Nieuws','Kansen','Concurrent'].map(f=>`<button class="fbtn${rFilter===f.toLowerCase()?' active':''}" onclick="setRF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
+      <div class="card" style="padding:0 20px">${signals.length?signals.map(sigRow).join(''):'<div class="empty" style="padding:30px 0">Geen signalen gevonden</div>'}</div>`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+function setRF(f){rFilter=f;render('radar');}
+
+// ── AGENTS (statisch) ──────────────────────────────────
+function tAgents(){
+  document.getElementById('ca').innerHTML=`<div class="ag-grid">${AGENTS.map(a=>`
+    <div class="ag-card">
+      <div class="ag-top"><div class="ag-num">${a.num}</div><div class="ag-name">${a.name}</div></div>
+      <div class="ag-desc">${a.desc}</div>
+      <div class="ag-ft"><span class="ag-pill ${a.status}">${cap(a.status)}</span><span class="ag-act">${a.activity}</span></div>
+    </div>`).join('')}</div>`;
+}
+
+// ── LEAD MODAL ─────────────────────────────────────────
+function openLeadModal(){document.getElementById('leadModal').classList.add('open');}
+function closeLeadModal(){document.getElementById('leadModal').classList.remove('open');}
+async function saveLead(){
+  const naam=document.getElementById('lm-naam').value.trim();
+  const org=document.getElementById('lm-org').value.trim();
+  if(!naam||!org){toast('Naam en organisatie zijn verplicht');return;}
+  const btn=document.getElementById('lm-save');
+  btn.disabled=true;btn.textContent='Opslaan...';
+  try{
+    await sbPost('leads',{
+      naam,organisatie:org,
+      functie:document.getElementById('lm-functie').value.trim()||null,
+      linkedin_url:document.getElementById('lm-li').value.trim()||null,
+      tier:parseInt(document.getElementById('lm-tier').value),
+      icp_score:parseInt(document.getElementById('lm-score').value)||null,
+      notities:document.getElementById('lm-notities').value.trim()||null,
+      status:'nieuw',fase:'leads'
+    });
+    closeLeadModal();
+    toast('Lead opgeslagen in Supabase ✓');
+    if(tab==='leadfunnel'||tab==='overzicht')render(tab);
+  }catch(e){toast('Fout bij opslaan: '+e.message);}
+  btn.disabled=false;btn.textContent='Opslaan';
+}
+
+// ── HELPERS ────────────────────────────────────────────
+function sigRow(s){
+  return `<div class="sig-item">
+    <span class="sig-b ${s.type||'nieuws'}">${cap(s.type||'nieuws')}</span>
+    <div class="sig-inf"><div class="sig-t">${s.titel}</div><div class="sig-m">${s.bron||'–'} · ${fmtDate(s.datum)}</div></div>
+    <div class="sig-sc"><div class="sig-v">${s.relevantie_score??'–'}/100</div><div class="sig-s">relevantie</div></div>
+  </div>`;
+}
+function ini(n){return(n||'?').split(' ').filter(Boolean).map(x=>x[0]).join('').toUpperCase().slice(0,2);}
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function fmtDate(d){if(!d)return'–';try{return new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});}catch{return d;}}
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),320);},2600);
+}
+function toggleSb(){document.getElementById('sb').classList.toggle('collapsed');}
+function runPipe(){toast('Pipeline gestart — agents worden geactiveerd...');}
+document.getElementById('leadModal').addEventListener('click',function(e){if(e.target===this)closeLeadModal();});
+init();
+</script>
+</body></html>
