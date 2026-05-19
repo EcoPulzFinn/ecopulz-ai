@@ -326,7 +326,91 @@
 <script>
 const SB_URL = 'https://knaohykrcxyanhidbhkt.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuYW9oeWtyY3h5YW5oaWRiaGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODUzMDUsImV4cCI6MjA5NDY2MTMwNX0.m4wYu4f2JDbWYOm6Ncg8IfDKLl5bceNtNUM063bYqtA';
-const H = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+const stored = localStorage.getItem('sb_token');
+const H = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + (stored || SB_KEY),
+  'Prefer': 'return=representation'
+};
+
+async function checkAuth() {
+  const r = await fetch(`${SB_URL}/auth/v1/session`, {
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+  });
+  const d = await r.json();
+  return d.access_token || null;
+}
+
+async function login(email, password) {
+  const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const d = await r.json();
+  if (d.access_token) {
+    localStorage.setItem('sb_token', d.access_token);
+    localStorage.setItem('sb_refresh', d.refresh_token);
+    H['Authorization'] = 'Bearer ' + d.access_token;
+    return true;
+  }
+  return false;
+}
+
+function logout() {
+  localStorage.removeItem('sb_token');
+  localStorage.removeItem('sb_refresh');
+  location.reload();
+}
+
+function showLogin() {
+  document.querySelector('.app').style.display = 'none';
+  const el = document.createElement('div');
+  el.id = 'loginScreen';
+  el.innerHTML = `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);">
+      <div style="width:340px;background:var(--sb);border:1px solid var(--bdm);padding:32px;border-radius:var(--r);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);"></div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t1);">Command Center</div>
+            <div style="font-size:10px;color:var(--t3);">Ecopulz Platform</div>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:5px;">Email</label>
+          <input id="li-email" type="email" placeholder="jouw@email.nl" style="width:100%;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);font-family:var(--f);font-size:13px;padding:9px 12px;border-radius:var(--r);outline:none;">
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:5px;">Wachtwoord</label>
+          <input id="li-pass" type="password" placeholder="••••••••" style="width:100%;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);font-family:var(--f);font-size:13px;padding:9px 12px;border-radius:var(--r);outline:none;">
+        </div>
+        <div id="li-err" style="display:none;color:#ff8080;font-size:11px;margin-bottom:12px;"></div>
+        <button id="li-btn" onclick="doLogin()" style="width:100%;background:var(--teal);border:none;color:#fff;font-family:var(--f);font-size:13px;font-weight:600;padding:10px;border-radius:var(--r);cursor:pointer;">Inloggen</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  document.getElementById('li-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+}
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const btn   = document.getElementById('li-btn');
+  const err   = document.getElementById('li-err');
+  btn.textContent = 'Bezig...'; btn.disabled = true; err.style.display = 'none';
+  const ok = await login(email, pass);
+  if (ok) {
+    document.getElementById('loginScreen').remove();
+    document.querySelector('.app').style.display = 'flex';
+    init();
+  } else {
+    err.textContent = 'Onjuist e-mailadres of wachtwoord';
+    err.style.display = 'block';
+    btn.textContent = 'Inloggen'; btn.disabled = false;
+  }
+}
 
 async function sbGet(table, params='') {
   const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {headers:H});
@@ -730,6 +814,11 @@ function toast(msg){
 function toggleSb(){document.getElementById('sb').classList.toggle('collapsed');}
 function runPipe(){toast('Pipeline gestart — agents worden geactiveerd...');}
 document.getElementById('leadModal').addEventListener('click',function(e){if(e.target===this)closeLeadModal();});
-init();
+const _token = localStorage.getItem('sb_token');
+if (!_token) {
+  showLogin();
+} else {
+  init();
+}
 </script>
 </body></html>
