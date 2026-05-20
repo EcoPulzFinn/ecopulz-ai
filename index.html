@@ -74,7 +74,7 @@
     .fbtn { padding:7px 14px; font-family:var(--f); font-size:12px; font-weight:600; color:var(--t3); background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .13s; }
     .fbtn:hover { color:var(--t1); }
     .fbtn.active { color:var(--teal); border-bottom-color:var(--teal); }
-    .w-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+    .w-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
     .widget { background:var(--card); border:1px solid var(--bd); padding:18px 18px 15px; position:relative; }
     .widget::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
     .w-teal::before { background:var(--teal); box-shadow:2px 0 12px rgba(0,181,147,.28); }
@@ -122,6 +122,23 @@
     .sig-sc { text-align:right; flex-shrink:0; }
     .sig-v { font-size:12px; font-weight:700; color:var(--teal); }
     .sig-s { font-size:9px; color:var(--t3); }
+    .sig-sum { font-size:11px; color:var(--t3); margin-top:3px; line-height:1.4; }
+    .sig-idee { font-size:11px; color:var(--teal); margin-top:5px; font-style:italic; }
+    .btn-xs { padding:3px 9px; font-size:10.5px; }
+    .reactie-card { background:var(--card); border:1px solid var(--bd); padding:16px; margin-bottom:8px; transition:border-color .13s; }
+    .reactie-card:hover { border-color:var(--bdm); }
+    .reactie-card.koopsignaal { border-left:3px solid var(--yellow); }
+    .reactie-voorstel { background:var(--inp); border:1px solid var(--bd); padding:12px; font-size:12px; line-height:1.6; color:var(--t2); margin:10px 0; white-space:pre-wrap; }
+    .badge-koop { background:rgba(245,197,66,.12); color:var(--yellow); border:1px solid rgba(245,197,66,.22); font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:2px; }
+    .badge-nieuw { background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue-b); font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:2px; }
+    .badge-gereageerd { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:2px; }
+    .badge-overgeslagen { background:rgba(255,255,255,.05); color:var(--t3); border:1px solid var(--bdm); font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:2px; }
+    .bedrijf-card { background:var(--card); border:1px solid var(--bd); padding:18px; margin-bottom:8px; transition:border-color .13s; }
+    .bedrijf-card:hover { border-color:var(--bdm); }
+    .bedrijf-naam { font-size:15px; font-weight:700; color:var(--t1); margin-bottom:4px; }
+    .bedrijf-meta { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+    .bedrijf-reden { font-size:11.5px; color:var(--teal); font-style:italic; margin:8px 0; line-height:1.5; }
+    .bedrijf-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
     .phase-nav { display:grid; grid-template-columns:1fr 28px 1fr 28px 1fr; align-items:stretch; margin-bottom:22px; }
     .phase-step { background:var(--card); border:1px solid var(--bd); padding:16px 16px 14px; cursor:pointer; transition:background .14s; position:relative; }
     .phase-step:hover { background:var(--ch); }
@@ -460,7 +477,7 @@ async function sbPost(table, body) {
   return r.json();
 }
 
-let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle';
+let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle', rReacties='alle', rBedrijven='alle';
 let expanded=new Set();
 
 const PH = {
@@ -518,6 +535,8 @@ const NAV=[
   {id:'content',label:'Content machine',icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'},
   {id:'taken',label:'Taken',icon:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
   {id:'radar',label:'Sector radar',icon:'<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.49-.01a6 6 0 0 1 0-8.49m11.32-2.82a10 10 0 0 1 0 14.14m-14.15 0a10 10 0 0 1 0-14.14"/>'},
+  {id:'reacties',label:'LinkedIn Reacties',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
+  {id:'bedrijven',label:'Bedrijf Leads',icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'},
   {id:'agents',label:'Agent status',icon:'<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/><circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="15" cy="16" r="1" fill="currentColor"/>'}
 ];
 
@@ -546,21 +565,25 @@ function renderNav(){
 function go(id){tab=id;document.getElementById('pgTitle').textContent=NAV.find(n=>n.id===id).label;renderNav();render(id);}
 function render(id){
   document.getElementById('ca').innerHTML='<div class="loading">Data ophalen</div>';
-  ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents})[id]();
+  ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents,reacties:tReacties,bedrijven:tBedrijven})[id]();
 }
 
 // ── OVERZICHT ──────────────────────────────────────────
 async function tOvz(){
   try{
-    const [leads,tasks,signals,content]=await Promise.all([
+    const [leads,tasks,signals,content,reacties,bedrijven]=await Promise.all([
       sbGetSafe('leads','select=id,fase'),
       sbGetSafe('tasks','select=id,status,urgent'),
       sbGetSafe('sector_signals','select=id,datum&order=datum.desc&limit=3'),
-      sbGetSafe('content_posts','select=id,status')
+      sbGetSafe('content_posts','select=id,status'),
+      sbGetSafe('sector_reactions','select=id,status'),
+      sbGetSafe('company_leads','select=id,status')
     ]);
     const open=tasks.filter(t=>t.status!=='done'&&t.status!=='klaar');
     const urg=open.filter(t=>t.urgent);
     const gepland=content.filter(c=>c.status==='gepland').length;
+    const openReacties=reacties.filter(r=>r.status==='nieuw').length;
+    const openBedrijven=bedrijven.filter(b=>b.status==='nieuw').length;
     const [topL,topT,topS]=await Promise.all([
       sbGetSafe('leads','select=naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
       sbGetSafe('tasks','select=titel,urgent,deadline,status&order=urgent.desc,deadline.asc&limit=5'),
@@ -572,6 +595,8 @@ async function tOvz(){
         <div class="widget w-sal"><div class="w-num">${open.length}</div><div class="w-label">Openstaande taken</div><div class="w-sub">Incl. ${urg.length} urgent</div></div>
         <div class="widget w-blue"><div class="w-num">${gepland}</div><div class="w-label">Content gepland</div><div class="w-sub">Wacht op publicatie</div></div>
         <div class="widget w-gray"><div class="w-num">${signals.length}</div><div class="w-label">Verse signalen</div><div class="w-sub">Laatste ophaalronde</div></div>
+        <div class="widget w-blue"><div class="w-num">${openReacties}</div><div class="w-label">Reacties te doen</div><div class="w-sub">LinkedIn posts wachten</div></div>
+        <div class="widget w-gray"><div class="w-num">${openBedrijven}</div><div class="w-label">Bedrijf leads</div><div class="w-sub">Koopsignalen wachten</div></div>
       </div>
       <div class="two-col">
         <div class="card">
@@ -781,7 +806,7 @@ async function togT(id,currentStatus){
 // ── SECTOR RADAR ───────────────────────────────────────
 async function tRadar(){
   try{
-    let q='select=id,type,titel,bron,datum,relevantie_score,actie_genomen&order=datum.desc';
+    let q='select=id,type,titel,bron,datum,relevantie_score,actie_genomen,url,content_idee,samenvatting&order=datum.desc';
     if(rFilter!=='alle'){const fm={aanbestedingen:'aanbesteding',nieuws:'nieuws',kansen:'kans',concurrent:'concurrent'};q+=`&type=eq.${fm[rFilter]||rFilter}`;}
     const signals=await sbGetSafe('sector_signals',q);
     document.getElementById('ca').innerHTML=`
@@ -790,6 +815,71 @@ async function tRadar(){
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 function setRF(f){rFilter=f;render('radar');}
+
+// ── LINKEDIN REACTIES ──────────────────────────────────
+async function tReacties(){
+  try{
+    let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post&order=datum_post.desc';
+    if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
+    const items=await sbGetSafe('sector_reactions',q);
+    const filters=['alle','nieuw','gereageerd','overgeslagen'];
+    document.getElementById('ca').innerHTML=`
+      <div class="filter-row">${filters.map(f=>`<button class="fbtn${rReacties===f?' active':''}" onclick="setReactiesFilter('${f}')">${cap(f)}</button>`).join('')}</div>
+      ${items.length?items.map(r=>`
+        <div class="reactie-card${r.koopsignaal?' koopsignaal':''}">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
+            <div>
+              <span style="font-size:13px;font-weight:700;color:var(--t1);">${r.auteur||'–'}</span>
+              <span style="font-size:11px;color:var(--t3);margin-left:8px;">${r.organisatie||''}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+              ${r.koopsignaal?'<span class="badge-koop">🎯 Koopsignaal</span>':''}
+              <span class="badge-${r.status||'nieuw'}">${cap(r.status||'nieuw')}</span>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:var(--t3);margin-bottom:8px;">${fmtDate(r.datum_post)}</div>
+          ${r.post_tekst?`<div style="font-size:12px;color:var(--t2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px;">${r.post_tekst}</div>`:''}
+          ${r.waarom_relevant?`<div style="font-size:11px;color:var(--teal);font-style:italic;margin-bottom:8px;">↳ ${r.waarom_relevant}</div>`:''}
+          ${r.reactie_voorstel?`<div class="reactie-voorstel">${r.reactie_voorstel}</div>`:''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button onclick="reageerOp('${r.id}','${(r.post_url||'').replace(/'/g,"\\'")}',${JSON.stringify(r.reactie_voorstel||'')})" class="btn btn-teal btn-sm">Reageer</button>
+            <button onclick="slaOver('${r.id}')" class="btn btn-ghost btn-sm">Overslaan</button>
+            ${r.koopsignaal?`<button onclick="naarBedrijfLead('${(r.organisatie||'').replace(/'/g,"\\'")}') " class="btn btn-ghost btn-xs">→ Bedrijf Lead</button>`:''}
+          </div>
+        </div>`).join(''):'<div class="empty">Geen reacties gevonden</div>'}`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+function setReactiesFilter(f){rReacties=f;render('reacties');}
+
+// ── BEDRIJF LEADS ──────────────────────────────────────
+async function tBedrijven(){
+  try{
+    let q='select=id,bedrijfsnaam,bron,signaaltype,samenvatting,url,koopsignaal_reden,status,datum_signaal&order=datum_signaal.desc';
+    if(rBedrijven!=='alle') q+=`&status=eq.${rBedrijven}`;
+    const items=await sbGetSafe('company_leads',q);
+    const filters=['alle','nieuw','onderzocht','toegevoegd','overgeslagen'];
+    document.getElementById('ca').innerHTML=`
+      <div class="filter-row">${filters.map(f=>`<button class="fbtn${rBedrijven===f?' active':''}" onclick="setBedrijvenFilter('${f}')">${cap(f)}</button>`).join('')}</div>
+      ${items.length?items.map(b=>`
+        <div class="bedrijf-card">
+          <div class="bedrijf-naam">${b.bedrijfsnaam||'–'}</div>
+          <div class="bedrijf-meta">
+            ${b.bron?`<span class="badge-nieuw">${b.bron}</span>`:''}
+            ${b.signaaltype?`<span class="badge-overgeslagen">${b.signaaltype}</span>`:''}
+            <span style="font-size:10.5px;color:var(--t3);">${fmtDate(b.datum_signaal)}</span>
+            <span class="badge-${b.status||'nieuw'}" style="margin-left:auto;">${cap(b.status||'nieuw')}</span>
+          </div>
+          ${b.samenvatting?`<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:6px;">${b.samenvatting}</div>`:''}
+          ${b.koopsignaal_reden?`<div class="bedrijf-reden">↳ ${b.koopsignaal_reden}</div>`:''}
+          <div class="bedrijf-actions">
+            <button onclick="onderzoekBedrijf('${b.id}')" class="btn btn-teal btn-sm">Onderzoek</button>
+            ${b.url?`<button onclick="window.open('${(b.url||'').replace(/'/g,"\\'")}','_blank')" class="btn btn-ghost btn-sm">Bekijk bron</button>`:''}
+            <button onclick="slaOverBedrijf('${b.id}')" class="btn btn-ghost btn-sm">Overslaan</button>
+          </div>
+        </div>`).join(''):'<div class="empty">Geen bedrijf leads gevonden</div>'}`;
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+function setBedrijvenFilter(f){rBedrijven=f;render('bedrijven');}
 
 // ── AGENTS (statisch) ──────────────────────────────────
 function tAgents(){
@@ -831,9 +921,40 @@ async function saveLead(){
 function sigRow(s){
   return `<div class="sig-item">
     <span class="sig-b ${s.type||'nieuws'}">${cap(s.type||'nieuws')}</span>
-    <div class="sig-inf"><div class="sig-t">${s.titel}</div><div class="sig-m">${s.bron||'–'} · ${fmtDate(s.datum)}</div></div>
+    <div class="sig-inf">
+      <div class="sig-t">${s.titel}</div>
+      <div class="sig-m">${s.bron||'–'} · ${fmtDate(s.datum)}</div>
+      ${s.samenvatting?`<div class="sig-sum">${s.samenvatting}</div>`:''}
+      ${s.content_idee?`<div class="sig-idee">💡 ${s.content_idee}</div>`:''}
+      ${s.url?`<a href="${s.url}" target="_blank" class="btn btn-ghost btn-xs" style="margin-top:6px;display:inline-block;">Bekijk bron →</a>`:''}
+    </div>
     <div class="sig-sc"><div class="sig-v">${s.relevantie_score??'–'}/100</div><div class="sig-s">relevantie</div></div>
   </div>`;
+}
+async function reageerOp(id,postUrl,reactieTekst){
+  try{
+    await navigator.clipboard.writeText(reactieTekst);
+    if(postUrl) window.open(postUrl,'_blank');
+    await sbPatch('sector_reactions',id,{status:'gereageerd'});
+    toast('Reactie gekopieerd — LinkedIn geopend ✓');
+    render('reacties');
+  }catch(e){toast('Fout: '+e.message);}
+}
+async function slaOver(id){
+  try{await sbPatch('sector_reactions',id,{status:'overgeslagen'});render('reacties');}
+  catch(e){toast('Fout: '+e.message);}
+}
+function naarBedrijfLead(org){rBedrijven='alle';go('bedrijven');}
+async function onderzoekBedrijf(id){
+  try{
+    await sbPatch('company_leads',id,{status:'onderzocht'});
+    toast('Onderzoek gestart — functie wordt gebouwd in Fase 10');
+    render('bedrijven');
+  }catch(e){toast('Fout: '+e.message);}
+}
+async function slaOverBedrijf(id){
+  try{await sbPatch('company_leads',id,{status:'overgeslagen'});render('bedrijven');}
+  catch(e){toast('Fout: '+e.message);}
 }
 function ini(n){return(n||'?').split(' ').filter(Boolean).map(x=>x[0]).join('').toUpperCase().slice(0,2);}
 function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
