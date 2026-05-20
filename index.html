@@ -358,6 +358,38 @@ async function login(email, password) {
   return false;
 }
 
+async function refreshToken() {
+  const refresh = localStorage.getItem('sb_refresh');
+  if (!refresh) { showLogin(); return; }
+  const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refresh })
+  });
+  const d = await r.json();
+  if (d.access_token) {
+    localStorage.setItem('sb_token', d.access_token);
+    localStorage.setItem('sb_refresh', d.refresh_token);
+    H['Authorization'] = 'Bearer ' + d.access_token;
+    return true;
+  } else {
+    showLogin();
+    return false;
+  }
+}
+
+async function sbGetSafe(table, params='') {
+  try {
+    return await sbGet(table, params);
+  } catch(e) {
+    if (e.message.includes('JWT') || e.message.includes('expired')) {
+      const ok = await refreshToken();
+      if (ok) return await sbGet(table, params);
+    }
+    throw e;
+  }
+}
+
 function logout() {
   localStorage.removeItem('sb_token');
   localStorage.removeItem('sb_refresh');
@@ -502,6 +534,7 @@ const AGENTS=[
 function init(){
   document.getElementById('pgDate').textContent=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   renderNav(); render(tab);
+  setInterval(refreshToken, 55 * 60 * 1000);
 }
 function renderNav(){
   document.getElementById('sbNav').innerHTML=NAV.map(n=>`
@@ -520,18 +553,18 @@ function render(id){
 async function tOvz(){
   try{
     const [leads,tasks,signals,content]=await Promise.all([
-      sbGet('leads','select=id,fase'),
-      sbGet('tasks','select=id,status,urgent'),
-      sbGet('sector_signals','select=id,datum&order=datum.desc&limit=3'),
-      sbGet('content_posts','select=id,status')
+      sbGetSafe('leads','select=id,fase'),
+      sbGetSafe('tasks','select=id,status,urgent'),
+      sbGetSafe('sector_signals','select=id,datum&order=datum.desc&limit=3'),
+      sbGetSafe('content_posts','select=id,status')
     ]);
     const open=tasks.filter(t=>t.status!=='done'&&t.status!=='klaar');
     const urg=open.filter(t=>t.urgent);
     const gepland=content.filter(c=>c.status==='gepland').length;
     const [topL,topT,topS]=await Promise.all([
-      sbGet('leads','select=naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
-      sbGet('tasks','select=titel,urgent,deadline,status&order=urgent.desc,deadline.asc&limit=5'),
-      sbGet('sector_signals','select=type,titel,bron,datum,relevantie_score&order=datum.desc&limit=3')
+      sbGetSafe('leads','select=naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
+      sbGetSafe('tasks','select=titel,urgent,deadline,status&order=urgent.desc,deadline.asc&limit=5'),
+      sbGetSafe('sector_signals','select=type,titel,bron,datum,relevantie_score&order=datum.desc&limit=3')
     ]);
     document.getElementById('ca').innerHTML=`
       <div class="w-grid">
@@ -567,12 +600,12 @@ async function tOvz(){
 // ── LEAD FUNNEL ────────────────────────────────────────
 async function tLead(){
   try{
-    const all=await sbGet('leads','select=fase');
+    const all=await sbGetSafe('leads','select=fase');
     const c={leads:0,offerte:0,onboarding:0};
     all.forEach(l=>{if(c[l.fase]!==undefined)c[l.fase]++;});
     let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,reden,outreach_bericht,linkedin_url&fase=eq.${lFase}&order=icp_score.desc`;
     if(lFase==='leads'&&lFilter!=='alle') q+=`&status=eq.${lFilter}`;
-    const leads=await sbGet('leads',q);
+    const leads=await sbGetSafe('leads',q);
     document.getElementById('ca').innerHTML=`
       <div class="phase-nav">
         ${ps('leads','01','Leads','Instroom & kwalificatie',c.leads,false)}
@@ -690,7 +723,7 @@ async function tContent(){
   try{
     let q='select=id,platform,pilaar,tekst,status,datum_gepland,datum_gepost,likes,comments,shares&order=created_at.desc';
     if(cFilter!=='alle'){const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost'};q+=`&status=eq.${fm[cFilter]||cFilter}`;}
-    const posts=await sbGet('content_posts',q);
+    const posts=await sbGetSafe('content_posts',q);
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${['Alle','Ideeën','Concept','Gepland','Gepost'].map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
       <div class="c-grid">${posts.length?posts.map(p=>`
@@ -722,7 +755,7 @@ async function tTaken(){
     let q='select=id,titel,type,status,urgent,deadline&order=urgent.desc,deadline.asc';
     if(tFilter==='open') q+='&status=neq.klaar&status=neq.done';
     if(tFilter==='klaar') q+='&or=(status.eq.klaar,status.eq.done)';
-    const tasks=await sbGet('tasks',q);
+    const tasks=await sbGetSafe('tasks',q);
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${['Open','Bezig','Klaar'].map(f=>`<button class="fbtn${tFilter===f.toLowerCase()?' active':''}" onclick="setTF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
       <div class="tasks-list">${tasks.length?tasks.map(t=>{
@@ -750,7 +783,7 @@ async function tRadar(){
   try{
     let q='select=id,type,titel,bron,datum,relevantie_score,actie_genomen&order=datum.desc';
     if(rFilter!=='alle'){const fm={aanbestedingen:'aanbesteding',nieuws:'nieuws',kansen:'kans',concurrent:'concurrent'};q+=`&type=eq.${fm[rFilter]||rFilter}`;}
-    const signals=await sbGet('sector_signals',q);
+    const signals=await sbGetSafe('sector_signals',q);
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${['Alle','Aanbestedingen','Nieuws','Kansen','Concurrent'].map(f=>`<button class="fbtn${rFilter===f.toLowerCase()?' active':''}" onclick="setRF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
       <div class="card" style="padding:0 20px">${signals.length?signals.map(sigRow).join(''):'<div class="empty" style="padding:30px 0">Geen signalen gevonden</div>'}</div>`;
