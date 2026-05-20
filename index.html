@@ -721,7 +721,7 @@ function n8nTrigger(){toast('n8n workflow — koppeling in aanbouw');}
 // ── CONTENT ────────────────────────────────────────────
 async function tContent(){
   try{
-    let q='select=id,platform,pilaar,tekst,status,datum_gepland,datum_gepost,likes,comments,shares&order=created_at.desc';
+    let q='select=id,platform,pilaar,tekst,status,datum_gepland,datum_gepost,likes,comments,shares&order=id.desc';
     if(cFilter!=='alle'){const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost'};q+=`&status=eq.${fm[cFilter]||cFilter}`;}
     const posts=await sbGetSafe('content_posts',q);
     document.getElementById('ca').innerHTML=`
