@@ -345,6 +345,41 @@
 .geschiedenis-meta { font-size:0.78rem; color:var(--t2); margin-top:0.2rem; }
 .geschiedenis-open-btn { padding:0.35rem 0.8rem; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:6px; color:#86efac; font-size:0.78rem; cursor:pointer; transition:all 0.15s; white-space:nowrap; font-family:var(--f); }
 .geschiedenis-open-btn:hover { background:rgba(34,197,94,0.2); }
+/* === Content Ideas === */
+.ci-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+@media(max-width:900px){ .ci-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:600px){ .ci-grid { grid-template-columns:1fr; } }
+.ci-card { background:var(--card); border:1px solid var(--bd); padding:16px; display:flex; flex-direction:column; gap:9px; transition:border-color .13s; }
+.ci-card:hover { border-color:var(--bdm); }
+.ci-card.clickable { cursor:pointer; }
+.ci-hdr { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ci-fmt-b { font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:2px; background:rgba(255,255,255,.05); color:var(--t2); border:1px solid var(--bdm); }
+.ci-badge { font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:2px; margin-left:auto; }
+.ci-badge-concept { background:rgba(34,197,94,.12); color:#86efac; border:1px solid rgba(34,197,94,.22); }
+.ci-badge-gepland { background:rgba(251,146,60,.12); color:#fdba74; border:1px solid rgba(251,146,60,.22); }
+.ci-badge-gepost { background:rgba(255,255,255,.06); color:var(--t3); border:1px solid var(--bdm); }
+.ci-onderwerp { font-size:14px; font-weight:700; color:var(--t1); line-height:1.3; }
+.ci-pilaar { font-size:10px; font-weight:600; color:var(--teal); text-transform:uppercase; letter-spacing:.08em; }
+.ci-aanleiding { font-size:11.5px; color:var(--t2); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.ci-footer { margin-top:auto; padding-top:4px; }
+.plat-b.website { background:rgba(168,85,247,.15); color:#d8b4fe; border:1px solid rgba(168,85,247,.25); }
+/* === Concept Popup === */
+.ci-modal { background:var(--sb); border:1px solid var(--bdm); width:700px; max-width:96vw; max-height:88vh; border-radius:var(--r); display:flex; flex-direction:column; overflow:hidden; }
+.ci-modal-hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px 16px; border-bottom:1px solid var(--bd); flex-shrink:0; }
+.ci-modal-title { font-size:15px; font-weight:700; color:var(--t1); flex:1; min-width:0; }
+.ci-modal-body { flex:1; overflow-y:auto; padding:18px 20px; }
+.ci-modal-ft { padding:14px 20px; border-top:1px solid var(--bd); flex-shrink:0; display:flex; gap:8px; }
+.ci-sect-lbl { font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.ci-copy-btn { background:none; border:none; color:var(--t3); cursor:pointer; font-size:14px; padding:0 2px; line-height:1; transition:color .12s; font-family:var(--f); }
+.ci-copy-btn:hover { color:var(--teal); }
+.ci-caption-blk { background:var(--inp); border:1px solid var(--bd); padding:13px; font-size:12px; line-height:1.65; color:var(--t2); white-space:pre-wrap; font-family:var(--f); max-height:160px; overflow-y:auto; }
+.ci-slide-nav { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.ci-slide-tab { font-family:var(--f); font-size:11px; font-weight:700; padding:4px 11px; border-radius:2px; border:1px solid var(--bdm); background:transparent; color:var(--t3); cursor:pointer; transition:all .13s; }
+.ci-slide-tab.active { background:var(--teal-dim); border-color:var(--teal-b); color:var(--teal); }
+.ci-slide-panel { display:block; }
+.ci-slide-panel.hidden { display:none; }
+.ci-slide-tekst { font-size:13px; color:var(--t1); line-height:1.6; padding:12px; background:var(--inp); border:1px solid var(--bd); white-space:pre-wrap; }
+.ci-visual-blk { background:rgba(255,255,255,.04); border:1px solid var(--bdm); padding:12px; font-size:11.5px; color:var(--t2); line-height:1.55; font-style:italic; white-space:pre-wrap; }
   </style>
 </head>
 <body>
@@ -388,6 +423,21 @@
       </div>
     </header>
     <div class="content-area" id="ca"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="ciModal" onclick="ciModalBgClick(event)">
+  <div class="ci-modal">
+    <div class="ci-modal-hdr">
+      <div class="ci-modal-title" id="ciModalTitle"></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+        <span id="ciModalPlatBadge"></span>
+        <span id="ciModalFmtBadge"></span>
+        <button onclick="sluitConceptPopup()" class="btn btn-ghost btn-sm" style="padding:3px 9px;">✕</button>
+      </div>
+    </div>
+    <div class="ci-modal-body" id="ciModalBody"></div>
+    <div class="ci-modal-ft" id="ciModalFt"></div>
   </div>
 </div>
 
@@ -549,6 +599,7 @@ async function sbPost(table, body) {
 
 let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
+let ciIdeeën=[], ciActiveIdee=null;
 
 const PH = {
   leads:{
@@ -858,33 +909,141 @@ async function markGereageerd(id){
 // ── CONTENT ────────────────────────────────────────────
 async function tContent(){
   try{
-    let q='select=id,platform,pilaar,tekst,status,datum_gepland,datum_gepost,likes,comments,shares&order=id.desc';
+    let q='select=*&order=created_at.desc';
     if(cFilter!=='alle'){const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost'};q+=`&status=eq.${fm[cFilter]||cFilter}`;}
-    const posts=await sbGetSafe('content_posts',q);
+    ciIdeeën=await sbGetSafe('content_ideas',q);
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${['Alle','Ideeën','Concept','Gepland','Gepost'].map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
-      <div class="c-grid">${posts.length?posts.map(p=>`
-        <div class="c-card">
-          <div class="cc-hdr">
-            <span class="plat-b ${p.platform}">${cap(p.platform)}</span>
-            ${p.pilaar?`<span class="pillar-tag">${p.pilaar}</span>`:''}
-          </div>
-          <div class="cc-txt">${p.tekst||'–'}</div>
-          ${p.status==='gepost'&&(p.likes||p.comments||p.shares)?`
-            <div class="engage">
-              <span class="ei">♥ ${p.likes||0}</span>
-              <span class="ei">💬 ${p.comments||0}</span>
-              <span class="ei">↗ ${p.shares||0}</span>
-            </div>`:''}
-          <div class="cc-ft" style="margin-top:8px">
-            <span class="sp ${p.status}">${cap(p.status)}</span>
-            <span class="cc-dt">${p.datum_gepland||p.datum_gepost||'–'}</span>
-          </div>
-        </div>`).join(''):'<div class="empty">Geen content in deze categorie</div>'}
-      </div>`;
+      <div class="ci-grid">${ciIdeeën.length?ciIdeeën.map(ciKaart).join(''):'<div class="empty">Geen content in deze categorie</div>'}</div>`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 function setCF(f){cFilter=f;render('content');}
+
+function ciPlatLabel(p){return{'linkedin':'LinkedIn','instagram':'Instagram','website':'Website'}[p]||cap(p||'');}
+function ciFmtLabel(f){return{'tekstpost':'Tekstpost','carrousel':'Carrousel','infographic':'Infographic','reels':'Reels'}[f]||cap(f||'');}
+
+function ciKaart(idee){
+  const platCls=idee.platform||'linkedin';
+  const badge=idee.status==='concept'?`<span class="ci-badge ci-badge-concept">✓ Concept klaar</span>`:
+               idee.status==='gepland' ?`<span class="ci-badge ci-badge-gepland">Gepland</span>`:
+               idee.status==='gepost'  ?`<span class="ci-badge ci-badge-gepost">Gepost</span>`:'';
+  const klikbaar=idee.status==='concept';
+  const footer=idee.status==='concept'
+    ?`<div class="ci-footer"><button class="btn btn-green btn-sm" onclick="openConceptPopup('${idee.id}')">Bekijk concept</button></div>`
+    :idee.status==='idee'||!idee.status
+    ?`<div class="ci-footer"><button id="ci-btn-${idee.id}" class="btn btn-green btn-sm" onclick="genereerPost('${idee.id}',this)">⚡ Genereer post</button></div>`
+    :'';
+  return `<div class="ci-card${klikbaar?' clickable':''}"${klikbaar?` onclick="openConceptPopup('${idee.id}')"`:''}>
+    <div class="ci-hdr">
+      <span class="plat-b ${platCls}">${ciPlatLabel(idee.platform)}</span>
+      ${idee.format?`<span class="ci-fmt-b">${ciFmtLabel(idee.format)}</span>`:''}
+      ${badge}
+    </div>
+    <div class="ci-onderwerp">${idee.onderwerp||'–'}</div>
+    ${idee.pilaar?`<div class="ci-pilaar">${idee.pilaar}</div>`:''}
+    ${idee.aanleiding?`<div class="ci-aanleiding">${idee.aanleiding}</div>`:''}
+    ${footer}
+  </div>`;
+}
+
+async function genereerPost(id,btn){
+  btn.disabled=true;
+  btn.textContent='Bezig...';
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const response=await fetch(`${SB_URL}/functions/v1/genereer-post-agent`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({idee_id:id})
+    });
+    const result=await response.json();
+    if(!response.ok) throw new Error(result.error||'Onbekende fout');
+    cFilter='concept';
+    await tContent();
+    const gevonden=ciIdeeën.find(i=>i.id===id);
+    if(gevonden) openConceptPopup(gevonden.id);
+    toast('Post gegenereerd ✓');
+  }catch(e){
+    if(document.getElementById('ci-btn-'+id)){
+      document.getElementById('ci-btn-'+id).disabled=false;
+      document.getElementById('ci-btn-'+id).textContent='⚡ Genereer post';
+    }
+    toast('Fout: '+e.message);
+  }
+}
+
+function ciSlides(idee){
+  const slides=[];
+  for(let i=1;i<=12;i++){
+    const tekst=idee[`slide_${i}_tekst`];
+    const visual=idee[`slide_${i}_visual`];
+    if(tekst||visual) slides.push({idx:i,tekst,visual});
+  }
+  return slides;
+}
+
+function openConceptPopup(id){
+  ciActiveIdee=ciIdeeën.find(i=>i.id===id);
+  if(!ciActiveIdee) return;
+  const idee=ciActiveIdee;
+  document.getElementById('ciModalTitle').textContent=idee.onderwerp||'–';
+  document.getElementById('ciModalPlatBadge').className=`plat-b ${idee.platform||'linkedin'}`;
+  document.getElementById('ciModalPlatBadge').textContent=ciPlatLabel(idee.platform);
+  document.getElementById('ciModalFmtBadge').className='ci-fmt-b';
+  document.getElementById('ciModalFmtBadge').textContent=ciFmtLabel(idee.format);
+  const isSlides=['carrousel','infographic'].includes(idee.format);
+  const slides=isSlides?ciSlides(idee):[];
+  let body=`<div style="margin-bottom:18px;">
+    <div class="ci-sect-lbl">Caption <button class="ci-copy-btn" onclick="ciCopy('caption')">⎘</button></div>
+    <div class="ci-caption-blk">${idee.caption||'–'}</div>
+  </div>`;
+  if(isSlides&&slides.length){
+    body+=`<div class="ci-sect-lbl">Slides</div>
+    <div class="ci-slide-nav">${slides.map((s,i)=>`<button class="ci-slide-tab${i===0?' active':''}" onclick="ciSetSlide(${i})">${s.idx}</button>`).join('')}</div>
+    <div>${slides.map((s,i)=>`<div class="ci-slide-panel${i===0?'':' hidden'}" id="ciSp-${i}">
+      ${s.tekst?`<div class="ci-sect-lbl">Slide tekst <button class="ci-copy-btn" onclick="ciCopySlide(${i},'tekst')">⎘</button></div><div class="ci-slide-tekst">${s.tekst}</div>`:''}
+      ${s.visual?`<div class="ci-sect-lbl" style="margin-top:12px;">Nanoo Banana prompt <button class="ci-copy-btn" onclick="ciCopySlide(${i},'visual')">⎘</button></div><div class="ci-visual-blk">${s.visual}</div>`:''}
+    </div>`).join('')}</div>`;
+  } else {
+    const visual=idee.slide_1_visual||idee.visual_prompt||'';
+    if(visual) body+=`<div style="margin-top:16px;"><div class="ci-sect-lbl">Nanoo Banana prompt <button class="ci-copy-btn" onclick="ciCopy('slide_1_visual')">⎘</button></div><div class="ci-visual-blk">${visual}</div></div>`;
+  }
+  document.getElementById('ciModalBody').innerHTML=body;
+  document.getElementById('ciModalFt').innerHTML=`<button class="btn btn-teal btn-sm" onclick="exporteerAdobe('${idee.id}')">Exporteer naar Adobe Express</button>`;
+  document.getElementById('ciModal').classList.add('open');
+}
+
+function sluitConceptPopup(){
+  document.getElementById('ciModal').classList.remove('open');
+}
+function ciModalBgClick(e){if(e.target===document.getElementById('ciModal'))sluitConceptPopup();}
+
+function ciSetSlide(idx){
+  document.querySelectorAll('.ci-slide-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.querySelectorAll('[id^="ciSp-"]').forEach((p,i)=>p.classList.toggle('hidden',i!==idx));
+}
+
+function ciCopy(field){
+  const val=ciActiveIdee?ciActiveIdee[field]||'':'';
+  if(navigator.clipboard&&val) navigator.clipboard.writeText(val).then(()=>toast('Gekopieerd ✓'));
+}
+function ciCopySlide(idx,part){
+  if(!ciActiveIdee) return;
+  const s=ciSlides(ciActiveIdee)[idx];
+  const val=s?(part==='tekst'?s.tekst:s.visual)||'':'';
+  if(navigator.clipboard&&val) navigator.clipboard.writeText(val).then(()=>toast('Gekopieerd ✓'));
+}
+
+async function exporteerAdobe(id){
+  window.open('https://www.adobe.com/express/','_blank');
+  try{
+    await sbPatch('content_ideas',id,{status:'gepland'});
+    sluitConceptPopup();
+    cFilter='gepland';
+    render('content');
+    toast('Status → Gepland ✓');
+  }catch(e){toast('Fout: '+e.message);}
+}
 
 // ── TAKEN ──────────────────────────────────────────────
 async function tTaken(){
