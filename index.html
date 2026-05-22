@@ -275,6 +275,55 @@
     .form-row textarea { resize:vertical; min-height:80px; }
     .form-row select option { background:var(--sb); }
     .modal-ft { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+
+/* === Analyse tab === */
+.analyse-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+.analyse-title { font-size:1.4rem; font-weight:700; color:var(--t1); margin:0 0 0.25rem 0; }
+.analyse-subtitle { font-size:0.85rem; color:var(--t2); margin:0; }
+.btn-genereer { display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.25rem; background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff; border:none; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap; font-family:var(--f); }
+.btn-genereer:hover { opacity:0.88; transform:translateY(-1px); }
+.btn-genereer:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-icon { font-size:1rem; }
+.analyse-loading { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); border-radius:10px; margin-bottom:1rem; color:#86efac; font-size:0.9rem; }
+.loading-pulse { width:12px; height:12px; border-radius:50%; background:#22c55e; animation:analysepulse 1.2s ease-in-out infinite; flex-shrink:0; }
+@keyframes analysepulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+.analyse-error { padding:0.85rem 1.25rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:10px; color:#fca5a5; font-size:0.88rem; margin-bottom:1rem; }
+.analyse-success { padding:0.85rem 1.25rem; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25); border-radius:10px; color:#86efac; font-size:0.88rem; margin-bottom:1rem; }
+.rapport-subtabs { display:flex; gap:0.25rem; border-bottom:2px solid rgba(255,255,255,0.07); margin-bottom:1.5rem; }
+.subtab-btn { padding:0.6rem 1.1rem; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; color:var(--t2); font-size:0.88rem; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:var(--f); }
+.subtab-btn:hover { color:var(--t1); }
+.subtab-btn.active { color:#22c55e; border-bottom-color:#22c55e; }
+.rapport-empty { text-align:center; padding:3rem 1rem; color:var(--t2); font-size:0.9rem; line-height:1.7; }
+.rapport-empty-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+.rapport-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.rapport-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:1.25rem; }
+.rapport-card-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--t2); margin:0 0 1rem 0; }
+.platform-badge { display:inline-flex; align-items:center; gap:0.4rem; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.75rem; font-weight:600; margin-bottom:0.75rem; }
+.badge-linkedin { background:rgba(10,102,194,0.2); color:#60a5fa; border:1px solid rgba(10,102,194,0.3); }
+.badge-instagram { background:rgba(225,48,108,0.15); color:#f9a8d4; border:1px solid rgba(225,48,108,0.25); }
+.badge-website { background:rgba(168,85,247,0.15); color:#d8b4fe; border:1px solid rgba(168,85,247,0.25); }
+.platform-stat { display:flex; justify-content:space-between; font-size:0.82rem; color:var(--t2); margin-bottom:0.3rem; }
+.platform-stat strong { color:var(--t1); }
+.tag-lijst { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; }
+.tag { padding:0.2rem 0.55rem; border-radius:20px; font-size:0.75rem; background:rgba(255,255,255,0.06); color:var(--t2); border:1px solid rgba(255,255,255,0.08); }
+.tag.goed { background:rgba(34,197,94,0.1); color:#86efac; border-color:rgba(34,197,94,0.2); }
+.tag.minder { background:rgba(239,68,68,0.08); color:#fca5a5; border-color:rgba(239,68,68,0.15); }
+.platform-advies { margin-top:0.75rem; padding:0.65rem 0.85rem; background:rgba(34,197,94,0.06); border-left:3px solid #22c55e; border-radius:0 6px 6px 0; font-size:0.82rem; color:var(--t1); line-height:1.55; }
+.inzicht-lijst { list-style:none; padding:0; margin:0; }
+.inzicht-item { padding:0.45rem 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem; color:var(--t1); display:flex; gap:0.5rem; align-items:flex-start; line-height:1.5; }
+.inzicht-item:last-child { border-bottom:none; }
+.inzicht-dot { color:#22c55e; flex-shrink:0; margin-top:2px; }
+.aanbevelingen-card { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.15); border-radius:12px; padding:1.25rem; margin-top:0.25rem; }
+.aanbevelingen-tekst { font-size:0.9rem; color:var(--t1); line-height:1.75; white-space:pre-wrap; }
+.rapport-meta { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem; align-items:center; }
+.rapport-meta-badge { display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:20px; font-size:0.78rem; color:var(--t2); }
+.geschiedenis-lijst { display:flex; flex-direction:column; gap:0.75rem; }
+.geschiedenis-item { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer; transition:all 0.15s; gap:1rem; flex-wrap:wrap; }
+.geschiedenis-item:hover { background:rgba(255,255,255,0.07); border-color:rgba(34,197,94,0.25); }
+.geschiedenis-datum { font-size:0.9rem; font-weight:600; color:var(--t1); }
+.geschiedenis-meta { font-size:0.78rem; color:var(--t2); margin-top:0.2rem; }
+.geschiedenis-open-btn { padding:0.35rem 0.8rem; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:6px; color:#86efac; font-size:0.78rem; cursor:pointer; transition:all 0.15s; white-space:nowrap; font-family:var(--f); }
+.geschiedenis-open-btn:hover { background:rgba(34,197,94,0.2); }
   </style>
 </head>
 <body>
@@ -537,7 +586,8 @@ const NAV=[
   {id:'radar',label:'Sector radar',icon:'<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.49-.01a6 6 0 0 1 0-8.49m11.32-2.82a10 10 0 0 1 0 14.14m-14.15 0a10 10 0 0 1 0-14.14"/>'},
   {id:'reacties',label:'LinkedIn Reacties',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
   {id:'bedrijven',label:'Bedrijf Leads',icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'},
-  {id:'agents',label:'Agent status',icon:'<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/><circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="15" cy="16" r="1" fill="currentColor"/>'}
+  {id:'agents',label:'Agent status',icon:'<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/><circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="15" cy="16" r="1" fill="currentColor"/>'},
+  {id:'analyse',label:'Analyse',icon:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'}
 ];
 
 const AGENTS=[
@@ -565,7 +615,7 @@ function renderNav(){
 function go(id){tab=id;document.getElementById('pgTitle').textContent=NAV.find(n=>n.id===id).label;renderNav();render(id);}
 function render(id){
   document.getElementById('ca').innerHTML='<div class="loading">Data ophalen</div>';
-  ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents,reacties:tReacties,bedrijven:tBedrijven})[id]();
+  ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents,reacties:tReacties,bedrijven:tBedrijven,analyse:tAnalyse})[id]();
 }
 
 // ── OVERZICHT ──────────────────────────────────────────
@@ -880,6 +930,195 @@ async function tBedrijven(){
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 function setBedrijvenFilter(f){rBedrijven=f;render('bedrijven');}
+
+// ── ANALYSE ────────────────────────────────────────────
+function tAnalyse() {
+  document.getElementById('ca').innerHTML = `
+    <div id="analyse-root">
+      <div class="analyse-header">
+        <div class="analyse-header-left">
+          <h2 class="analyse-title">Maandanalyse</h2>
+          <p class="analyse-subtitle">AI-rapport op basis van sector signalen, eigen content en concurrenten</p>
+        </div>
+        <button class="btn-genereer" id="btnGenereerRapport" onclick="genereerRapport()">
+          <span class="btn-icon">⚡</span>
+          Genereer maandoverzicht
+        </button>
+      </div>
+      <div id="analyseLoading" class="analyse-loading" style="display:none">
+        <div class="loading-pulse"></div>
+        <p>Claude analyseert de afgelopen 30 dagen... Dit duurt ~30 seconden.</p>
+      </div>
+      <div id="analyseError" class="analyse-error" style="display:none"></div>
+      <div id="analyseSuccess" class="analyse-success" style="display:none"></div>
+      <div class="rapport-subtabs">
+        <button class="subtab-btn active" id="subtab-huidig" onclick="switchSubtab('huidig')">Huidig rapport</button>
+        <button class="subtab-btn" id="subtab-geschiedenis" onclick="switchSubtab('geschiedenis')">Geschiedenis</button>
+      </div>
+      <div id="subtab-content-huidig">
+        <div id="rapportContainer">
+          <div class="rapport-empty">
+            <div class="rapport-empty-icon">📋</div>
+            <p>Nog geen rapport gegenereerd.<br>Klik op "Genereer maandoverzicht" om te beginnen.</p>
+          </div>
+        </div>
+      </div>
+      <div id="subtab-content-geschiedenis" style="display:none">
+        <div id="geschiedenisContainer">
+          <div class="rapport-empty">
+            <div class="rapport-empty-icon">🗂️</div>
+            <p>Eerdere rapporten worden hier getoond.</p>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  laadLaatstRapport();
+}
+
+function switchSubtab(t) {
+  document.getElementById('subtab-content-huidig').style.display = t === 'huidig' ? 'block' : 'none';
+  document.getElementById('subtab-content-geschiedenis').style.display = t === 'geschiedenis' ? 'block' : 'none';
+  document.getElementById('subtab-huidig').classList.toggle('active', t === 'huidig');
+  document.getElementById('subtab-geschiedenis').classList.toggle('active', t === 'geschiedenis');
+  if (t === 'geschiedenis') laadGeschiedenis();
+}
+
+async function genereerRapport() {
+  const btn = document.getElementById('btnGenereerRapport');
+  const loading = document.getElementById('analyseLoading');
+  const errorEl = document.getElementById('analyseError');
+  const successEl = document.getElementById('analyseSuccess');
+  btn.disabled = true;
+  loading.style.display = 'flex';
+  errorEl.style.display = 'none';
+  successEl.style.display = 'none';
+  try {
+    const token = localStorage.getItem('sb_token') || SB_KEY;
+    const response = await fetch(`${SB_URL}/functions/v1/analyse-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    });
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Onbekende fout');
+    successEl.style.display = 'block';
+    successEl.textContent = `✅ Rapport gegenereerd! ${result.geanalyseerd.posts} posts en ${result.geanalyseerd.signalen} signalen geanalyseerd.`;
+    await laadLaatstRapport();
+  } catch (err) {
+    errorEl.style.display = 'block';
+    errorEl.textContent = `❌ Fout: ${err.message}`;
+  } finally {
+    loading.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+async function laadLaatstRapport() {
+  try {
+    const data = await sbGetSafe('content_reports', 'select=*&order=created_at.desc&limit=1');
+    if (!data || !data.length) return;
+    renderRapport(data[0], 'rapportContainer');
+  } catch(e) {}
+}
+
+function renderRapport(rapport, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const pb = rapport.platform_breakdown || {};
+  const si = rapport.sector_inzichten || {};
+  const ci = rapport.concurrent_inzichten || {};
+  const periodeLabel = `${formatDatum(rapport.periode_van)} – ${formatDatum(rapport.periode_tot)}`;
+  container.innerHTML = `
+    <div class="rapport-meta">
+      <span class="rapport-meta-badge">📅 ${periodeLabel}</span>
+      <span class="rapport-meta-badge">📄 ${rapport.posts_geanalyseerd || 0} posts geanalyseerd</span>
+      <span class="rapport-meta-badge">📡 ${rapport.signalen_geanalyseerd || 0} sector signalen</span>
+    </div>
+    <div class="rapport-grid">
+      ${renderPlatformKaart('LinkedIn', 'badge-linkedin', '💼', pb.linkedin)}
+      ${renderPlatformKaart('Instagram', 'badge-instagram', '📸', pb.instagram)}
+      ${renderPlatformKaart('Website', 'badge-website', '🌐', pb.website)}
+      ${renderInzichtKaart('📡 Sector inzichten', [
+        ...(si.top_themas || []).map(t => ({tekst:t})),
+        ...(si.kansen_voor_ecopulz || []).map(t => ({tekst:t}))
+      ])}
+      ${renderInzichtKaart('🏢 Concurrent inzichten', [
+        ...(ci.wat_werkt_bij_concurrenten || []).map(t => ({tekst:t})),
+        ...(ci.gaps_die_ecopulz_kan_vullen || []).map(t => ({tekst:`Gap: ${t}`}))
+      ])}
+    </div>
+    <div class="aanbevelingen-card">
+      <div class="rapport-card-title">⚡ Claude's aanbevelingen</div>
+      <div class="aanbevelingen-tekst">${rapport.aanbevelingen || '—'}</div>
+    </div>`;
+}
+
+function renderPlatformKaart(naam, badgeClass, icon, data) {
+  if (!data) return `<div class="rapport-card"><div class="rapport-card-title">Platform analyse</div><span class="platform-badge ${badgeClass}">${icon} ${naam}</span><p style="color:var(--t2);font-size:0.82rem">Geen data beschikbaar</p></div>`;
+  const goede = (data.best_presterende_themas || []).slice(0, 4);
+  const minder = (data.minderpresterende_themas || []).slice(0, 3);
+  return `<div class="rapport-card">
+    <div class="rapport-card-title">Platform analyse</div>
+    <span class="platform-badge ${badgeClass}">${icon} ${naam}</span>
+    ${data.aantal_posts != null ? `<div class="platform-stat"><span>Posts</span><strong>${data.aantal_posts}</strong></div>` : ''}
+    ${data.gemiddeld_engagement != null ? `<div class="platform-stat"><span>Gem. engagement</span><strong>${data.gemiddeld_engagement}</strong></div>` : ''}
+    ${goede.length ? `<div style="margin-top:0.75rem;font-size:0.75rem;color:var(--t2);margin-bottom:0.3rem">Werkt goed</div><div class="tag-lijst">${goede.map(t=>`<span class="tag goed">${t}</span>`).join('')}</div>` : ''}
+    ${minder.length ? `<div style="margin-top:0.6rem;font-size:0.75rem;color:var(--t2);margin-bottom:0.3rem">Minder goed</div><div class="tag-lijst">${minder.map(t=>`<span class="tag minder">${t}</span>`).join('')}</div>` : ''}
+    ${data.aanbeveling ? `<div class="platform-advies">${data.aanbeveling}</div>` : ''}
+  </div>`;
+}
+
+function renderInzichtKaart(titel, items) {
+  if (!items || !items.length) return `<div class="rapport-card"><div class="rapport-card-title">${titel}</div><p style="color:var(--t2);font-size:0.82rem">Geen data beschikbaar</p></div>`;
+  return `<div class="rapport-card">
+    <div class="rapport-card-title">${titel}</div>
+    <ul class="inzicht-lijst">
+      ${items.slice(0, 6).map(item=>`<li class="inzicht-item"><span class="inzicht-dot">▸</span><span>${typeof item==='string'?item:item.tekst||''}</span></li>`).join('')}
+    </ul>
+  </div>`;
+}
+
+async function laadGeschiedenis() {
+  const container = document.getElementById('geschiedenisContainer');
+  container.innerHTML = '<p style="color:var(--t2);font-size:0.85rem;padding:1rem">Laden...</p>';
+  try {
+    const data = await sbGetSafe('content_reports', 'select=id,created_at,periode_van,periode_tot,posts_geanalyseerd,signalen_geanalyseerd&order=created_at.desc&limit=20');
+    if (!data || !data.length) {
+      container.innerHTML = `<div class="rapport-empty"><div class="rapport-empty-icon">🗂️</div><p>Nog geen eerdere rapporten.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="geschiedenis-lijst">
+      ${data.map(r=>`
+        <div class="geschiedenis-item" onclick="openGeschiedenisRapport('${r.id}')">
+          <div>
+            <div class="geschiedenis-datum">${formatDatum(r.periode_van)} – ${formatDatum(r.periode_tot)}</div>
+            <div class="geschiedenis-meta">Gegenereerd op ${formatDatumTijd(r.created_at)} · ${r.posts_geanalyseerd||0} posts · ${r.signalen_geanalyseerd||0} signalen</div>
+          </div>
+          <button class="geschiedenis-open-btn">Bekijk →</button>
+        </div>`).join('')}
+    </div>`;
+  } catch(e) {
+    container.innerHTML = `<div class="rapport-empty"><div class="rapport-empty-icon">🗂️</div><p>Fout bij laden.</p></div>`;
+  }
+}
+
+async function openGeschiedenisRapport(id) {
+  try {
+    const data = await sbGetSafe('content_reports', `select=*&id=eq.${id}&limit=1`);
+    if (!data || !data.length) return;
+    switchSubtab('huidig');
+    renderRapport(data[0], 'rapportContainer');
+    document.getElementById('ca').scrollTop = 0;
+  } catch(e) {}
+}
+
+function formatDatum(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'});
+}
+function formatDatumTijd(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
 
 // ── AGENTS (statisch) ──────────────────────────────────
 function tAgents(){
