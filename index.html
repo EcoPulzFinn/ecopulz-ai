@@ -904,7 +904,7 @@ function setReactiesFilter(f){rReacties=f;render('reacties');}
 // ── BEDRIJF LEADS ──────────────────────────────────────
 async function tBedrijven(){
   try{
-    let q='select=id,bedrijfsnaam,bron,signaaltype,samenvatting,url,koopsignaal_reden,status,datum_signaal&order=datum_signaal.desc';
+    let q='select=id,bedrijfsnaam,bron,signaaltype,relevantiescore,samenvatting,url,koopsignaal_reden,status,datum_signaal&order=datum_signaal.desc';
     if(rBedrijven!=='alle') q+=`&status=eq.${rBedrijven}`;
     const items=await sbGetSafe('company_leads',q);
     const filters=['alle','nieuw','onderzocht','toegevoegd','overgeslagen'];
@@ -915,7 +915,7 @@ async function tBedrijven(){
           <div class="bedrijf-naam">${b.bedrijfsnaam||'–'}</div>
           <div class="bedrijf-meta">
             ${b.bron?`<span class="badge-nieuw">${b.bron}</span>`:''}
-            ${b.signaaltype?`<span class="badge-overgeslagen">${b.signaaltype}</span>`:''}
+            ${signaalBadge(b.signaaltype)}${relevantieBadge(b.signaaltype,b.relevantiescore)}
             <span style="font-size:10.5px;color:var(--t3);">${fmtDate(b.datum_signaal)}</span>
             <span class="badge-${b.status||'nieuw'}" style="margin-left:auto;">${cap(b.status||'nieuw')}</span>
           </div>
@@ -930,6 +930,16 @@ async function tBedrijven(){
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 function setBedrijvenFilter(f){rBedrijven=f;render('bedrijven');}
+function signaalBadge(type){
+  const m={'vacature':'📋 Vacature','linkedin_post':'📡 LinkedIn post','sector_monitoring':'🔍 Sector'};
+  return m[type]?`<span class="badge-overgeslagen">${m[type]}</span>`:'';
+}
+function relevantieBadge(type,score){
+  if(type!=='vacature')return'';
+  if(score==='Hoog')return`<span class="badge-gereageerd">🟢 Hoog</span>`;
+  if(score==='Middel')return`<span style="background:rgba(251,146,60,.12);color:#fdba74;border:1px solid rgba(251,146,60,.25);font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:2px;">🟡 Middel</span>`;
+  return'';
+}
 
 // ── ANALYSE ────────────────────────────────────────────
 function tAnalyse() {
