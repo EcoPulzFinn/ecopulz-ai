@@ -538,7 +538,7 @@ async function sbPost(table, body) {
   return r.json();
 }
 
-let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle', rReacties='alle', rBedrijven='alle';
+let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 
 const PH = {
@@ -884,7 +884,7 @@ async function tReacties(){
     let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at&order=created_at.desc';
     if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
     const items=await sbGetSafe('sector_reactions',q);
-    const filters=['alle','nieuw','gereageerd','overgeslagen'];
+    const filters=['nieuw','gereageerd','overgeslagen','alle'];
     const vandaag=new Date().toDateString();
     const dagLabel=d=>d===vandaag?'Vandaag':new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'long'});
     const groepen={};
