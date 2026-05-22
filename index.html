@@ -276,6 +276,18 @@
     .form-row select option { background:var(--sb); }
     .modal-ft { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
 
+/* === LinkedIn Reacties grid === */
+.reacties-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:6px; }
+@media(max-width:720px){ .reacties-grid { grid-template-columns:1fr; } }
+.reacties-datum-header { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--t3); padding:16px 0 6px; border-top:1px solid var(--bd); margin-top:4px; }
+.reacties-datum-header:first-child { border-top:none; padding-top:4px; }
+.reactie-card { padding:10px; }
+.reactie-post-tekst { font-size:11.5px; color:var(--t2); line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:5px; }
+.reactie-post-tekst.expanded { display:block; overflow:visible; }
+.reactie-lees-meer { font-size:10px; color:var(--teal); cursor:pointer; background:none; border:none; padding:0 0 4px; font-family:var(--f); }
+.reactie-voorstel-toggle { display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--t2); cursor:pointer; background:none; border:none; padding:3px 0; font-family:var(--f); }
+.reactie-voorstel-toggle svg { transition:transform .18s; }
+.reactie-voorstel.hidden { display:none; }
 /* === Analyse tab === */
 .analyse-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
 .analyse-title { font-size:1.4rem; font-weight:700; color:var(--t1); margin:0 0 0.25rem 0; }
@@ -869,37 +881,60 @@ function setRF(f){rFilter=f;render('radar');}
 // ── LINKEDIN REACTIES ──────────────────────────────────
 async function tReacties(){
   try{
-    let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post&order=datum_post.desc';
+    let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at&order=created_at.desc';
     if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
     const items=await sbGetSafe('sector_reactions',q);
     const filters=['alle','nieuw','gereageerd','overgeslagen'];
+    const vandaag=new Date().toDateString();
+    const dagLabel=d=>d===vandaag?'Vandaag':new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'long'});
+    const groepen={};
+    items.forEach(r=>{const d=r.created_at?new Date(r.created_at).toDateString():'–';if(!groepen[d])groepen[d]=[];groepen[d].push(r);});
+    const groepHTML=Object.entries(groepen).map(([dag,rijen])=>`
+      <div class="reacties-datum-header">${dagLabel(dag)}</div>
+      <div class="reacties-grid">${rijen.map(r=>reactieKaart(r)).join('')}</div>`).join('');
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${filters.map(f=>`<button class="fbtn${rReacties===f?' active':''}" onclick="setReactiesFilter('${f}')">${cap(f)}</button>`).join('')}</div>
-      ${items.length?items.map(r=>`
-        <div class="reactie-card${r.koopsignaal?' koopsignaal':''}">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
-            <div>
-              <span style="font-size:13px;font-weight:700;color:var(--t1);">${r.auteur||'–'}</span>
-              <span style="font-size:11px;color:var(--t3);margin-left:8px;">${r.organisatie||''}</span>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-              ${r.koopsignaal?'<span class="badge-koop">🎯 Koopsignaal</span>':''}
-              <span class="badge-${r.status||'nieuw'}">${cap(r.status||'nieuw')}</span>
-            </div>
-          </div>
-          <div style="font-size:10.5px;color:var(--t3);margin-bottom:8px;">${fmtDate(r.datum_post)}</div>
-          ${r.post_tekst?`<div style="font-size:12px;color:var(--t2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px;">${r.post_tekst}</div>`:''}
-          ${r.waarom_relevant?`<div style="font-size:11px;color:var(--teal);font-style:italic;margin-bottom:8px;">↳ ${r.waarom_relevant}</div>`:''}
-          ${r.reactie_voorstel?`<div class="reactie-voorstel">${r.reactie_voorstel}</div>`:''}
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-            <button onclick="reageerOp('${r.id}','${(r.post_url||'').replace(/'/g,"\\'")}',${JSON.stringify(r.reactie_voorstel||'')})" class="btn btn-teal btn-sm">Reageer</button>
-            <button onclick="slaOver('${r.id}')" class="btn btn-ghost btn-sm">Overslaan</button>
-            ${r.koopsignaal?`<button onclick="naarBedrijfLead('${(r.organisatie||'').replace(/'/g,"\\'")}') " class="btn btn-ghost btn-xs">→ Bedrijf Lead</button>`:''}
-          </div>
-        </div>`).join(''):'<div class="empty">Geen reacties gevonden</div>'}`;
+      ${items.length?groepHTML:'<div class="empty">Geen reacties gevonden</div>'}`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 function setReactiesFilter(f){rReacties=f;render('reacties');}
+
+function reactieKaart(r){
+  const ptId='pt-'+r.id, rvId='rv-'+r.id;
+  const lang=(r.post_tekst||'').length>220;
+  return `<div class="reactie-card${r.koopsignaal?' koopsignaal':''}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;">
+      <div style="min-width:0">
+        <span style="font-size:12.5px;font-weight:700;color:var(--t1);">${r.auteur||'–'}</span>
+        ${r.organisatie?`<span style="font-size:10.5px;color:var(--t3);margin-left:6px;">${r.organisatie}</span>`:''}
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+        ${r.koopsignaal?'<span class="badge-koop">🎯</span>':''}
+        <span class="badge-${r.status||'nieuw'}">${cap(r.status||'nieuw')}</span>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:5px;">${fmtDate(r.datum_post)}</div>
+    ${r.post_tekst?`<div id="${ptId}" class="reactie-post-tekst">${r.post_tekst}</div>${lang?`<button class="reactie-lees-meer" onclick="togglePostTekst('${ptId}',this)">Lees meer ↓</button>`:''}` : ''}
+    ${r.waarom_relevant?`<div style="font-size:10.5px;color:var(--teal);font-style:italic;margin-bottom:4px;">↳ ${r.waarom_relevant}</div>`:''}
+    ${r.reactie_voorstel?`<button class="reactie-voorstel-toggle" onclick="toggleVoorstel('${rvId}',this)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>Reactievoorstel</button><div id="${rvId}" class="reactie-voorstel hidden">${r.reactie_voorstel}</div>`:''}
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;">
+      <button onclick="reageerOp('${r.id}','${(r.post_url||'').replace(/'/g,"\\'")}',${JSON.stringify(r.reactie_voorstel||'')})" class="btn btn-teal btn-sm">Reageer</button>
+      <button onclick="slaOver('${r.id}')" class="btn btn-ghost btn-sm">Overslaan</button>
+      ${r.koopsignaal?`<button onclick="naarBedrijfLead('${(r.organisatie||'').replace(/'/g,"\\'")}') " class="btn btn-ghost btn-xs">→ Lead</button>`:''}
+    </div>
+  </div>`;
+}
+function togglePostTekst(id,btn){
+  const el=document.getElementById(id);
+  el.classList.toggle('expanded');
+  btn.textContent=el.classList.contains('expanded')?'Minder ↑':'Lees meer ↓';
+}
+function toggleVoorstel(id,btn){
+  const el=document.getElementById(id);
+  el.classList.toggle('hidden');
+  const svg=btn.querySelector('svg');
+  if(svg)svg.style.transform=el.classList.contains('hidden')?'':'rotate(90deg)';
+}
 
 // ── BEDRIJF LEADS ──────────────────────────────────────
 async function tBedrijven(){
