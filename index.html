@@ -67,6 +67,10 @@
     .btn-ghost:hover { border-color:rgba(255,255,255,.2); color:var(--t1); background:rgba(255,255,255,.04); }
     .btn-teal { background:var(--teal); border-color:var(--teal); color:#fff; }
     .btn-teal:hover { background:#00cba6; box-shadow:0 0 18px rgba(0,181,147,.32); }
+    .btn-red { background:#e53535; border-color:#e53535; color:#fff; }
+    .btn-red:hover { background:#cc2020; box-shadow:0 0 14px rgba(229,53,53,.28); }
+    .btn-ghost-red { background:transparent; border-color:rgba(229,53,53,.35); color:#e57575; }
+    .btn-ghost-red:hover { border-color:#e53535; color:#e53535; background:rgba(229,53,53,.06); }
     .btn-sm { padding:5px 11px; font-size:11px; }
     .btn:disabled { opacity:.4; cursor:not-allowed; }
     .btn-green { background:#22c55e; border-color:#22c55e; color:#fff; }
@@ -447,6 +451,21 @@
   </div>
 </div>
 
+<div class="modal-bg" id="afwijzenModal" onclick="if(event.target===this)closeAfwijzenModal()">
+  <div class="modal">
+    <h3>Lead afwijzen</h3>
+    <p id="afwijzenSubtitel" style="font-size:12.5px;color:var(--t2);margin-bottom:16px;"></p>
+    <div class="form-row">
+      <label>Reden (optioneel)</label>
+      <textarea id="afwijzenReden" placeholder="Bijv. niet relevant, te groot, verkeerde sector..."></textarea>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeAfwijzenModal()">Annuleren</button>
+      <button class="btn btn-red" id="afwijzenBevestig" onclick="bevestigAfwijzing()">Bevestig afwijzing</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="agInstModal" onclick="if(event.target===this)closeAgentModal()">
   <div class="modal" style="width:580px;">
     <h3 id="agInstTitle">Instructies</h3>
@@ -753,14 +772,20 @@ async function tOvz(){
 }
 
 // ── LEAD FUNNEL ────────────────────────────────────────
+const _leadDataMap={};
 async function tLead(){
   try{
-    const all=await sbGetSafe('leads','select=fase');
+    const all=await sbGetSafe('leads','select=fase,status');
     const c={leads:0,offerte:0,onboarding:0};
-    all.forEach(l=>{if(c[l.fase]!==undefined)c[l.fase]++;});
+    all.forEach(l=>{if(c[l.fase]!==undefined&&l.status!=='afgewezen')c[l.fase]++;});
     let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,reden,outreach_bericht,linkedin_url,benaderd_at&fase=eq.${lFase}&order=icp_score.desc`;
-    if(lFase==='leads'&&lFilter!=='alle') q+=`&status=eq.${lFilter}`;
+    if(lFase==='leads'){
+      if(lFilter==='afgewezen') q+=`&status=eq.afgewezen`;
+      else if(lFilter!=='alle') q+=`&status=eq.${lFilter}`;
+      else q+=`&status=neq.afgewezen`;
+    }
     const leads=await sbGetSafe('leads',q);
+    leads.forEach(l=>{ _leadDataMap[l.id]=l; });
     document.getElementById('ca').innerHTML=`
       <div class="phase-nav">
         ${ps('leads','01','Leads','Instroom & kwalificatie',c.leads,false)}
@@ -769,7 +794,7 @@ async function tLead(){
         <div class="phase-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
         ${ps('onboarding','03','Onboarding','Portal & AI-plan',c.onboarding,true)}
       </div>
-      ${lFase==='leads'?`<div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>`:''}
+      ${lFase==='leads'?`<div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>`:''}
       <div class="leads-list">${leads.length?leads.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
@@ -816,6 +841,7 @@ function leadRow(l){
         </div>
         <div class="lead-actions">
           ${ph.actions.map(a=>`<button class="btn ${a.t==='teal'?'btn-teal':'btn-ghost'} btn-sm" onclick="${a.fn}('${l.id}','${l.naam}','${l.linkedin_url||''}','${encodeURIComponent(l.outreach_bericht||'')}')">${a.l}</button>`).join('')}
+          ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;padding:4px 0;">✕ Afgewezen</span>'}
         </div>
         ${statusFlow(l)}
       </div>
@@ -867,6 +893,32 @@ async function toOnboarding(id){
     await sbPatch('leads',id,{fase:'onboarding',onboarding_at:new Date().toISOString()});
     expanded.delete(id);toast('Lead doorgestuurd naar Onboarding →');render('leadfunnel');
   }catch(e){toast('Fout: '+e.message);}
+}
+function openAfwijzenModal(id){
+  const l=_leadDataMap[id];
+  if(!l) return;
+  document.getElementById('afwijzenModal').classList.add('open');
+  document.getElementById('afwijzenSubtitel').textContent=`${l.naam} · ${l.organisatie}`;
+  document.getElementById('afwijzenReden').value='';
+  document.getElementById('afwijzenBevestig').dataset.leadId=id;
+}
+function closeAfwijzenModal(){document.getElementById('afwijzenModal').classList.remove('open');}
+async function bevestigAfwijzing(){
+  const btn=document.getElementById('afwijzenBevestig');
+  const id=btn.dataset.leadId;
+  const reden=document.getElementById('afwijzenReden').value.trim();
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    await sbPatch('leads',id,{
+      status:'afgewezen',
+      verwerkt:true,
+      notities:reden?`Afgewezen: ${reden}`:'Afgewezen'
+    });
+    closeAfwijzenModal();
+    toast('Lead afgewezen ✓');
+    render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+  btn.disabled=false;btn.textContent='Bevestig afwijzing';
 }
 function genOfferte(){toast('Offerte generator — koppeling in aanbouw');}
 function jurCheck(){toast('Juridische check — koppeling in aanbouw');}
