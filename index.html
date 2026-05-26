@@ -778,7 +778,7 @@ async function tLead(){
     const all=await sbGetSafe('leads','select=fase,status');
     const c={leads:0,offerte:0,onboarding:0};
     all.forEach(l=>{if(c[l.fase]!==undefined&&l.status!=='afgewezen')c[l.fase]++;});
-    let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,reden,outreach_bericht,linkedin_url,benaderd_at&fase=eq.${lFase}&order=icp_score.desc`;
+    let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,reden,outreach_bericht,linkedin_url,benaderd_at,notities&fase=eq.${lFase}&order=icp_score.desc`;
     if(lFase==='leads'){
       if(lFilter==='afgewezen') q+=`&status=eq.afgewezen`;
       else if(lFilter!=='alle') q+=`&status=eq.${lFilter}`;
@@ -856,6 +856,7 @@ function leadCtx(l){
     <div class="detail-grid">
       <div><div class="d-lbl">Functie</div><div class="d-val">${l.functie||'–'}</div></div>
       <div><div class="d-lbl">Status</div><div class="d-val" style="text-transform:capitalize">${l.status||'nieuw'}</div></div>
+      ${l.status==='afgewezen'&&l.notities?`<div class="fspan"><div class="d-lbl" style="color:#e57575">Reden afwijzing</div><div class="d-val m" style="color:#e57575">${l.notities}</div></div>`:''}
       ${l.reden?`<div class="fspan"><div class="d-lbl">Reden tot aanschrijven</div><div class="d-val m">${l.reden}</div></div>`:''}
       ${l.outreach_bericht?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
     </div>`;
