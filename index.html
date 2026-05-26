@@ -267,7 +267,7 @@
     .ag-pill.fout{background:rgba(229,53,53,.12);color:#E53535;border:1px solid rgba(229,53,53,.28);}
     .ag-meta { font-size:10.5px; color:var(--t3); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
     .ag-meta-sep { color:var(--t3); opacity:.4; }
-    .ag-last { font-size:11px; color:var(--t2); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:12px; min-height:2.2em; flex:1; }
+    .ag-last { font-size:11px; color:var(--t2); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:12px; max-height:3.2em; }
     .ag-ft { display:flex; justify-content:flex-end; }
     .ag-edit-btn { font-size:10px; padding:3px 10px; background:transparent; border:1px solid var(--bdm); color:var(--t3); border-radius:var(--r); cursor:pointer; transition:border-color .12s,color .12s; }
     .ag-edit-btn:hover { border-color:var(--teal-b); color:var(--teal); }
@@ -1384,6 +1384,7 @@ function formatDatumTijd(dateStr) {
 }
 
 // ── AGENTS (live) ──────────────────────────────────────
+const _agentData={};
 async function tAgents(){
   try{
     const agents=await sbGetSafe('agents','select=id,nummer,naam,instructies&order=nummer.asc');
@@ -1391,6 +1392,7 @@ async function tAgents(){
       sbGetSafe('agent_runs',`select=status,resultaat,fout_melding,created_at&agent_nummer=eq.${a.nummer}&order=created_at.desc&limit=20`)
         .catch(()=>[])
     ));
+    (agents||[]).forEach(a=>{ _agentData[a.id]=a; });
     const cards=(agents||[]).map((a,i)=>{
       const runs=Array.isArray(runsPerAgent[i])?runsPerAgent[i]:[];
       const laatste=runs[0]||null;
@@ -1410,7 +1412,7 @@ async function tAgents(){
         <div class="ag-meta">${metaRate}<span class="ag-meta-sep">·</span>${tijdLabel}</div>
         <div class="ag-last">${resultaatTekst}</div>
         <div class="ag-ft">
-          <button class="ag-edit-btn" onclick="openAgentModal(${JSON.stringify(a.id)},${JSON.stringify(a.naam)},${JSON.stringify(a.instructies||'')})">Instructies</button>
+          <button class="ag-edit-btn" onclick="openAgentModal('${a.id}')">Instructies</button>
         </div>
       </div>`;
     }).join('');
@@ -1430,10 +1432,12 @@ function relTijd(dateStr){
   if(d<7) return `${d} dagen geleden`;
   return new Date(dateStr).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
 }
-function openAgentModal(id,naam,instructies){
+function openAgentModal(id){
+  const a=_agentData[id];
+  if(!a) return;
   document.getElementById('agInstModal').classList.add('open');
-  document.getElementById('agInstTitle').textContent='Instructies — '+naam;
-  document.getElementById('agInstTa').value=instructies;
+  document.getElementById('agInstTitle').textContent='Instructies — '+a.naam;
+  document.getElementById('agInstTa').value=a.instructies||'';
   document.getElementById('agInstTa').dataset.agentId=id;
 }
 function closeAgentModal(){document.getElementById('agInstModal').classList.remove('open');}
