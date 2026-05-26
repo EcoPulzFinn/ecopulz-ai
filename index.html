@@ -1149,11 +1149,13 @@ async function tRadar(){
 function setRF(f){rFilter=f;render('radar');}
 
 // ── LINKEDIN REACTIES ──────────────────────────────────
+const _reactiesMap={};
 async function tReacties(){
   try{
     let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at&order=created_at.desc';
     if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
     const items=await sbGetSafe('sector_reactions',q);
+    items.forEach(r=>{ _reactiesMap[r.id]=r; });
     const filters=['nieuw','gereageerd','overgeslagen','alle'];
     const vandaag=new Date().toDateString();
     const dagLabel=d=>d===vandaag?'Vandaag':new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'long'});
@@ -1188,7 +1190,7 @@ function reactieKaart(r){
     ${r.waarom_relevant?`<div style="font-size:10.5px;color:var(--teal);font-style:italic;margin-bottom:4px;">↳ ${r.waarom_relevant}</div>`:''}
     ${r.reactie_voorstel?`<button class="reactie-voorstel-toggle" onclick="toggleVoorstel('${rvId}',this)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>Reactievoorstel</button><div id="${rvId}" class="reactie-voorstel hidden">${r.reactie_voorstel}</div>`:''}
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;">
-      <button onclick="reageerOp('${r.id}','${(r.post_url||'').replace(/'/g,"\\'")}',${JSON.stringify(r.reactie_voorstel||'')})" class="btn btn-teal btn-sm">Reageer</button>
+      <button onclick="reageerOp('${r.id}')" class="btn btn-teal btn-sm">Reageer</button>
       <button onclick="slaOver('${r.id}')" class="btn btn-ghost btn-sm">Overslaan</button>
       ${r.koopsignaal?`<button onclick="naarBedrijfLead('${(r.organisatie||'').replace(/'/g,"\\'")}') " class="btn btn-ghost btn-xs">→ Lead</button>`:''}
     </div>
@@ -1547,10 +1549,12 @@ function sigRow(s){
     <div class="sig-sc"><div class="sig-v">${s.relevantie_score??'–'}/100</div><div class="sig-s">relevantie</div></div>
   </div>`;
 }
-async function reageerOp(id,postUrl,reactieTekst){
+async function reageerOp(id){
+  const r=_reactiesMap[id];
+  if(!r) return;
   try{
-    await navigator.clipboard.writeText(reactieTekst);
-    if(postUrl) window.open(postUrl,'_blank');
+    if(r.reactie_voorstel) await navigator.clipboard.writeText(r.reactie_voorstel);
+    if(r.post_url) window.open(r.post_url,'_blank');
     await sbPatch('sector_reactions',id,{status:'gereageerd'});
     toast('Reactie gekopieerd — LinkedIn geopend ✓');
     render('reacties');
