@@ -1387,13 +1387,13 @@ function formatDatumTijd(dateStr) {
 // ── AGENTS (live) ──────────────────────────────────────
 async function tAgents(){
   try{
-    const {data:agents,error:ae}=await supabaseClient.from('agents').select('id,nummer,naam,instructies').order('nummer',{ascending:true});
-    if(ae) throw ae;
+    const agents=await sbGetSafe('agents','select=id,nummer,naam,instructies&order=nummer.asc');
     const runsPerAgent=await Promise.all((agents||[]).map(a=>
-      supabaseClient.from('agent_runs').select('status,resultaat,fout_melding,created_at').eq('agent_nummer',a.nummer).order('created_at',{ascending:false}).limit(20)
+      sbGetSafe('agent_runs',`select=status,resultaat,fout_melding,created_at&agent_nummer=eq.${a.nummer}&order=created_at.desc&limit=20`)
+        .catch(()=>[])
     ));
     const cards=(agents||[]).map((a,i)=>{
-      const runs=runsPerAgent[i].data||[];
+      const runs=Array.isArray(runsPerAgent[i])?runsPerAgent[i]:[];
       const laatste=runs[0]||null;
       const succesCount=runs.filter(r=>r.status==='succes').length;
       const succesRate=runs.length?Math.round(succesCount/runs.length*100):null;
@@ -1441,8 +1441,7 @@ async function saveAgentInst(){
   const btn=document.getElementById('agInstSave');
   btn.disabled=true;btn.textContent='Opslaan...';
   try{
-    const {error}=await supabaseClient.from('agents').update({instructies:ta.value}).eq('id',id);
-    if(error) throw error;
+    await sbPatch('agents',id,{instructies:ta.value});
     closeAgentModal();
     toast('Instructies opgeslagen ✓');
   }catch(e){toast('Fout: '+e.message);}
