@@ -264,9 +264,16 @@
     .ag-desc { font-size:11.5px; line-height:1.55; color:var(--t3); margin-bottom:14px; }
     .ag-ft { display:flex; align-items:center; justify-content:space-between; }
     .ag-pill { font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:99px; }
-    .ag-pill.gereed{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
-    .ag-pill.idle{background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--bdm);}
+    .ag-pill.gereed,.ag-pill.actief{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
+    .ag-pill.idle,.ag-pill.onbekend{background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--bdm);}
+    .ag-pill.fout{background:rgba(229,53,53,.12);color:#E53535;border:1px solid rgba(229,53,53,.28);}
     .ag-act { font-size:10px; color:var(--t3); }
+    .ag-stats { font-size:11px; color:var(--t2); margin-bottom:6px; }
+    .ag-last { font-size:10.5px; color:var(--t3); margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ag-edit-btn { font-size:10px; padding:2px 8px; background:transparent; border:1px solid var(--bdm); color:var(--t3); border-radius:var(--r); cursor:pointer; transition:border-color .12s,color .12s; }
+    .ag-edit-btn:hover { border-color:var(--teal-b); color:var(--teal); }
+    .ag-inst-ta { width:100%; min-height:300px; background:var(--inp); border:1px solid var(--bdm); color:var(--t1); font-family:var(--f); font-size:12px; padding:10px; border-radius:var(--r); resize:vertical; outline:none; }
+    .ag-inst-ta:focus { border-color:var(--teal-b); }
     .toast { position:fixed; bottom:22px; right:22px; z-index:999; background:var(--sb); border:1px solid var(--teal-b); color:var(--t1); font-family:var(--f); font-size:12px; font-weight:500; padding:10px 16px; border-radius:var(--r); box-shadow:0 8px 24px rgba(0,0,0,.45); transition:opacity .3s; pointer-events:none; }
     .empty { text-align:center; padding:40px 20px; color:var(--t3); font-size:13px; }
     .loading { text-align:center; padding:40px 20px; color:var(--t3); font-size:13px; }
@@ -438,6 +445,17 @@
     </div>
     <div class="ci-modal-body" id="ciModalBody"></div>
     <div class="ci-modal-ft" id="ciModalFt"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="agInstModal" onclick="if(event.target===this)closeAgentModal()">
+  <div class="modal" style="width:580px;">
+    <h3 id="agInstTitle">Instructies</h3>
+    <textarea class="ag-inst-ta" id="agInstTa"></textarea>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeAgentModal()">Annuleren</button>
+      <button class="btn btn-teal" id="agInstSave" onclick="saveAgentInst()">Opslaan</button>
+    </div>
   </div>
 </div>
 
@@ -662,15 +680,6 @@ const NAV=[
   {id:'analyse',label:'Analyse',icon:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'}
 ];
 
-const AGENTS=[
-  {num:1,name:'ICP Scanner',status:'gereed',activity:'3 min geleden',desc:'Scant nieuwe profielen en berekent ICP-scores op basis van sector, grootte en koopsignalen.'},
-  {num:2,name:'Profile Reader',status:'gereed',activity:'7 min geleden',desc:'Leest LinkedIn-profielen uit en verrijkt leaddata met functie, activiteit en bedrijfscontext.'},
-  {num:3,name:'Signal Detector',status:'gereed',activity:'5 min geleden',desc:'Monitort TenderNed, ACM.nl en LinkedIn op relevante sectorsignalen en aanbestedingen.'},
-  {num:4,name:'Competitor Monitor',status:'gereed',activity:'11 min geleden',desc:'Volgt concurrenten in de warmtemarkt op uitbreiding, vacatures en public statements.'},
-  {num:5,name:'Message Writer',status:'gereed',activity:'20 min geleden',desc:'Genereert gepersonaliseerde outreach-berichten op basis van ICP-score en koopsignalen.'},
-  {num:6,name:'Follow-up Manager',status:'idle',activity:'2 uur geleden',desc:'Bewaakt follow-up timing en stuurt herinneringen aan het sales-team via taaklijst.'},
-  {num:7,name:'Demo Qualifier',status:'idle',activity:'4 uur geleden',desc:'Kwalificeert demo-aanvragen en bereidt gepersonaliseerde presentatie-input voor.'}
-];
 
 function init(){
   document.getElementById('pgDate').textContent=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1375,14 +1384,69 @@ function formatDatumTijd(dateStr) {
   return new Date(dateStr).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
-// ── AGENTS (statisch) ──────────────────────────────────
-function tAgents(){
-  document.getElementById('ca').innerHTML=`<div class="ag-grid">${AGENTS.map(a=>`
-    <div class="ag-card">
-      <div class="ag-top"><div class="ag-num">${a.num}</div><div class="ag-name">${a.name}</div></div>
-      <div class="ag-desc">${a.desc}</div>
-      <div class="ag-ft"><span class="ag-pill ${a.status}">${cap(a.status)}</span><span class="ag-act">${a.activity}</span></div>
-    </div>`).join('')}</div>`;
+// ── AGENTS (live) ──────────────────────────────────────
+async function tAgents(){
+  try{
+    const {data:agents,error:ae}=await supabaseClient.from('agents').select('id,nummer,naam,instructies').order('nummer',{ascending:true});
+    if(ae) throw ae;
+    const runsPerAgent=await Promise.all((agents||[]).map(a=>
+      supabaseClient.from('agent_runs').select('status,resultaat,fout_melding,created_at').eq('agent_nummer',a.nummer).order('created_at',{ascending:false}).limit(20)
+    ));
+    const cards=(agents||[]).map((a,i)=>{
+      const runs=runsPerAgent[i].data||[];
+      const laatste=runs[0]||null;
+      const succesCount=runs.filter(r=>r.status==='succes').length;
+      const succesRate=runs.length?Math.round(succesCount/runs.length*100):null;
+      const status=laatste?(laatste.status==='succes'?'actief':laatste.status==='fout'?'fout':'onbekend'):'onbekend';
+      const pillLabel=status==='actief'?'Actief':status==='fout'?'Fout':'Onbekend';
+      const tijdLabel=laatste?relTijd(laatste.created_at):'Nooit gedraaid';
+      const resultaatTekst=laatste?(laatste.status==='fout'&&laatste.fout_melding?laatste.fout_melding:laatste.resultaat||'—'):'—';
+      return `<div class="ag-card">
+        <div class="ag-top"><div class="ag-num">${a.nummer}</div><div class="ag-name">${a.naam}</div></div>
+        ${succesRate!==null?`<div class="ag-stats">Succes rate: <b>${succesRate}%</b> (${runs.length} runs)</div>`:'<div class="ag-stats" style="color:var(--t3)">Nog geen runs</div>'}
+        <div class="ag-last" title="${resultaatTekst}">${resultaatTekst}</div>
+        <div class="ag-ft">
+          <span class="ag-pill ${status}">${pillLabel}</span>
+          <span class="ag-act">${tijdLabel}</span>
+          <button class="ag-edit-btn" onclick="openAgentModal(${JSON.stringify(a.id)},${JSON.stringify(a.naam)},${JSON.stringify(a.instructies||'')})">Instructies</button>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('ca').innerHTML=`<div class="ag-grid">${cards||'<div style="color:var(--t3);padding:20px">Geen agents gevonden</div>'}</div>`;
+  }catch(e){
+    document.getElementById('ca').innerHTML=`<div style="color:var(--t3);padding:20px">Fout bij laden: ${e.message}</div>`;
+  }
+}
+function relTijd(dateStr){
+  if(!dateStr) return '—';
+  const diff=Math.floor((Date.now()-new Date(dateStr))/1000);
+  if(diff<60) return 'Zojuist';
+  if(diff<3600) return `${Math.floor(diff/60)} min geleden`;
+  if(diff<86400) return `${Math.floor(diff/3600)} uur geleden`;
+  const d=Math.floor(diff/86400);
+  if(d===1) return 'Gisteren';
+  if(d<7) return `${d} dagen geleden`;
+  return new Date(dateStr).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+}
+function openAgentModal(id,naam,instructies){
+  document.getElementById('agInstModal').classList.add('open');
+  document.getElementById('agInstTitle').textContent='Instructies — '+naam;
+  document.getElementById('agInstTa').value=instructies;
+  document.getElementById('agInstTa').dataset.agentId=id;
+}
+function closeAgentModal(){document.getElementById('agInstModal').classList.remove('open');}
+async function saveAgentInst(){
+  const ta=document.getElementById('agInstTa');
+  const id=ta.dataset.agentId;
+  const btn=document.getElementById('agInstSave');
+  btn.disabled=true;btn.textContent='Opslaan...';
+  try{
+    const {error}=await supabaseClient.from('agents').update({instructies:ta.value}).eq('id',id);
+    if(error) throw error;
+    closeAgentModal();
+    toast('Instructies opgeslagen ✓');
+  }catch(e){toast('Fout: '+e.message);}
+  btn.disabled=false;btn.textContent='Opslaan';
 }
 
 // ── LEAD MODAL ─────────────────────────────────────────
