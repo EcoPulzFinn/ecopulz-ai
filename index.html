@@ -88,7 +88,8 @@
     .fbtn:hover { color:var(--t1); }
     .fbtn.active { color:var(--teal); border-bottom-color:var(--teal); }
     .w-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
-    .widget { background:var(--card); border:1px solid var(--bd); padding:18px 18px 15px; position:relative; }
+    .widget { background:var(--card); border:1px solid var(--bd); padding:18px 18px 15px; position:relative; cursor:pointer; transition:border-color .15s,box-shadow .15s; }
+    .widget:hover { border-color:var(--teal-b); box-shadow:var(--teal-glow); }
     .widget::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
     .w-teal::before { background:var(--teal); box-shadow:2px 0 12px rgba(0,181,147,.28); }
     .w-sal::before { background:var(--salmon); }
@@ -101,8 +102,9 @@
     .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
     .card { background:var(--card); border:1px solid var(--bd); padding:18px; }
     .card-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); margin-bottom:14px; }
-    .prev-item { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--bd); }
+    .prev-item { display:flex; align-items:center; gap:11px; padding:9px 6px; border-bottom:1px solid var(--bd); cursor:pointer; transition:background .12s; border-radius:var(--r); }
     .prev-item:last-child { border-bottom:none; padding-bottom:0; }
+    .prev-item:hover { background:rgba(255,255,255,.04); }
     .l-av { width:32px; height:32px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
     .l-av.t1{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
     .l-av.t2{background:var(--sal-dim);color:var(--salmon);border:1px solid var(--sal-b);}
@@ -122,8 +124,9 @@
     .t-txt.urgent{color:var(--salmon);}
     .t-dl { font-size:10.5px; color:var(--t3); flex-shrink:0; }
     .t-dl.urgent{color:var(--salmon);font-weight:600;}
-    .sig-item { display:flex; align-items:center; gap:13px; padding:12px 0; border-bottom:1px solid var(--bd); }
+    .sig-item { display:flex; align-items:center; gap:13px; padding:12px 0; border-bottom:1px solid var(--bd); transition:background .12s; }
     .sig-item:last-child { border-bottom:none; }
+    .sig-item:hover { background:rgba(255,255,255,.03); }
     .sig-b { font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:2px; white-space:nowrap; flex-shrink:0; }
     .sig-b.aanbesteding{background:var(--sal-dim);color:var(--salmon);border:1px solid var(--sal-b);}
     .sig-b.nieuws{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-b);}
@@ -771,23 +774,29 @@ async function tOvz(){
     const openReacties=reacties.filter(r=>r.status==='nieuw').length;
     const openBedrijven=bedrijven.filter(b=>b.status==='nieuw').length;
     const [topL,topT,topS]=await Promise.all([
-      sbGetSafe('leads','select=naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
+      sbGetSafe('leads','select=id,naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
       sbGetSafe('tasks','select=titel,urgent,deadline,status&order=urgent.desc,deadline.asc&limit=5'),
-      sbGetSafe('sector_signals','select=type,titel,bron,datum,relevantie_score&order=datum.desc&limit=3')
+      sbGetSafe('sector_signals','select=type,titel,bron,datum,relevantie_score,url&order=datum.desc&limit=3')
     ]);
+    const ovzSigRow=s=>{
+      const base=sigRow(s);
+      return s.url
+        ? base.replace('<div class="sig-item">',`<div class="sig-item" onclick="window.open('${s.url.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','_blank')" style="cursor:pointer">`)
+        : base;
+    };
     document.getElementById('ca').innerHTML=`
       <div class="w-grid">
-        <div class="widget w-teal"><div class="w-num">${leads.length}</div><div class="w-label">Actieve leads</div><div class="w-sub">In pipeline</div></div>
-        <div class="widget w-sal"><div class="w-num">${open.length}</div><div class="w-label">Openstaande taken</div><div class="w-sub">Incl. ${urg.length} urgent</div></div>
-        <div class="widget w-blue"><div class="w-num">${gepland}</div><div class="w-label">Content gepland</div><div class="w-sub">Wacht op publicatie</div></div>
-        <div class="widget w-gray"><div class="w-num">${signals.length}</div><div class="w-label">Verse signalen</div><div class="w-sub">Laatste ophaalronde</div></div>
-        <div class="widget w-blue"><div class="w-num">${openReacties}</div><div class="w-label">Reacties te doen</div><div class="w-sub">LinkedIn posts wachten</div></div>
-        <div class="widget w-gray"><div class="w-num">${openBedrijven}</div><div class="w-label">Bedrijf leads</div><div class="w-sub">Koopsignalen wachten</div></div>
+        <div class="widget w-teal" onclick="go('leadfunnel')"><div class="w-num">${leads.length}</div><div class="w-label">Actieve leads</div><div class="w-sub">In pipeline</div></div>
+        <div class="widget w-sal" onclick="go('taken')"><div class="w-num">${open.length}</div><div class="w-label">Openstaande taken</div><div class="w-sub">Incl. ${urg.length} urgent</div></div>
+        <div class="widget w-blue" onclick="cFilter='gepland';go('content')"><div class="w-num">${gepland}</div><div class="w-label">Content gepland</div><div class="w-sub">Wacht op publicatie</div></div>
+        <div class="widget w-gray" onclick="go('radar')"><div class="w-num">${signals.length}</div><div class="w-label">Verse signalen</div><div class="w-sub">Laatste ophaalronde</div></div>
+        <div class="widget w-blue" onclick="rReacties='nieuw';go('reacties')"><div class="w-num">${openReacties}</div><div class="w-label">Reacties te doen</div><div class="w-sub">LinkedIn posts wachten</div></div>
+        <div class="widget w-gray" onclick="go('bedrijven')"><div class="w-num">${openBedrijven}</div><div class="w-label">Bedrijf leads</div><div class="w-sub">Koopsignalen wachten</div></div>
       </div>
       <div class="two-col">
         <div class="card">
           <div class="card-title">Top leads</div>
-          ${topL.map(l=>`<div class="prev-item">
+          ${topL.map(l=>`<div class="prev-item" onclick="naarLead('${l.id}')">
             <div class="l-av ${l.tier===1?'t1':'t2'}">${ini(l.naam)}</div>
             <div class="prev-inf"><div class="prev-n">${l.naam}</div><div class="prev-c">${l.organisatie}</div></div>
             <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier}</span>
@@ -804,8 +813,15 @@ async function tOvz(){
             </div>`).join('')}
         </div>
       </div>
-      <div class="card"><div class="card-title">Verse sector-signalen</div>${topS.map(sigRow).join('')}</div>`;
+      <div class="card"><div class="card-title">Verse sector-signalen</div>${topS.map(ovzSigRow).join('')}</div>`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function naarLead(id){
+  lFase='leads'; lFilter='alle';
+  expanded.add(id);
+  go('leadfunnel');
+  setTimeout(()=>{const el=document.getElementById('lr-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},600);
 }
 
 // ── LEAD FUNNEL ────────────────────────────────────────
