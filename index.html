@@ -243,21 +243,37 @@
     .engage { display:flex; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--bd); }
     .ei { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--t3); }
     .tasks-list { display:flex; flex-direction:column; }
-    .task-row { display:flex; align-items:center; gap:12px; padding:11px 15px; background:var(--card); border:1px solid var(--bd); border-top:none; transition:background .12s; }
-    .task-row:first-child { border-top:1px solid var(--bd); }
+    .task-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--card); border:1px solid var(--bd); border-top:none; transition:background .12s; }
+    .task-row:first-child { border-top:1px solid var(--bd); border-radius:var(--r) var(--r) 0 0; }
+    .task-row:last-child { border-radius:0 0 var(--r) var(--r); }
     .task-row:hover { background:var(--ch); }
-    .task-row.done { opacity:.4; }
+    .task-row.done { opacity:.38; }
+    .task-row.urg .t-name { color:var(--salmon); }
     .cb { width:16px; height:16px; border-radius:3px; border:1.5px solid var(--bdm); background:transparent; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .15s; }
     .cb.on { background:var(--teal); border-color:var(--teal); }
     .cb.on::after { content:''; display:block; width:4px; height:7px; border:2px solid #fff; border-top:none; border-left:none; transform:rotate(45deg) translate(-1px,-1px); }
-    .t-name { font-size:13px; font-weight:500; color:var(--t1); flex:1; }
+    .prio-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .prio-dot.hoog { background:#e53535; }
+    .prio-dot.middel { background:#f5a623; }
+    .prio-dot.laag { background:var(--t3); }
+    .t-name { font-size:13px; font-weight:500; color:var(--t1); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .task-row.done .t-name { text-decoration:line-through; color:var(--t3); }
-    .task-row.urg .t-name { color:var(--salmon); }
-    .tt { font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:2px; flex-shrink:0; }
+    .t-cat { font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:2px; flex-shrink:0; white-space:nowrap; }
+    .t-cat.leads,.t-cat.sdr { background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b); }
+    .t-cat.content { background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-b); }
+    .t-cat.linkedin { background:rgba(147,112,219,.12);color:#9370db;border:1px solid rgba(147,112,219,.28); }
+    .t-cat.intern { background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--bdm); }
+    .t-pers { font-size:10px; color:var(--t2); background:rgba(255,255,255,.05); border:1px solid var(--bdm); border-radius:99px; padding:1px 8px; flex-shrink:0; white-space:nowrap; }
+    .t-dl { font-size:11px; color:var(--t3); white-space:nowrap; flex-shrink:0; }
+    .t-dl.overdue { color:#e53535; font-weight:600; }
+    .t-dl.today { color:#f5a623; font-weight:600; }
+    .t-sys { font-size:11px; flex-shrink:0; opacity:.5; }
+    .taken-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .filter-double { display:flex; flex-direction:column; gap:0; margin-bottom:16px; }
+    .filter-double .filter-row { margin-bottom:0; }
     .tt.sdr{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
     .tt.content{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-b);}
     .tt.intern{background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--bdm);}
-    .t-dl2 { font-size:11px; color:var(--t3); white-space:nowrap; flex-shrink:0; }
     .t-dl2.urg { color:var(--salmon); font-weight:600; }
     .ag-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
     .ag-card { background:var(--card); border:1px solid var(--bd); padding:16px; transition:border-color .15s,box-shadow .15s; overflow:hidden; display:flex; flex-direction:column; gap:0; }
@@ -451,6 +467,27 @@
   </div>
 </div>
 
+<div class="modal-bg" id="taakModal" onclick="if(event.target===this)closeTaakModal()">
+  <div class="modal">
+    <h3>Taak toevoegen</h3>
+    <div class="form-row"><label>Titel</label><input id="tm-titel" placeholder="Omschrijving van de taak..."></div>
+    <div class="form-row"><label>Categorie</label>
+      <select id="tm-cat"><option value="leads">Leads</option><option value="content">Content</option><option value="linkedin">LinkedIn</option><option value="intern">Intern</option></select>
+    </div>
+    <div class="form-row"><label>Prioriteit</label>
+      <select id="tm-prio"><option value="hoog">Hoog</option><option value="middel" selected>Middel</option><option value="laag">Laag</option></select>
+    </div>
+    <div class="form-row"><label>Toegewezen aan</label>
+      <select id="tm-pers"><option value="">Niet toegewezen</option><option value="Finn">Finn</option><option value="Olaf">Olaf</option></select>
+    </div>
+    <div class="form-row"><label>Deadline</label><input id="tm-dl" type="date"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeTaakModal()">Annuleren</button>
+      <button class="btn btn-teal" id="tm-save" onclick="saveTaak()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="afwijzenModal" onclick="if(event.target===this)closeAfwijzenModal()">
   <div class="modal">
     <h3>Lead afwijzen</h3>
@@ -633,7 +670,7 @@ async function sbPost(table, body) {
   return r.json();
 }
 
-let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilter='open', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
+let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 
@@ -840,7 +877,7 @@ function leadRow(l){
           <div class="streef-txt"><strong>${ph.streef}</strong> · ${ph.streef2}</div>
         </div>
         <div class="lead-actions">
-          ${ph.actions.map(a=>`<button class="btn ${a.t==='teal'?'btn-teal':'btn-ghost'} btn-sm" onclick="${a.fn}('${l.id}','${l.naam}','${l.linkedin_url||''}','${encodeURIComponent(l.outreach_bericht||'')}')">${a.l}</button>`).join('')}
+          ${ph.actions.map(a=>`<button class="btn ${a.t==='teal'?'btn-teal':'btn-ghost'} btn-sm" onclick="${a.fn}('${l.id}')">${a.l}</button>`).join('')}
           ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;padding:4px 0;">✕ Afgewezen</span>'}
         </div>
         ${statusFlow(l)}
@@ -870,13 +907,15 @@ function toggleL(id){
   else{expanded.add(id);body.classList.add('show');row.classList.add('open');}
 }
 
-async function copyMsg(id,naam,li,msgEnc){
-  const msg=decodeURIComponent(msgEnc);
+async function copyMsg(id){
+  const l=_leadDataMap[id];
+  const msg=l?.outreach_bericht||'';
   if(msg&&navigator.clipboard){await navigator.clipboard.writeText(msg);toast('Bericht gekopieerd ✓');}
   else toast('Geen bericht beschikbaar voor deze lead');
 }
-async function openLI(id,naam,liUrl){
-  const url=liUrl&&liUrl!=='undefined'?liUrl:'https://www.linkedin.com/search/results/people/?keywords='+encodeURIComponent(naam);
+async function openLI(id){
+  const l=_leadDataMap[id];
+  const url=l?.linkedin_url||'https://www.linkedin.com/search/results/people/?keywords='+encodeURIComponent(l?.naam||'');
   window.open(url,'_blank');
 }
 async function markBen(id){
@@ -1109,30 +1148,103 @@ async function exporteerAdobe(id){
 // ── TAKEN ──────────────────────────────────────────────
 async function tTaken(){
   try{
-    let q='select=id,titel,type,status,urgent,deadline&order=urgent.desc,deadline.asc';
-    if(tFilter==='open') q+='&status=neq.klaar&status=neq.done';
-    if(tFilter==='klaar') q+='&or=(status.eq.klaar,status.eq.done)';
-    const tasks=await sbGetSafe('tasks',q);
-    document.getElementById('ca').innerHTML=`
-      <div class="filter-row">${['Open','Bezig','Klaar'].map(f=>`<button class="fbtn${tFilter===f.toLowerCase()?' active':''}" onclick="setTF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
-      <div class="tasks-list">${tasks.length?tasks.map(t=>{
-        const done=t.status==='klaar'||t.status==='done';
-        const urg=t.urgent&&!done;
-        return `<div class="task-row${done?' done':''}${urg?' urg':''}">
-          <div class="cb${done?' on':''}" onclick="togT('${t.id}','${t.status}')"></div>
-          <span class="t-name">${t.titel}</span>
-          <span class="tt ${t.type||'intern'}">${t.type||'intern'}</span>
-          <span class="t-dl2${urg?' urg':''}">${fmtDate(t.deadline)}</span>
-        </div>`;
-      }).join(''):'<div class="empty">Geen taken in deze categorie</div>'}
+    const all=await sbGetSafe('tasks','select=id,titel,categorie,type,prioriteit,toegewezen_aan,deadline,status,urgent,bron');
+    const prioKey={hoog:1,middel:2,laag:3};
+    const today=new Date();today.setHours(0,0,0,0);
+    // filter
+    let tasks=all.filter(t=>{
+      const done=t.status==='klaar'||t.status==='done';
+      const statusOk=tFilterStatus==='alle'?true
+        :tFilterStatus==='open'?(!done&&t.status!=='bezig')
+        :tFilterStatus==='bezig'?t.status==='bezig'
+        :done;
+      const pers=t.toegewezen_aan||'';
+      const persOk=tFilterPersoon==='iedereen'?true
+        :tFilterPersoon==='finn'?pers.toLowerCase()==='finn'
+        :tFilterPersoon==='olaf'?pers.toLowerCase()==='olaf'
+        :!pers;
+      return statusOk&&persOk;
+    });
+    // sort: done last → urgent → prioriteit → deadline
+    tasks.sort((a,b)=>{
+      const ad=a.status==='klaar'||a.status==='done', bd=b.status==='klaar'||b.status==='done';
+      if(ad!==bd) return ad?1:-1;
+      if(!!a.urgent!==!!b.urgent) return b.urgent?1:-1;
+      const ap=prioKey[a.prioriteit]||3, bp=prioKey[b.prioriteit]||3;
+      if(ap!==bp) return ap-bp;
+      if(a.deadline&&b.deadline) return new Date(a.deadline)-new Date(b.deadline);
+      return a.deadline?-1:b.deadline?1:0;
+    });
+    const catLabel={leads:'Leads',sdr:'Leads',content:'Content',linkedin:'LinkedIn',intern:'Intern'};
+    const dlHtml=t=>{
+      if(!t.deadline) return '';
+      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+      const done=t.status==='klaar'||t.status==='done';
+      const cls=done?'':dl<today?'overdue':dl.getTime()===today.getTime()?'today':'';
+      return `<span class="t-dl${cls?' '+cls:''}">${fmtDate(t.deadline)}</span>`;
+    };
+    const rows=tasks.map(t=>{
+      const done=t.status==='klaar'||t.status==='done';
+      const urg=t.urgent&&!done;
+      const cat=(t.categorie||t.type||'intern').toLowerCase();
+      const prio=(t.prioriteit||'laag').toLowerCase();
+      return `<div class="task-row${done?' done':''}${urg?' urg':''}">
+        <div class="cb${done?' on':''}" onclick="togT('${t.id}',${done})"></div>
+        <div class="prio-dot ${prio}"></div>
+        <span class="t-name">${t.titel}</span>
+        <span class="t-cat ${cat}">${catLabel[cat]||cap(cat)}</span>
+        ${t.toegewezen_aan?`<span class="t-pers">${t.toegewezen_aan}</span>`:''}
+        ${dlHtml(t)}
+        ${t.bron==='systeem'?'<span class="t-sys">⚙</span>':''}
       </div>`;
+    }).join('');
+    document.getElementById('ca').innerHTML=`
+      <div class="taken-hdr">
+        <span style="font-size:12px;color:var(--t3)">${tasks.length} ${tasks.length===1?'taak':'taken'}</span>
+        <button class="btn btn-teal btn-sm" onclick="openTaakModal()">+ Taak toevoegen</button>
+      </div>
+      <div class="filter-double">
+        <div class="filter-row">${['Alle','Open','Bezig','Klaar'].map(f=>`<button class="fbtn${tFilterStatus===f.toLowerCase()?' active':''}" onclick="setTFS('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
+        <div class="filter-row">${['Iedereen','Finn','Olaf','Niet toegewezen'].map(f=>`<button class="fbtn${tFilterPersoon===f.toLowerCase().replace(' ','_')?' active':''}" onclick="setTFP('${f.toLowerCase().replace(' ','_')}')">${f}</button>`).join('')}</div>
+      </div>
+      <div class="tasks-list">${rows||'<div class="empty">Geen taken gevonden</div>'}</div>`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
-function setTF(f){tFilter=f;render('taken');}
-async function togT(id,currentStatus){
-  const done=currentStatus==='klaar'||currentStatus==='done';
-  try{await sbPatch('tasks',id,{status:done?'open':'klaar'});render('taken');}
+function setTFS(f){tFilterStatus=f;render('taken');}
+function setTFP(f){tFilterPersoon=f;render('taken');}
+async function togT(id,isDone){
+  try{await sbPatch('tasks',id,{status:isDone?'open':'klaar'});render('taken');}
   catch(e){toast('Fout: '+e.message);}
+}
+function openTaakModal(){
+  document.getElementById('taakModal').classList.add('open');
+  document.getElementById('tm-titel').value='';
+  document.getElementById('tm-cat').value='leads';
+  document.getElementById('tm-prio').value='middel';
+  document.getElementById('tm-pers').value='';
+  document.getElementById('tm-dl').value='';
+}
+function closeTaakModal(){document.getElementById('taakModal').classList.remove('open');}
+async function saveTaak(){
+  const titel=document.getElementById('tm-titel').value.trim();
+  if(!titel){toast('Titel is verplicht');return;}
+  const btn=document.getElementById('tm-save');
+  btn.disabled=true;btn.textContent='Opslaan...';
+  try{
+    await sbPost('tasks',{
+      titel,
+      categorie:document.getElementById('tm-cat').value,
+      prioriteit:document.getElementById('tm-prio').value,
+      toegewezen_aan:document.getElementById('tm-pers').value||null,
+      deadline:document.getElementById('tm-dl').value||null,
+      status:'open',
+      bron:'handmatig'
+    });
+    closeTaakModal();
+    toast('Taak toegevoegd ✓');
+    render('taken');
+  }catch(e){toast('Fout: '+e.message);}
+  btn.disabled=false;btn.textContent='Opslaan';
 }
 
 // ── SECTOR RADAR ───────────────────────────────────────
