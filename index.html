@@ -1782,8 +1782,8 @@ async function laadLeadStats() {
     // Funnel — horizontale bar
     _mkChart('ch-funnel','bar',
       {labels:fLabels,datasets:[{data:fCounts,backgroundColor:fColors,borderRadius:4,borderSkipped:false}]},
-      {indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} leads`}}},
-       scales:{x:{ticks:_cTick,grid:_cGrid,beginAtZero:true,ticks:{...{},stepSize:1}},y:{ticks:{color:'#96a496',font:{family:'Poppins',size:11}},grid:{display:false}}}}
+      {responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} leads`}}},
+       scales:{x:{ticks:{color:'#96a496',font:{family:'Poppins',size:10}},grid:{display:false}},y:{ticks:{..._cTick,stepSize:1},grid:_cGrid,beginAtZero:true}}}
     );
 
     // Status — donut
