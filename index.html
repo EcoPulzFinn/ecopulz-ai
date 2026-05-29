@@ -1782,7 +1782,7 @@ async function laadLeadStats() {
     // Funnel — horizontale bar
     _mkChart('ch-funnel','bar',
       {labels:fLabels,datasets:[{data:fCounts,backgroundColor:fColors,borderRadius:4,borderSkipped:false}]},
-      {responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} leads`}}},
+      {responsive:true,aspectRatio:1,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} leads`}}},
        scales:{x:{ticks:{color:'#96a496',font:{family:'Poppins',size:10}},grid:{display:false}},y:{ticks:{..._cTick,stepSize:1},grid:_cGrid,beginAtZero:true}}}
     );
 
