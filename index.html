@@ -1611,13 +1611,9 @@ function tAnalyse() {
     <div id="analyse-root">
       <div class="analyse-header">
         <div class="analyse-header-left">
-          <h2 class="analyse-title">Maandanalyse</h2>
-          <p class="analyse-subtitle">AI-rapport op basis van sector signalen, eigen content en concurrenten</p>
+          <h2 class="analyse-title">Analyse dashboard</h2>
+          <p class="analyse-subtitle">Lead statistieken, content prestaties en AI-maandrapport</p>
         </div>
-        <button class="btn-genereer" id="btnGenereerRapport" onclick="genereerRapport()">
-          <span class="btn-icon">⚡</span>
-          Genereer maandoverzicht
-        </button>
       </div>
       <div id="analyseLoading" class="analyse-loading" style="display:none">
         <div class="loading-pulse"></div>
@@ -1626,10 +1622,21 @@ function tAnalyse() {
       <div id="analyseError" class="analyse-error" style="display:none"></div>
       <div id="analyseSuccess" class="analyse-success" style="display:none"></div>
       <div class="rapport-subtabs">
-        <button class="subtab-btn active" id="subtab-huidig" onclick="switchSubtab('huidig')">Huidig rapport</button>
+        <button class="subtab-btn active" id="subtab-leads" onclick="switchSubtab('leads')">Lead statistieken</button>
+        <button class="subtab-btn" id="subtab-contentstats" onclick="switchSubtab('contentstats')">Content statistieken</button>
+        <button class="subtab-btn" id="subtab-rapport" onclick="switchSubtab('rapport')">AI Maandrapport</button>
         <button class="subtab-btn" id="subtab-geschiedenis" onclick="switchSubtab('geschiedenis')">Geschiedenis</button>
       </div>
-      <div id="subtab-content-huidig">
+      <div id="subtab-content-leads">
+        <div id="leadStatsContainer"><div class="loading">Statistieken laden...</div></div>
+      </div>
+      <div id="subtab-content-contentstats" style="display:none">
+        <div id="contentStatsContainer"><div class="loading">Statistieken laden...</div></div>
+      </div>
+      <div id="subtab-content-rapport" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+          <button class="btn-genereer" id="btnGenereerRapport" onclick="genereerRapport()"><span class="btn-icon">⚡</span>Genereer maandoverzicht</button>
+        </div>
         <div id="rapportContainer">
           <div class="rapport-empty">
             <div class="rapport-empty-icon">📋</div>
@@ -1646,15 +1653,227 @@ function tAnalyse() {
         </div>
       </div>
     </div>`;
-  laadLaatstRapport();
+  laadLeadStats();
 }
 
+const ANALYSE_TABS = ['leads','contentstats','rapport','geschiedenis'];
 function switchSubtab(t) {
-  document.getElementById('subtab-content-huidig').style.display = t === 'huidig' ? 'block' : 'none';
-  document.getElementById('subtab-content-geschiedenis').style.display = t === 'geschiedenis' ? 'block' : 'none';
-  document.getElementById('subtab-huidig').classList.toggle('active', t === 'huidig');
-  document.getElementById('subtab-geschiedenis').classList.toggle('active', t === 'geschiedenis');
+  ANALYSE_TABS.forEach(id => {
+    document.getElementById('subtab-content-'+id).style.display = t === id ? 'block' : 'none';
+    document.getElementById('subtab-'+id).classList.toggle('active', t === id);
+  });
+  if (t === 'rapport') laadLaatstRapport();
   if (t === 'geschiedenis') laadGeschiedenis();
+  if (t === 'leads') laadLeadStats();
+  if (t === 'contentstats') laadContentStats();
+}
+
+// ── LEAD STATISTIEKEN ──────────────────────────────────
+async function laadLeadStats() {
+  const el = document.getElementById('leadStatsContainer');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Statistieken laden...</div>';
+  try {
+    const leads = await sbGetSafe('leads', 'select=id,naam,organisatie,tier,icp_score,status,fase,fase_detail,instroompunt,created_at,verwerkt&order=icp_score.desc');
+    const nu = Date.now();
+    const d30 = new Date(nu - 30*864e5);
+    const d7  = new Date(nu - 7*864e5);
+    const totaal = leads.length;
+    const t1 = leads.filter(l=>l.tier===1).length;
+    const t2 = leads.filter(l=>l.tier===2).length;
+    const nieuw = leads.filter(l=>l.status==='nieuw').length;
+    const benaderd = leads.filter(l=>l.status==='benaderd').length;
+    const gereageerd = leads.filter(l=>l.status==='gereageerd').length;
+    const afgewezen = leads.filter(l=>l.status==='afgewezen').length;
+    const dezeWeek = leads.filter(l=>new Date(l.created_at)>=d7).length;
+    const dezeMaand = leads.filter(l=>new Date(l.created_at)>=d30).length;
+    const funnelFasen = ['prospecting','gekwalificeerd','probleemanalyse','offerte','gewonnen','verloren'];
+    const funnelCounts = {};
+    funnelFasen.forEach(f => funnelCounts[f] = leads.filter(l=>l.fase_detail===f).length);
+    const maxFunnel = Math.max(...Object.values(funnelCounts), 1);
+    const instroompunten = {};
+    leads.forEach(l => { const k = l.instroompunt||'onbekend'; instroompunten[k]=(instroompunten[k]||0)+1; });
+    const verwerkt = leads.filter(l=>l.verwerkt===true).length;
+    const verwerkPct = totaal ? Math.round(verwerkt/totaal*100) : 0;
+    const top5 = leads.slice(0,5);
+    const convBen = totaal ? Math.round(benaderd/totaal*100) : 0;
+    const convReag = benaderd ? Math.round(gereageerd/benaderd*100) : 0;
+    const funnelLabels = {prospecting:'Prospecting',gekwalificeerd:'Gekwalificeerd',probleemanalyse:'Analyse',offerte:'Offerte',gewonnen:'Gewonnen',verloren:'Verloren'};
+    const funnelColors = {prospecting:'var(--t3)',gekwalificeerd:'var(--blue)',probleemanalyse:'#fb923c',offerte:'#a78bfa',gewonnen:'var(--teal)',verloren:'var(--red)'};
+    const instrLabels = {handmatig:'Handmatig',sdr:'SDR Pipeline',warm_netwerk:'Warm netwerk',website:'Website',email:'Email',onbekend:'Onbekend'};
+    el.innerHTML = `
+      <div class="w-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+        <div class="widget w-teal"><div class="w-num">${totaal}</div><div class="w-label">Totaal leads</div><div class="w-sub">${dezeWeek} deze week · ${dezeMaand} deze maand</div></div>
+        <div class="widget w-sal"><div class="w-num">${t1}</div><div class="w-label">Tier 1 leads</div><div class="w-sub">${t2} Tier 2</div></div>
+        <div class="widget w-blue"><div class="w-num">${benaderd}</div><div class="w-label">Benaderd</div><div class="w-sub">${convBen}% van totaal</div></div>
+        <div class="widget w-gray"><div class="w-num">${gereageerd}</div><div class="w-label">Gereageerd</div><div class="w-sub">${convReag}% van benaderd</div></div>
+      </div>
+      <div class="two-col" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-title">Pipeline funnel</div>
+          ${funnelFasen.map(f => {
+            const cnt = funnelCounts[f]||0;
+            const pct = Math.round(cnt/maxFunnel*100);
+            return `<div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span style="font-size:11.5px;color:var(--t1);">${funnelLabels[f]}</span>
+                <span style="font-size:13px;font-weight:700;color:${funnelColors[f]};">${cnt}</span>
+              </div>
+              <div style="background:rgba(255,255,255,.07);height:6px;border-radius:99px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:${funnelColors[f]};border-radius:99px;transition:width .4s;"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="card">
+          <div class="card-title">Status verdeling</div>
+          ${[{label:'Nieuw',count:nieuw,color:'var(--blue)'},{label:'Benaderd',count:benaderd,color:'var(--yellow)'},{label:'Gereageerd',count:gereageerd,color:'var(--teal)'},{label:'Afgewezen',count:afgewezen,color:'var(--red)'}].map(s => {
+            const pct = totaal ? Math.round(s.count/totaal*100) : 0;
+            return `<div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span style="font-size:11.5px;color:var(--t1);">${s.label}</span>
+                <span style="font-size:12px;font-weight:700;color:${s.color};">${s.count} <span style="font-size:10px;color:var(--t3);font-weight:400;">(${pct}%)</span></span>
+              </div>
+              <div style="background:rgba(255,255,255,.07);height:5px;border-radius:99px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:${s.color};border-radius:99px;"></div>
+              </div>
+            </div>`;
+          }).join('')}
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);">
+            <div class="card-title" style="margin-bottom:8px;">SDR automatisering</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <span style="font-size:11.5px;color:var(--t2);">Verwerkt door AI</span>
+              <span style="font-size:13px;font-weight:700;color:var(--teal);">${verwerkt} / ${totaal}</span>
+            </div>
+            <div style="background:rgba(255,255,255,.07);height:5px;border-radius:99px;overflow:hidden;">
+              <div style="width:${verwerkPct}%;height:100%;background:var(--teal);border-radius:99px;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--t3);margin-top:4px;">${verwerkPct}% van leads automatisch verrijkt</div>
+          </div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Instroompunten</div>
+          ${Object.entries(instroompunten).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+            const pct = totaal ? Math.round(v/totaal*100) : 0;
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bd);">
+              <span style="font-size:12px;color:var(--t1);">${instrLabels[k]||k}</span>
+              <span style="font-size:12px;font-weight:700;color:var(--teal);">${v} <span style="color:var(--t3);font-weight:400;font-size:10px;">${pct}%</span></span>
+            </div>`;
+          }).join('') || '<div style="color:var(--t3);font-size:12px;">Geen data</div>'}
+        </div>
+        <div class="card">
+          <div class="card-title">Top 5 leads op ICP score</div>
+          ${top5.map(l => `
+            <div class="prev-item">
+              <div class="l-av ${l.tier===1?'t1':'t2'}">${(l.naam||'?').charAt(0)}</div>
+              <div class="prev-inf"><div class="prev-n">${l.naam||'–'}</div><div class="prev-c">${l.organisatie||'–'}</div></div>
+              <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier||'?'}</span>
+              <span class="score-n">${l.icp_score||'–'}</span>
+            </div>`).join('') || '<div style="color:var(--t3);font-size:12px;">Geen leads</div>'}
+        </div>
+      </div>`;
+  } catch(e) { el.innerHTML = `<div class="err">Fout bij laden: ${e.message}</div>`; }
+}
+
+// ── CONTENT STATISTIEKEN ───────────────────────────────
+async function laadContentStats() {
+  const el = document.getElementById('contentStatsContainer');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Statistieken laden...</div>';
+  try {
+    const [posts, ideeën] = await Promise.all([
+      sbGetSafe('content_posts', 'select=id,platform,status,pillar,created_at').catch(()=>[]),
+      sbGetSafe('content_ideas', 'select=id,platform,status,pillar,created_at').catch(()=>[])
+    ]);
+    const nu = Date.now();
+    const d30 = new Date(nu - 30*864e5);
+    const totaalPosts = posts.length;
+    const gepost = posts.filter(p=>p.status==='gepost').length;
+    const gepland = posts.filter(p=>p.status==='gepland').length;
+    const concept = posts.filter(p=>p.status==='concept').length;
+    const dezeMaand = posts.filter(p=>new Date(p.created_at)>=d30).length;
+    const totaalIdeeën = ideeën.length;
+    const actieveIdeeën = ideeën.filter(i=>!['afgewezen','gepost'].includes(i.status)).length;
+    const afgewezenIdeeën = ideeën.filter(i=>i.status==='afgewezen').length;
+    const platforms = ['linkedin','instagram','website'];
+    const platLabels = {linkedin:'LinkedIn',instagram:'Instagram',website:'Website'};
+    const platColors = {linkedin:'#5BA4E8',instagram:'#F07090',website:'var(--teal)'};
+    const postPerPlat = {};
+    const gepostPerPlat = {};
+    platforms.forEach(p => {
+      postPerPlat[p] = posts.filter(x=>x.platform===p).length;
+      gepostPerPlat[p] = posts.filter(x=>x.platform===p&&x.status==='gepost').length;
+    });
+    const maxPlat = Math.max(...platforms.map(p=>postPerPlat[p]||0),1);
+    const pillarCounts = {};
+    posts.forEach(p => { const k=p.pillar||'Onbekend'; pillarCounts[k]=(pillarCounts[k]||0)+1; });
+    const statusData = [
+      {label:'Idee',count:(ideeën.filter(i=>!i.status||i.status==='idee').length),color:'var(--t3)'},
+      {label:'Concept',count:concept,color:'var(--yellow)'},
+      {label:'Gepland',count:gepland,color:'var(--blue)'},
+      {label:'Gepost',count:gepost,color:'var(--teal)'}
+    ];
+    const maxStatus = Math.max(...statusData.map(s=>s.count),1);
+    el.innerHTML = `
+      <div class="w-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+        <div class="widget w-teal"><div class="w-num">${gepost}</div><div class="w-label">Gepost</div><div class="w-sub">${dezeMaand} deze maand</div></div>
+        <div class="widget w-blue"><div class="w-num">${gepland}</div><div class="w-label">Ingepland</div><div class="w-sub">Klaar voor publicatie</div></div>
+        <div class="widget w-sal"><div class="w-num">${concept}</div><div class="w-label">Concept</div><div class="w-sub">In bewerking</div></div>
+        <div class="widget w-gray"><div class="w-num">${totaalIdeeën}</div><div class="w-label">Ideeën totaal</div><div class="w-sub">${actieveIdeeën} actief · ${afgewezenIdeeën} afgewezen</div></div>
+      </div>
+      <div class="two-col" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-title">Per platform</div>
+          ${platforms.map(p => {
+            const tot = postPerPlat[p]||0;
+            const gep = gepostPerPlat[p]||0;
+            const barPct = Math.round(tot/maxPlat*100);
+            return `<div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                <span style="font-size:12px;font-weight:600;color:${platColors[p]};">${platLabels[p]}</span>
+                <span style="font-size:11px;color:var(--t3);">${gep} gepost van ${tot} totaal</span>
+              </div>
+              <div style="background:rgba(255,255,255,.07);height:7px;border-radius:99px;overflow:hidden;">
+                <div style="width:${barPct}%;height:100%;background:${platColors[p]};border-radius:99px;opacity:.85;"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="card">
+          <div class="card-title">Status pipeline</div>
+          ${statusData.map(s => {
+            const pct = Math.round(s.count/maxStatus*100);
+            return `<div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span style="font-size:11.5px;color:var(--t1);">${s.label}</span>
+                <span style="font-size:13px;font-weight:700;color:${s.color};">${s.count}</span>
+              </div>
+              <div style="background:rgba(255,255,255,.07);height:5px;border-radius:99px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:${s.color};border-radius:99px;"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Verdeling per content pillar</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px;">
+          ${Object.entries(pillarCounts).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+            const pct = totaalPosts ? Math.round(v/totaalPosts*100) : 0;
+            return `<div style="background:var(--inp);border:1px solid var(--bd);padding:12px;">
+              <div style="font-size:10.5px;color:var(--teal);font-weight:600;margin-bottom:6px;line-height:1.3;">${k}</div>
+              <div style="font-size:22px;font-weight:800;color:var(--t1);margin-bottom:4px;">${v}</div>
+              <div style="font-size:10px;color:var(--t3);">${pct}% van alle posts</div>
+              <div style="background:rgba(255,255,255,.07);height:3px;border-radius:99px;overflow:hidden;margin-top:8px;">
+                <div style="width:${pct}%;height:100%;background:var(--teal);border-radius:99px;"></div>
+              </div>
+            </div>`;
+          }).join('') || '<div style="color:var(--t3);font-size:12px;grid-column:1/-1;">Geen pillar data gevonden</div>'}
+        </div>
+      </div>`;
+  } catch(e) { el.innerHTML = `<div class="err">Fout bij laden: ${e.message}</div>`; }
 }
 
 async function genereerRapport() {
