@@ -155,7 +155,7 @@
     .bedrijf-meta { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
     .bedrijf-reden { font-size:11.5px; color:var(--teal); font-style:italic; margin:8px 0; line-height:1.5; }
     .bedrijf-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
-    .phase-nav { display:grid; grid-template-columns:1fr 28px 1fr 28px 1fr; align-items:stretch; margin-bottom:22px; }
+    .phase-nav { display:grid; grid-template-columns:1fr 22px 1fr 22px 1fr 22px 1fr 22px 1fr; align-items:stretch; margin-bottom:22px; }
     .phase-step { background:var(--card); border:1px solid var(--bd); padding:16px 16px 14px; cursor:pointer; transition:background .14s; position:relative; }
     .phase-step:hover { background:var(--ch); }
     .phase-step.active { background:var(--teal-dim); border-color:var(--teal-b); }
@@ -521,7 +521,7 @@
 </div>
 
 <div class="modal-bg" id="leadModal">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
     <h3>Lead toevoegen</h3>
     <div class="form-row"><label>Naam</label><input id="lm-naam" placeholder="Voornaam Achternaam"></div>
     <div class="form-row"><label>Organisatie</label><input id="lm-org" placeholder="Bedrijfsnaam"></div>
@@ -531,6 +531,23 @@
       <select id="lm-tier"><option value="1">Tier 1 — Top prioriteit</option><option value="2">Tier 2 — Secundair</option></select>
     </div>
     <div class="form-row"><label>ICP Score (0–100)</label><input id="lm-score" type="number" min="0" max="100" placeholder="85"></div>
+    <div class="form-row"><label>Instroompunt</label>
+      <select id="lm-instroompunt">
+        <option value="handmatig" selected>Handmatig</option>
+        <option value="sdr">SDR Pipeline</option>
+        <option value="warm_netwerk">Warm netwerk</option>
+        <option value="website">Website</option>
+        <option value="email">Email</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Verantwoordelijke</label>
+      <select id="lm-admin">
+        <option value="finn">Finn</option>
+        <option value="olaf">Olaf</option>
+      </select>
+    </div>
+    <div class="form-row"><label>KVK nummer (optioneel)</label><input id="lm-kvk" placeholder="12345678"></div>
+    <div class="form-row"><label>Vennootschap (optioneel)</label><input id="lm-vennootschap" placeholder="B.V. naam of holding"></div>
     <div class="form-row"><label>Notities</label><textarea id="lm-notities" placeholder="Reden om aan te schrijven..."></textarea></div>
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="closeLeadModal()">Annuleren</button>
@@ -676,7 +693,7 @@ async function sbPost(table, body) {
   return r.json();
 }
 
-let tab='overzicht', lFase='leads', lFilter='alle', cFilter='alle', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
+let tab='overzicht', lFase='prospecting', lFilter='alle', cFilter='alle', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 
@@ -821,7 +838,7 @@ async function tOvz(){
 }
 
 function naarLead(id){
-  lFase='leads'; lFilter='alle';
+  lFase='prospecting'; lFilter='alle';
   expanded.add(id);
   go('leadfunnel');
   setTimeout(()=>{const el=document.getElementById('lr-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},600);
@@ -831,26 +848,28 @@ function naarLead(id){
 const _leadDataMap={};
 async function tLead(){
   try{
-    const all=await sbGetSafe('leads','select=fase,status');
-    const c={leads:0,offerte:0,onboarding:0};
-    all.forEach(l=>{if(c[l.fase]!==undefined&&l.status!=='afgewezen')c[l.fase]++;});
-    let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,reden,outreach_bericht,linkedin_url,benaderd_at,notities&fase=eq.${lFase}&order=icp_score.desc`;
-    if(lFase==='leads'){
-      if(lFilter==='afgewezen') q+=`&status=eq.afgewezen`;
-      else if(lFilter!=='alle') q+=`&status=eq.${lFilter}`;
-      else q+=`&status=neq.afgewezen`;
-    }
+    const allLeads=await sbGetSafe('leads','select=fase_detail&fase_detail=not.in.(verloren)');
+    const telFase=(f)=>(allLeads||[]).filter(l=>l.fase_detail===f).length;
+    let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin&fase_detail=eq.${lFase}&order=icp_score.desc`;
+    if(lFilter==='afgewezen') q+=`&status=eq.afgewezen`;
+    else if(lFilter!=='alle') q+=`&status=eq.${lFilter}`;
+    else q+=`&status=neq.afgewezen`;
     const leads=await sbGetSafe('leads',q);
     leads.forEach(l=>{ _leadDataMap[l.id]=l; });
+    const arr=`<div class="phase-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
     document.getElementById('ca').innerHTML=`
       <div class="phase-nav">
-        ${ps('leads','01','Leads','Instroom & kwalificatie',c.leads,false)}
-        <div class="phase-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-        ${ps('offerte','02','Offerte','Analyse & voorstel',c.offerte,false)}
-        <div class="phase-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-        ${ps('onboarding','03','Onboarding','Portal & AI-plan',c.onboarding,true)}
+        ${ps('prospecting','01','Prospecting','Leads in beeld',telFase('prospecting'),false)}
+        ${arr}
+        ${ps('gekwalificeerd','02','Gekwalificeerd','Interesse bevestigd',telFase('gekwalificeerd'),false)}
+        ${arr}
+        ${ps('probleemanalyse','03','Probleemanalyse','Behoefte helder',telFase('probleemanalyse'),false)}
+        ${arr}
+        ${ps('offerte','04','Offerte','Voorstel verstuurd',telFase('offerte'),false)}
+        ${arr}
+        ${ps('gewonnen','05','Gewonnen','Klant',telFase('gewonnen'),false)}
       </div>
-      ${lFase==='leads'?`<div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>`:''}
+      <div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
       <div class="leads-list">${leads.length?leads.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
@@ -873,7 +892,13 @@ function leadRow(l){
   return `<div class="lead-row${exp?' open':''}" id="lr-${l.id}">
     <div class="lead-hdr" onclick="toggleL('${l.id}')">
       <div class="sdot ${l.status||'nieuw'}"></div>
-      <div class="l-name-blk"><div class="l-name">${l.naam}</div><div class="l-co">${l.organisatie}</div></div>
+      <div class="l-name-blk">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <div class="l-name">${l.naam}</div>
+          ${faseBadge(l.fase_detail)}
+        </div>
+        <div class="l-co">${l.organisatie}</div>
+      </div>
       <span class="tier-b ${l.tier===1?'t1':'t2'}">Tier ${l.tier}</span>
       <span class="score-n" style="margin-right:4px">${l.icp_score??'–'}/100</span>
       <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -896,7 +921,11 @@ function leadRow(l){
           <div class="streef-txt"><strong>${ph.streef}</strong> · ${ph.streef2}</div>
         </div>
         <div class="lead-actions">
-          ${ph.actions.map(a=>`<button class="btn ${a.t==='teal'?'btn-teal':'btn-ghost'} btn-sm" onclick="${a.fn}('${l.id}')">${a.l}</button>`).join('')}
+          <button class="btn btn-ghost btn-sm" onclick="copyMsg('${l.id}')">Kopieer bericht</button>
+          <button class="btn btn-ghost btn-sm" onclick="openLI('${l.id}')">Open LinkedIn</button>
+          <button class="btn btn-ghost btn-sm" onclick="markBen('${l.id}')">Markeer benaderd</button>
+          ${volgendeFaseBtn(l)}
+          ${l.fase_detail!=='gewonnen'&&l.fase_detail!=='verloren'?`<button class="btn btn-red btn-sm" style="font-size:10px;" onclick="markeerVerloren('${l.id}')">Verloren</button>`:''}
           ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;padding:4px 0;">✕ Afgewezen</span>'}
         </div>
         ${statusFlow(l)}
@@ -912,9 +941,14 @@ function leadCtx(l){
     <div class="detail-grid">
       <div><div class="d-lbl">Functie</div><div class="d-val">${l.functie||'–'}</div></div>
       <div><div class="d-lbl">Status</div><div class="d-val" style="text-transform:capitalize">${l.status||'nieuw'}</div></div>
+      <div><div class="d-lbl">Verantwoordelijke</div><div class="d-val" style="text-transform:capitalize">${l.admin||'–'}</div></div>
       ${l.status==='afgewezen'&&l.notities?`<div class="fspan"><div class="d-lbl" style="color:#e57575">Reden afwijzing</div><div class="d-val m" style="color:#e57575">${l.notities}</div></div>`:''}
       ${l.reden?`<div class="fspan"><div class="d-lbl">Reden tot aanschrijven</div><div class="d-val m">${l.reden}</div></div>`:''}
       ${l.outreach_bericht?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
+      <div class="fspan">
+        <div class="d-lbl">Interne notities</div>
+        <textarea id="notities-${l.id}" onblur="slaNotitiesOp('${l.id}')" placeholder="Aantekeningen, afspraken, probleemanalyse..." style="width:100%;min-height:80px;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);padding:10px;font-family:var(--f);font-size:12px;resize:vertical;border-radius:var(--r);">${l.notities_intern||''}</textarea>
+      </div>
     </div>`;
 }
 
@@ -1679,13 +1713,66 @@ async function saveLead(){
       tier:parseInt(document.getElementById('lm-tier').value),
       icp_score:parseInt(document.getElementById('lm-score').value)||null,
       notities:document.getElementById('lm-notities').value.trim()||null,
-      status:'nieuw',fase:'leads'
+      instroompunt:document.getElementById('lm-instroompunt').value||null,
+      admin:document.getElementById('lm-admin').value||null,
+      kvk_nummer:document.getElementById('lm-kvk').value.trim()||null,
+      vennootschap:document.getElementById('lm-vennootschap').value.trim()||null,
+      status:'nieuw',fase:'leads',fase_detail:'prospecting'
     });
     closeLeadModal();
     toast('Lead opgeslagen in Supabase ✓');
     if(tab==='leadfunnel'||tab==='overzicht')render(tab);
   }catch(e){toast('Fout bij opslaan: '+e.message);}
   btn.disabled=false;btn.textContent='Opslaan';
+}
+
+// ── FASE DETAIL HELPERS ────────────────────────────────
+function faseBadge(fd){
+  const m={
+    prospecting:{t:'Prospecting',bg:'rgba(87,96,87,.18)',c:'var(--t3)',b:'var(--bdm)'},
+    gekwalificeerd:{t:'Gekwalificeerd',bg:'var(--blue-dim)',c:'var(--blue)',b:'var(--blue-b)'},
+    probleemanalyse:{t:'Analyse',bg:'rgba(251,146,60,.12)',c:'#fb923c',b:'rgba(251,146,60,.3)'},
+    offerte:{t:'Offerte',bg:'rgba(167,139,250,.12)',c:'#a78bfa',b:'rgba(167,139,250,.3)'},
+    gewonnen:{t:'Gewonnen ✓',bg:'var(--teal-dim)',c:'var(--teal)',b:'var(--teal-b)'},
+    verloren:{t:'Verloren',bg:'rgba(229,53,53,.12)',c:'var(--red)',b:'rgba(229,53,53,.3)'}
+  }[fd];
+  if(!m)return'';
+  return `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:2px;background:${m.bg};color:${m.c};border:1px solid ${m.b};flex-shrink:0;">${m.t}</span>`;
+}
+
+function volgendeFaseBtn(l){
+  const flow={
+    prospecting:{next:'gekwalificeerd',label:'→ Gekwalificeerd'},
+    gekwalificeerd:{next:'probleemanalyse',label:'→ Probleemanalyse'},
+    probleemanalyse:{next:'offerte',label:'→ Offerte'},
+    offerte:{next:'gewonnen',label:'→ Gewonnen'}
+  }[l.fase_detail];
+  if(!flow)return'';
+  return `<button class="btn btn-teal btn-sm" onclick="setFaseDetail('${l.id}','${flow.next}')">${flow.label}</button>`;
+}
+
+async function setFaseDetail(leadId,nieuweFase){
+  try{
+    await sbPatch('leads',leadId,{fase_detail:nieuweFase});
+    toast(`Lead doorgestuurd naar ${nieuweFase} →`);
+    render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function markeerVerloren(leadId){
+  try{
+    await sbPatch('leads',leadId,{fase_detail:'verloren',status:'afgewezen'});
+    toast('Lead gemarkeerd als verloren');
+    render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function slaNotitiesOp(leadId){
+  const tekst=document.getElementById('notities-'+leadId)?.value||'';
+  try{
+    await sbPatch('leads',leadId,{notities_intern:tekst});
+    toast('Notities opgeslagen ✓');
+  }catch(e){toast('Fout: '+e.message);}
 }
 
 // ── HELPERS ────────────────────────────────────────────
