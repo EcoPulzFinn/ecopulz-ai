@@ -377,6 +377,11 @@
 .geschiedenis-meta { font-size:0.78rem; color:var(--t2); margin-top:0.2rem; }
 .geschiedenis-open-btn { padding:0.35rem 0.8rem; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:6px; color:#86efac; font-size:0.78rem; cursor:pointer; transition:all 0.15s; white-space:nowrap; font-family:var(--f); }
 .geschiedenis-open-btn:hover { background:rgba(34,197,94,0.2); }
+/* === Marketing sub-tabs === */
+.marketing-subtabs { display:flex; gap:0; border-bottom:1px solid var(--bd); margin-bottom:16px; }
+.mstab { padding:7px 14px; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px; color:var(--t3); font-size:12px; font-weight:600; cursor:pointer; transition:all .13s; font-family:var(--f); }
+.mstab:hover { color:var(--t1); }
+.mstab.active { color:var(--teal); border-bottom-color:var(--teal); }
 /* === Content Ideas === */
 .ci-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
 @media(max-width:900px){ .ci-grid { grid-template-columns:repeat(2,1fr); } }
@@ -516,6 +521,40 @@
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="closeAgentModal()">Annuleren</button>
       <button class="btn btn-teal" id="agInstSave" onclick="saveAgentInst()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="afwijsIdeeModal" onclick="if(event.target===this)sluitAfwijsIdeeModal()">
+  <div class="modal">
+    <h3>Idee afwijzen</h3>
+    <p id="afwijsIdeeNaam" style="font-size:12.5px;color:var(--t2);margin-bottom:16px;"></p>
+    <div class="form-row">
+      <label>Reden (optioneel)</label>
+      <textarea id="afwijsIdeeReden" placeholder="Bijv. niet relevant, verkeerde timing, te vergelijkbaar met recent geposte content..."></textarea>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitAfwijsIdeeModal()">Annuleren</button>
+      <button class="btn btn-red" id="afwijsIdeeBevestig" onclick="bevestigAfwijsIdee()">Bevestig</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="planPostModal" onclick="if(event.target===this)sluitPlanPostModal()">
+  <div class="modal" style="width:360px;">
+    <h3>Post inplannen</h3>
+    <div class="form-row"><label>Datum</label><input id="pp-datum" type="date"></div>
+    <div class="form-row"><label>Tijd</label>
+      <select id="pp-tijd">
+        <option value="09:00">09:00</option>
+        <option value="12:00" selected>12:00</option>
+        <option value="17:00">17:00</option>
+        <option value="19:00">19:00</option>
+      </select>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitPlanPostModal()">Annuleren</button>
+      <button class="btn btn-teal" id="pp-bevestig" onclick="bevestigPlanning()">Bevestig planning</button>
     </div>
   </div>
 </div>
@@ -693,7 +732,7 @@ async function sbPost(table, body) {
   return r.json();
 }
 
-let tab='overzicht', lFase='prospecting', lFilter='alle', cFilter='alle', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
+let tab='overzicht', lFase='prospecting', lFilter='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 
@@ -749,7 +788,7 @@ const PH = {
 const NAV=[
   {id:'overzicht',label:'Overzicht',icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'},
   {id:'leadfunnel',label:'Lead funnel',icon:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'},
-  {id:'content',label:'Content machine',icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'},
+  {id:'content',label:'Marketing',icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'},
   {id:'taken',label:'Taken',icon:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
   {id:'radar',label:'Sector radar',icon:'<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.49-.01a6 6 0 0 1 0-8.49m11.32-2.82a10 10 0 0 1 0 14.14m-14.15 0a10 10 0 0 1 0-14.14"/>'},
   {id:'reacties',label:'LinkedIn Reacties',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
@@ -1059,33 +1098,78 @@ async function markGereageerd(id){
   }catch(e){toast('Fout: '+e.message);}
 }
 
-// ── CONTENT ────────────────────────────────────────────
+// ── CONTENT / MARKETING ────────────────────────────────
+function setMarketingTab(t){mTab=t;render('content');}
+function setCF(f){cFilter=f;render('content');}
+
+const _mSubtabs=()=>`<div class="marketing-subtabs">
+  <button class="mstab${mTab==='content'?' active':''}" onclick="setMarketingTab('content')">Content</button>
+  <button class="mstab${mTab==='campagnes'?' active':''}" onclick="setMarketingTab('campagnes')">Campagnes</button>
+  <button class="mstab${mTab==='werving'?' active':''}" onclick="setMarketingTab('werving')">Werving</button>
+</div>`;
+
 async function tContent(){
   try{
-    let q='select=*&order=created_at.desc';
-    if(cFilter!=='alle'){const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost'};q+=`&status=eq.${fm[cFilter]||cFilter}`;}
+    if(mTab==='campagnes'){
+      document.getElementById('ca').innerHTML=`${_mSubtabs()}<div class="empty" style="margin-top:60px;"><div style="font-size:32px;margin-bottom:12px;color:var(--t3);">🔒</div>Campagnes — komt binnenkort</div>`;
+      return;
+    }
+    if(mTab==='werving'){
+      document.getElementById('ca').innerHTML=`${_mSubtabs()}<div class="empty" style="margin-top:60px;"><div style="font-size:32px;margin-bottom:12px;color:var(--t3);">🔒</div>Werving — komt binnenkort</div>`;
+      return;
+    }
+    const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost',afgewezen:'afgewezen'};
+    let q=cFilter==='gepland'?'select=*&status=eq.gepland&order=gepland_datum.asc':'select=*&order=created_at.desc';
+    if(cFilter!=='alle'&&cFilter!=='gepland') q+=`&status=eq.${fm[cFilter]||cFilter}`;
     ciIdeeën=await sbGetSafe('content_ideas',q);
+    const filterBtns=['Alle','Ideeën','Concept','Gepland','Gepost','Afgewezen'];
+    const filterHtml=filterBtns.map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('');
+    const gridHtml=cFilter==='gepland'?renderGeplandAgenda(ciIdeeën):`<div class="ci-grid">${ciIdeeën.length?ciIdeeën.map(ciKaart).join(''):'<div class="empty">Geen content in deze categorie</div>'}</div>`;
     document.getElementById('ca').innerHTML=`
-      <div class="filter-row">${['Alle','Ideeën','Concept','Gepland','Gepost'].map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
-      <div class="ci-grid">${ciIdeeën.length?ciIdeeën.map(ciKaart).join(''):'<div class="empty">Geen content in deze categorie</div>'}</div>`;
+      ${_mSubtabs()}
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--bd);margin-bottom:18px;">
+        <div style="display:flex;">${filterHtml}</div>
+        <button class="btn btn-ghost btn-sm" onclick="bedenkIdee()" style="margin-bottom:3px;flex-shrink:0;margin-left:8px;">💡 Bedenk idee</button>
+      </div>
+      ${gridHtml}`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
-function setCF(f){cFilter=f;render('content');}
 
 function ciPlatLabel(p){return{'linkedin':'LinkedIn','instagram':'Instagram','website':'Website'}[p]||cap(p||'');}
 function ciFmtLabel(f){return{'tekstpost':'Tekstpost','carrousel':'Carrousel','infographic':'Infographic','reels':'Reels'}[f]||cap(f||'');}
 
 function ciKaart(idee){
   const platCls=idee.platform||'linkedin';
+  if(idee.status==='afgewezen'){
+    return `<div class="ci-card">
+      <div class="ci-hdr">
+        <span class="plat-b ${platCls}">${ciPlatLabel(idee.platform)}</span>
+        <span class="ci-badge" style="background:rgba(229,53,53,.1);color:var(--red);border:1px solid rgba(229,53,53,.2);margin-left:auto;">Afgewezen</span>
+      </div>
+      <div class="ci-onderwerp" style="text-decoration:line-through;opacity:.45;">${idee.onderwerp||'–'}</div>
+      ${idee.pilaar?`<div class="ci-pilaar" style="opacity:.4;">${idee.pilaar}</div>`:''}
+      ${idee.afwijzing_reden?`<div style="font-size:11px;color:var(--t3);font-style:italic;margin-top:4px;line-height:1.5;">${idee.afwijzing_reden}</div>`:''}
+    </div>`;
+  }
   const badge=idee.status==='concept'?`<span class="ci-badge ci-badge-concept">✓ Concept klaar</span>`:
                idee.status==='gepland' ?`<span class="ci-badge ci-badge-gepland">Gepland</span>`:
                idee.status==='gepost'  ?`<span class="ci-badge ci-badge-gepost">Gepost</span>`:'';
   const klikbaar=idee.status==='concept';
-  const footer=idee.status==='concept'
-    ?`<div class="ci-footer"><button class="btn btn-green btn-sm" onclick="openConceptPopup('${idee.id}')">Bekijk concept</button></div>`
-    :idee.status==='idee'||!idee.status
-    ?`<div class="ci-footer"><button id="ci-btn-${idee.id}" class="btn btn-green btn-sm" onclick="genereerPost('${idee.id}',this)">⚡ Genereer post</button></div>`
-    :'';
+  let footer='';
+  if(idee.status==='concept'){
+    footer=`<div class="ci-footer" style="display:flex;gap:6px;align-items:center;">
+      <button class="btn btn-green btn-sm" onclick="openConceptPopup('${idee.id}')">Bekijk concept</button>
+      <button class="btn btn-ghost-red btn-sm" onclick="openAfwijsIdeeModal('${idee.id}')">Afwijzen</button>
+    </div>`;
+  } else if(idee.status==='idee'||!idee.status){
+    footer=`<div class="ci-footer" style="display:flex;gap:6px;align-items:center;">
+      <button id="ci-btn-${idee.id}" class="btn btn-green btn-sm" onclick="genereerPost('${idee.id}',this)">⚡ Genereer post</button>
+      <button class="btn btn-ghost-red btn-sm" onclick="openAfwijsIdeeModal('${idee.id}')">Afwijzen</button>
+    </div>`;
+  } else if(idee.status==='gepland'&&idee.gepland_datum){
+    const t=new Date(idee.gepland_datum).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+    footer=`<div class="ci-footer"><span style="font-size:10.5px;color:var(--t3);">⏰ ${t}</span></div>`;
+  }
   return `<div class="ci-card${klikbaar?' clickable':''}"${klikbaar?` onclick="openConceptPopup('${idee.id}')"`:''}>
     <div class="ci-hdr">
       <span class="plat-b ${platCls}">${ciPlatLabel(idee.platform)}</span>
@@ -1162,7 +1246,10 @@ function openConceptPopup(id){
     if(visual) body+=`<div style="margin-top:16px;"><div class="ci-sect-lbl">Nanoo Banana prompt <button class="ci-copy-btn" onclick="ciCopy('slide_1_visual')">⎘</button></div><div class="ci-visual-blk">${visual}</div></div>`;
   }
   document.getElementById('ciModalBody').innerHTML=body;
-  document.getElementById('ciModalFt').innerHTML=`<button class="btn btn-teal btn-sm" onclick="exporteerAdobe('${idee.id}')">Exporteer naar Adobe Express</button>`;
+  document.getElementById('ciModalFt').innerHTML=`
+    <button class="btn btn-teal btn-sm" onclick="openPlanPostModal('${idee.id}')">Plan post</button>
+    <button class="btn btn-ghost btn-sm" onclick="exporteerAdobeDirectly('${idee.id}')">Exporteer</button>
+  `;
   document.getElementById('ciModal').classList.add('open');
 }
 
@@ -1187,7 +1274,8 @@ function ciCopySlide(idx,part){
   if(navigator.clipboard&&val) navigator.clipboard.writeText(val).then(()=>toast('Gekopieerd ✓'));
 }
 
-async function exporteerAdobe(id){
+async function exporteerAdobe(id){ exporteerAdobeDirectly(id); }
+async function exporteerAdobeDirectly(id){
   window.open('https://www.adobe.com/express/','_blank');
   try{
     await sbPatch('content_ideas',id,{status:'gepland'});
@@ -1197,6 +1285,88 @@ async function exporteerAdobe(id){
     toast('Status → Gepland ✓');
   }catch(e){toast('Fout: '+e.message);}
 }
+
+// ── MARKETING — AFWIJZEN IDEE ──────────────────────────
+function openAfwijsIdeeModal(id){
+  const idee=ciIdeeën.find(i=>i.id===id);
+  if(!idee) return;
+  document.getElementById('afwijsIdeeModal').classList.add('open');
+  document.getElementById('afwijsIdeeNaam').textContent=idee.onderwerp||'–';
+  document.getElementById('afwijsIdeeReden').value='';
+  document.getElementById('afwijsIdeeBevestig').dataset.ideeId=id;
+}
+function sluitAfwijsIdeeModal(){document.getElementById('afwijsIdeeModal').classList.remove('open');}
+async function bevestigAfwijsIdee(){
+  const btn=document.getElementById('afwijsIdeeBevestig');
+  const id=btn.dataset.ideeId;
+  const reden=document.getElementById('afwijsIdeeReden').value.trim();
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    await sbPatch('content_ideas',id,{status:'afgewezen',afwijzing_reden:reden||null});
+    sluitAfwijsIdeeModal();
+    toast('Idee afgewezen ✓');
+    setCF('ideeën');
+  }catch(e){toast('Fout: '+e.message);}
+  btn.disabled=false;btn.textContent='Bevestig';
+}
+
+// ── MARKETING — PLAN POST ──────────────────────────────
+let _planPostIdeeId=null;
+function openPlanPostModal(id){
+  _planPostIdeeId=id;
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('pp-datum').value=today;
+  document.getElementById('planPostModal').classList.add('open');
+}
+function sluitPlanPostModal(){document.getElementById('planPostModal').classList.remove('open');}
+async function bevestigPlanning(){
+  const btn=document.getElementById('pp-bevestig');
+  const datum=document.getElementById('pp-datum').value;
+  const tijd=document.getElementById('pp-tijd').value;
+  if(!datum){toast('Kies een datum');return;}
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const geplandDatum=new Date(`${datum}T${tijd}:00`).toISOString();
+    await sbPatch('content_ideas',_planPostIdeeId,{status:'gepland',gepland_datum:geplandDatum});
+    window.open('https://www.adobe.com/express/','_blank');
+    sluitPlanPostModal();
+    sluitConceptPopup();
+    toast('Post ingepland voor '+datum+' ✓');
+    cFilter='gepland';
+    render('content');
+  }catch(e){toast('Fout: '+e.message);}
+  btn.disabled=false;btn.textContent='Bevestig planning';
+}
+
+// ── MARKETING — GEPLAND AGENDA ─────────────────────────
+function renderGeplandAgenda(ideeën){
+  if(!ideeën.length) return '<div class="empty">Geen geplande posts</div>';
+  const today=new Date();today.setHours(0,0,0,0);
+  const weekEnd=new Date(today);weekEnd.setDate(today.getDate()+7);
+  const groups={};
+  ideeën.forEach(i=>{
+    const d=i.gepland_datum?new Date(i.gepland_datum):null;
+    let key,label;
+    if(!d){key='z_geen';label='Geen datum';}
+    else{
+      const dd=new Date(d);dd.setHours(0,0,0,0);
+      if(dd.getTime()===today.getTime()){key='0_vandaag';label='Vandaag';}
+      else if(dd>today&&dd<=weekEnd){key='1_dezeweek';label='Deze week';}
+      else{
+        const ds=dd.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+        key=`2_${dd.toISOString()}`;label=ds;
+      }
+    }
+    if(!groups[key])groups[key]={label,items:[]};
+    groups[key].items.push(i);
+  });
+  return Object.entries(groups).sort(([a],[b])=>a.localeCompare(b)).map(([,g])=>`
+    <div class="reacties-datum-header">${g.label}</div>
+    <div class="ci-grid">${g.items.map(ciKaart).join('')}</div>
+  `).join('');
+}
+
+function bedenkIdee(){toast('Bedenk idee — komt binnenkort');}
 
 // ── TAKEN ──────────────────────────────────────────────
 async function tTaken(){
