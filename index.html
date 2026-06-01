@@ -413,6 +413,39 @@
 .reeks-b-afgerond { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
 .reeks-chevron { color:var(--t3); font-size:10px; transition:transform .2s; }
 .reeks-chevron.open { transform:rotate(180deg); }
+/* === Campagnes === */
+.cmp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+@media(max-width:900px){ .cmp-grid { grid-template-columns:1fr 1fr; } }
+.cmp-card { background:var(--card); border:1px solid var(--bd); padding:16px 18px; cursor:pointer; transition:border-color .13s,transform .1s; }
+.cmp-card:hover { border-color:var(--teal-b); transform:translateY(-1px); }
+.cmp-card-naam { font-size:14px; font-weight:700; color:var(--t1); margin-bottom:4px; }
+.cmp-card-sub { font-size:11.5px; color:var(--t2); line-height:1.4; margin-bottom:10px; }
+.cmp-plats { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.cmp-plat-b { font-size:9px; font-weight:700; padding:2px 6px; border-radius:2px; text-transform:uppercase; letter-spacing:.04em; }
+.cmp-plat-li { background:rgba(91,164,232,.15); color:#5BA4E8; border:1px solid rgba(91,164,232,.25); }
+.cmp-plat-meta { background:rgba(240,112,144,.13); color:#F07090; border:1px solid rgba(240,112,144,.22); }
+.cmp-plat-google { background:rgba(52,168,83,.14); color:#34A853; border:1px solid rgba(52,168,83,.24); }
+.cmp-card-ft { display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--bd); font-size:11px; color:var(--t3); }
+.cmp-status-b { font-size:9px; font-weight:700; padding:2px 7px; border-radius:2px; text-transform:uppercase; letter-spacing:.04em; }
+.cmp-b-concept { background:rgba(255,255,255,.07); color:var(--t3); border:1px solid var(--bd); }
+.cmp-b-actief { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+.cmp-b-gepauzeerd { background:rgba(245,197,66,.12); color:#F5C542; border:1px solid rgba(245,197,66,.22); }
+.cmp-b-afgerond { background:rgba(168,224,224,.1); color:var(--blue); border:1px solid rgba(168,224,224,.2); }
+.cmp-detail-hdr { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.cmp-info-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; background:var(--ch); border:1px solid var(--bd); padding:14px 16px; border-radius:var(--r); margin-bottom:20px; }
+.cmp-info-item { display:flex; flex-direction:column; gap:2px; }
+.cmp-info-lbl { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--t3); }
+.cmp-info-val { font-size:12.5px; color:var(--t1); }
+.ad-card { background:var(--card); border:1px solid var(--bd); padding:12px 14px; margin-bottom:8px; border-radius:var(--r); }
+.ad-card-hdr { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.ad-card-preview { font-size:12px; color:var(--t2); margin-top:8px; line-height:1.5; }
+.ad-card-body { margin-top:12px; padding-top:12px; border-top:1px solid var(--bd); font-size:12px; color:var(--t2); line-height:1.6; }
+.ad-status-b { font-size:9px; font-weight:700; padding:2px 6px; border-radius:2px; }
+.ad-b-concept { background:rgba(255,255,255,.07); color:var(--t3); border:1px solid var(--bd); }
+.ad-b-live { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+.ad-b-gepauzeerd { background:rgba(245,197,66,.12); color:#F5C542; border:1px solid rgba(245,197,66,.22); }
+.cb-row { display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer; font-size:12.5px; color:var(--t1); user-select:none; }
+.cb-row input[type=checkbox] { width:14px; height:14px; accent-color:var(--teal); cursor:pointer; flex-shrink:0; }
 /* === Concept Popup === */
 .ci-modal { background:var(--sb); border:1px solid var(--bdm); width:700px; max-width:96vw; max-height:88vh; border-radius:var(--r); display:flex; flex-direction:column; overflow:hidden; }
 .ci-modal-hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px 16px; border-bottom:1px solid var(--bd); flex-shrink:0; }
@@ -616,6 +649,80 @@
   </div>
 </div>
 
+<!-- Campagne modal -->
+<div class="modal-bg" id="campagneModal" onclick="if(event.target===this)sluitCampagneModal()">
+  <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto;">
+    <h3 id="cmpModalTitel">Nieuwe campagne</h3>
+    <input type="hidden" id="cmp-edit-id">
+    <div class="form-row"><label>Naam</label><input id="cmp-naam" placeholder="Q3 Warmtenet awareness"></div>
+    <div class="form-row"><label>Doel</label>
+      <select id="cmp-doel">
+        <option value="Brand awareness">Brand awareness</option>
+        <option value="Lead generatie">Lead generatie</option>
+        <option value="Webinar aanmeldingen">Webinar aanmeldingen</option>
+        <option value="Recruitment">Recruitment</option>
+        <option value="Anders">Anders</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Doelgroep</label><textarea id="cmp-doelgroep" placeholder="Woningcorporaties 1000+ woningen, Randstad" style="min-height:60px;"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Budget (€)</label><input id="cmp-budget" type="number" min="0" placeholder="2500"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Start</label><input id="cmp-start" type="date"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Einde</label><input id="cmp-eind" type="date"></div>
+    </div>
+    <div class="form-row" style="margin-top:14px;">
+      <label>Platforms</label>
+      <label class="cb-row"><input type="checkbox" id="cmp-plat-linkedin" value="linkedin"> LinkedIn</label>
+      <label class="cb-row"><input type="checkbox" id="cmp-plat-meta" value="meta"> Meta (Facebook/Instagram)</label>
+      <label class="cb-row"><input type="checkbox" id="cmp-plat-google" value="google"> Google Ads</label>
+    </div>
+    <div class="form-row"><label>Notities (optioneel)</label><textarea id="cmp-notities" style="min-height:50px;" placeholder="Interne aantekeningen..."></textarea></div>
+    <div id="cmp-err" style="font-size:11.5px;color:var(--red);min-height:16px;"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitCampagneModal()">Annuleren</button>
+      <button class="btn btn-teal" id="cmp-save-btn" onclick="slaanCampagneOp()">Campagne aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ad modal -->
+<div class="modal-bg" id="adModal" onclick="if(event.target===this)sluitAdModal()">
+  <div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;">
+    <h3>Nieuwe advertentie</h3>
+    <input type="hidden" id="ad-campagne-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Platform</label>
+        <select id="ad-platform"></select>
+      </div>
+      <div class="form-row" style="margin-bottom:0;"><label>Ad type</label>
+        <select id="ad-type">
+          <option value="sponsored_post">Sponsored post</option>
+          <option value="display">Display</option>
+          <option value="search">Search</option>
+          <option value="video">Video</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+        <label style="margin-bottom:0;">Ad tekst</label>
+        <button class="btn btn-ghost btn-sm" id="ad-ai-btn" onclick="genereerAdCopy()" style="font-size:10px;padding:2px 8px;">⚡ Genereer met AI</button>
+      </div>
+      <textarea id="ad-tekst" placeholder="Schrijf je advertentietekst hier, of laat AI het genereren..." style="min-height:100px;"></textarea>
+    </div>
+    <div class="form-row"><label>Doelgroep targeting</label><textarea id="ad-targeting" placeholder="Bijv: functietitels, bedrijfsgrootte, locatie..." style="min-height:60px;"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Budget (€)</label><input id="ad-budget" type="number" min="0" placeholder="500"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Visual URL (optioneel)</label><input id="ad-visual" placeholder="https://..."></div>
+    </div>
+    <div id="ad-err" style="font-size:11.5px;color:var(--red);margin-top:10px;min-height:16px;"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitAdModal()">Annuleren</button>
+      <button class="btn btn-teal" id="ad-save-btn" onclick="slaAdOp()">Ad opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="leadModal">
   <div class="modal" style="max-height:90vh;overflow-y:auto;">
     <h3>Lead toevoegen</h3>
@@ -789,11 +896,16 @@ async function sbPost(table, body) {
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
+async function sbDelete(table, id) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'DELETE',headers:H});
+  if (!r.ok) throw new Error(await r.text());
+}
 
 let tab='overzicht', lFase='prospecting', lFilter='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 let expandedReeksen=new Set(), _reeksIdeeënCache={};
+let activeCampagneId=null, expandedAds=new Set();
 
 const PH = {
   leads:{
@@ -1170,7 +1282,7 @@ const _mSubtabs=()=>`<div class="marketing-subtabs">
 async function tContent(){
   try{
     if(mTab==='campagnes'){
-      document.getElementById('ca').innerHTML=`${_mSubtabs()}<div class="empty" style="margin-top:60px;"><div style="font-size:32px;margin-bottom:12px;color:var(--t3);">🔒</div>Campagnes — komt binnenkort</div>`;
+      await tCampagnes();
       return;
     }
     if(mTab==='werving'){
@@ -1338,6 +1450,289 @@ function renderReeksSection(reeksen){
   }).join('');
 }
 // ─────────────────────────────────────────────────────────────────────────
+
+// ═══ CAMPAGNES ════════════════════════════════════════════════════════════
+async function tCampagnes(){
+  const el=document.getElementById('ca');
+  el.innerHTML=`${_mSubtabs()}<div class="loading">Campagnes laden...</div>`;
+  try{
+    const campagnes=await sbGetSafe('campagnes','select=*&order=created_at.desc').catch(()=>[]);
+    if(activeCampagneId){
+      const c=campagnes.find(x=>x.id===activeCampagneId);
+      if(c){ await renderCampagneDetail(el,c); return; }
+      activeCampagneId=null;
+    }
+    renderCampagnesOverzicht(el,campagnes);
+  }catch(e){el.innerHTML=`${_mSubtabs()}<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function _cmpStatusBadge(s){
+  const m={concept:'cmp-b-concept',actief:'cmp-b-actief',gepauzeerd:'cmp-b-gepauzeerd',afgerond:'cmp-b-afgerond'};
+  const l={concept:'Concept',actief:'Actief',gepauzeerd:'Gepauzeerd',afgerond:'Afgerond'};
+  return `<span class="cmp-status-b ${m[s]||'cmp-b-concept'}">${l[s]||s||'Concept'}</span>`;
+}
+function _cmpPlatBadges(plats){
+  if(!plats||!plats.length) return '';
+  const m={linkedin:'cmp-plat-li',meta:'cmp-plat-meta',google:'cmp-plat-google'};
+  const l={linkedin:'LinkedIn',meta:'Meta',google:'Google Ads'};
+  return (Array.isArray(plats)?plats:[plats]).map(p=>`<span class="cmp-plat-b ${m[p]||''}">${l[p]||p}</span>`).join('');
+}
+function _fmtBudget(b){return b!=null?`€${Number(b).toLocaleString('nl-NL')}`:'–';}
+function _fmtDatum(d){return d?new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}):'–';}
+
+function renderCampagnesOverzicht(el,campagnes){
+  const actief=campagnes.filter(c=>c.status==='actief');
+  const totBudget=actief.reduce((a,c)=>a+(Number(c.budget)||0),0);
+  const kpiHtml=`
+    <div class="w-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+      <div class="widget w-teal"><div class="w-num">${actief.length}</div><div class="w-label">Actieve campagnes</div></div>
+      <div class="widget w-blue"><div class="w-num">${_fmtBudget(totBudget)}</div><div class="w-label">Totaal budget actief</div></div>
+      <div class="widget w-gray"><div class="w-num">${campagnes.length}</div><div class="w-label">Campagnes totaal</div></div>
+    </div>`;
+  const lijstHtml=campagnes.length
+    ?`<div class="cmp-grid">${campagnes.map(c=>{
+        const looptijd=`${_fmtDatum(c.looptijd_start)} — ${_fmtDatum(c.looptijd_eind)}`;
+        return `<div class="cmp-card" onclick="openCampagneDetail('${c.id}')">
+          <div class="cmp-card-naam">${c.naam||'–'}</div>
+          <div class="cmp-card-sub">${c.doel||''}${c.doelgroep?` · ${c.doelgroep}`:''}</div>
+          <div class="cmp-plats">${_cmpPlatBadges(c.platforms)}</div>
+          <div class="cmp-card-ft">
+            <span>${_fmtBudget(c.budget)}</span>
+            <span style="color:var(--t3);">${looptijd}</span>
+            ${_cmpStatusBadge(c.status)}
+          </div>
+        </div>`;
+      }).join('')}</div>`
+    :`<div class="empty" style="margin-top:40px;"><div style="font-size:28px;margin-bottom:10px;color:var(--t3);">📢</div>Nog geen campagnes. Maak een campagne aan om je betaalde marketing te beheren.</div>`;
+  el.innerHTML=`${_mSubtabs()}
+    <div style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+      <button class="btn-genereer" onclick="openNieuweCampagneModal()"><span>+</span> Nieuwe campagne</button>
+    </div>
+    ${kpiHtml}${lijstHtml}`;
+}
+
+async function renderCampagneDetail(el,c){
+  const ads=await sbGetSafe('campagne_ads',`select=*&campagne_id=eq.${c.id}&order=created_at.asc`).catch(()=>[]);
+  const heeftMetrics=(c.status==='actief'||c.status==='afgerond')&&c.resultaten;
+  const metricsHtml=heeftMetrics
+    ?`<div class="w-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px;">
+        <div class="widget w-gray"><div class="w-num">${_fmtBudget(c.resultaten?.spend)}</div><div class="w-label">Spend</div></div>
+        <div class="widget w-gray"><div class="w-num">${(c.resultaten?.impressies||0).toLocaleString('nl-NL')}</div><div class="w-label">Impressies</div></div>
+        <div class="widget w-blue"><div class="w-num">${(c.resultaten?.clicks||0).toLocaleString('nl-NL')}</div><div class="w-label">Clicks</div></div>
+        <div class="widget w-teal"><div class="w-num">${c.resultaten?.ctr||'–'}%</div><div class="w-label">CTR</div></div>
+        <div class="widget w-sal"><div class="w-num">${c.resultaten?.conversies||0}</div><div class="w-label">Conversies</div></div>
+      </div>`
+    :(c.status==='actief'||c.status==='afgerond')
+      ?`<div style="background:var(--ch);border:1px solid var(--bd);padding:14px 16px;border-radius:var(--r);font-size:12px;color:var(--t3);margin-bottom:20px;">Metrics worden bijgewerkt zodra de campagne live is.</div>`
+      :'';
+  const adTypeLbl={'sponsored_post':'Sponsored post','display':'Display','search':'Search','video':'Video'};
+  const adStatusBadge=s=>{const m={concept:'ad-b-concept',live:'ad-b-live',gepauzeerd:'ad-b-gepauzeerd'};return`<span class="ad-status-b ${m[s]||'ad-b-concept'}">${s==='live'?'Live':s==='gepauzeerd'?'Gepauzeerd':'Concept'}</span>`;};
+  const adsHtml=ads.length
+    ?ads.map(a=>{
+        const isExp=expandedAds.has(a.id);
+        return `<div class="ad-card">
+          <div class="ad-card-hdr" onclick="toggleAd('${a.id}')">
+            <span class="cmp-plat-b ${a.platform==='linkedin'?'cmp-plat-li':a.platform==='meta'?'cmp-plat-meta':'cmp-plat-google'}">${a.platform==='linkedin'?'LinkedIn':a.platform==='meta'?'Meta':'Google'}</span>
+            <span style="font-size:11px;color:var(--t2);">${adTypeLbl[a.ad_type]||a.ad_type||'–'}</span>
+            ${adStatusBadge(a.status)}
+            ${a.budget_per_ad?`<span style="font-size:11px;color:var(--t3);margin-left:auto;">${_fmtBudget(a.budget_per_ad)}</span>`:''}
+            <span style="color:var(--t3);font-size:10px;margin-left:${a.budget_per_ad?'0':'auto'};">${isExp?'▲':'▼'}</span>
+          </div>
+          <div class="ad-card-preview" style="display:${isExp?'none':'block'};">${(a.tekst||'').substring(0,120)}${(a.tekst||'').length>120?'…':''}</div>
+          ${isExp?`<div class="ad-card-body">
+            <div style="margin-bottom:10px;white-space:pre-wrap;">${a.tekst||'–'}</div>
+            ${a.doelgroep_targeting?`<div style="margin-bottom:8px;"><span style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;">Targeting</span><div style="margin-top:3px;">${typeof a.doelgroep_targeting==='object'?JSON.stringify(a.doelgroep_targeting,null,2):a.doelgroep_targeting}</div></div>`:''}
+            ${a.visual_url?`<div><span style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;">Visual</span><div style="margin-top:3px;"><a href="${a.visual_url}" target="_blank" style="color:var(--teal);font-size:12px;">Bekijk visual ↗</a></div></div>`:''}
+          </div>`:''}
+        </div>`;
+      }).join('')
+    :`<div style="color:var(--t3);font-size:12px;padding:14px 0;">Nog geen advertenties. Klik op "Nieuwe ad" om te beginnen.</div>`;
+
+  el.innerHTML=`${_mSubtabs()}
+    <div style="margin-bottom:20px;">
+      <button class="btn btn-ghost btn-sm" onclick="activeCampagneId=null;render('content')" style="margin-bottom:12px;">← Terug naar campagnes</button>
+      <div class="cmp-detail-hdr">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:4px;">${c.naam||'–'}</div>
+        </div>
+        <select class="btn btn-ghost btn-sm" onchange="setCampagneStatus('${c.id}',this.value)" style="font-size:12px;padding:5px 10px;cursor:pointer;">
+          ${['concept','actief','gepauzeerd','afgerond'].map(s=>`<option value="${s}"${c.status===s?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="openNieuweCampagneModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️ Bewerken</button>
+        <button class="btn btn-ghost-red btn-sm" onclick="verwijderCampagne('${c.id}')">Verwijder</button>
+      </div>
+      <div class="cmp-info-row">
+        <div class="cmp-info-item"><span class="cmp-info-lbl">Doel</span><span class="cmp-info-val">${c.doel||'–'}</span></div>
+        <div class="cmp-info-item"><span class="cmp-info-lbl">Doelgroep</span><span class="cmp-info-val">${c.doelgroep||'–'}</span></div>
+        <div class="cmp-info-item"><span class="cmp-info-lbl">Budget</span><span class="cmp-info-val">${_fmtBudget(c.budget)}</span></div>
+        <div class="cmp-info-item"><span class="cmp-info-lbl">Looptijd</span><span class="cmp-info-val">${_fmtDatum(c.looptijd_start)} — ${_fmtDatum(c.looptijd_eind)}</span></div>
+        <div class="cmp-info-item"><span class="cmp-info-lbl">Platforms</span><span class="cmp-info-val" style="display:flex;gap:4px;flex-wrap:wrap;">${_cmpPlatBadges(c.platforms)||'–'}</span></div>
+        ${c.notities?`<div class="cmp-info-item" style="grid-column:1/-1;"><span class="cmp-info-lbl">Notities</span><span class="cmp-info-val">${c.notities}</span></div>`:''}
+      </div>
+    </div>
+    ${heeftMetrics||c.status==='actief'?`<div class="card-title" style="margin-bottom:12px;">Metrics</div>${metricsHtml}`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="card-title">Advertenties <span style="color:var(--t3);font-weight:400;">(${ads.length})</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="openNieuweAdModal('${c.id}',${JSON.stringify(c.platforms||[])})">+ Nieuwe ad</button>
+    </div>
+    ${adsHtml}`;
+}
+
+function openCampagneDetail(id){activeCampagneId=id;render('content');}
+
+function openNieuweCampagneModal(c=null){
+  document.getElementById('cmpModalTitel').textContent=c?'Campagne bewerken':'Nieuwe campagne';
+  document.getElementById('cmp-edit-id').value=c?.id||'';
+  document.getElementById('cmp-naam').value=c?.naam||'';
+  document.getElementById('cmp-doel').value=c?.doel||'Brand awareness';
+  document.getElementById('cmp-doelgroep').value=c?.doelgroep||'';
+  document.getElementById('cmp-budget').value=c?.budget||'';
+  document.getElementById('cmp-start').value=c?.looptijd_start?.split('T')[0]||'';
+  document.getElementById('cmp-eind').value=c?.looptijd_eind?.split('T')[0]||'';
+  ['linkedin','meta','google'].forEach(p=>{
+    document.getElementById('cmp-plat-'+p).checked=(c?.platforms||[]).includes(p);
+  });
+  document.getElementById('cmp-notities').value=c?.notities||'';
+  document.getElementById('cmp-err').textContent='';
+  document.getElementById('cmp-save-btn').textContent=c?'Wijzigingen opslaan':'Campagne aanmaken';
+  document.getElementById('cmp-save-btn').disabled=false;
+  document.getElementById('campagneModal').classList.add('open');
+}
+function sluitCampagneModal(){
+  document.getElementById('campagneModal').classList.remove('open');
+  document.getElementById('cmp-edit-id').value='';
+}
+
+async function slaanCampagneOp(){
+  const naam=document.getElementById('cmp-naam').value.trim();
+  const err=document.getElementById('cmp-err');
+  const btn=document.getElementById('cmp-save-btn');
+  err.textContent='';
+  if(!naam){err.textContent='Naam is verplicht.';return;}
+  const platforms=['linkedin','meta','google'].filter(p=>document.getElementById('cmp-plat-'+p).checked);
+  const body={
+    naam,
+    doel:document.getElementById('cmp-doel').value,
+    doelgroep:document.getElementById('cmp-doelgroep').value.trim()||null,
+    budget:parseFloat(document.getElementById('cmp-budget').value)||null,
+    looptijd_start:document.getElementById('cmp-start').value||null,
+    looptijd_eind:document.getElementById('cmp-eind').value||null,
+    platforms,
+    notities:document.getElementById('cmp-notities').value.trim()||null,
+  };
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const editId=document.getElementById('cmp-edit-id').value;
+    if(editId){
+      await sbPatch('campagnes',editId,body);
+      if(activeCampagneId===editId){/* blijf in detail */}
+    } else {
+      await sbPost('campagnes',{...body,status:'concept'});
+    }
+    sluitCampagneModal();
+    toast('Campagne opgeslagen ✓');
+    await tCampagnes();
+  }catch(e){
+    err.textContent='Fout: '+e.message;
+    btn.disabled=false;btn.textContent='Opslaan';
+  }
+}
+
+async function setCampagneStatus(id,status){
+  try{
+    await sbPatch('campagnes',id,{status});
+    toast('Status bijgewerkt ✓');
+    await tCampagnes();
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function verwijderCampagne(id){
+  if(!confirm('Campagne en alle bijbehorende advertenties definitief verwijderen?')) return;
+  try{
+    await sbDelete('campagnes',id);
+    activeCampagneId=null;
+    toast('Campagne verwijderd');
+    await tCampagnes();
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+function toggleAd(id){
+  if(expandedAds.has(id)) expandedAds.delete(id); else expandedAds.add(id);
+  // Re-render detail view
+  render('content');
+}
+
+function openNieuweAdModal(campagneId,platforms){
+  document.getElementById('ad-campagne-id').value=campagneId;
+  // Vul platform dropdown met alleen de campagne-platforms
+  const plats=Array.isArray(platforms)?platforms:[];
+  const platLbl={linkedin:'LinkedIn',meta:'Meta',google:'Google Ads'};
+  document.getElementById('ad-platform').innerHTML=plats.length
+    ?plats.map(p=>`<option value="${p}">${platLbl[p]||p}</option>`).join('')
+    :`<option value="linkedin">LinkedIn</option><option value="meta">Meta</option><option value="google">Google Ads</option>`;
+  document.getElementById('ad-tekst').value='';
+  document.getElementById('ad-targeting').value='';
+  document.getElementById('ad-budget').value='';
+  document.getElementById('ad-visual').value='';
+  document.getElementById('ad-err').textContent='';
+  document.getElementById('ad-save-btn').disabled=false;
+  document.getElementById('ad-save-btn').textContent='Ad opslaan';
+  document.getElementById('adModal').classList.add('open');
+}
+function sluitAdModal(){document.getElementById('adModal').classList.remove('open');}
+
+async function genereerAdCopy(){
+  const campagneId=document.getElementById('ad-campagne-id').value;
+  const platform=document.getElementById('ad-platform').value;
+  const adType=document.getElementById('ad-type').value;
+  const btn=document.getElementById('ad-ai-btn');
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const resp=await fetch(`${SB_URL}/functions/v1/genereer-ad-copy`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({campagne_id:campagneId,platform,ad_type:adType})
+    });
+    const result=await resp.json();
+    if(!resp.ok) throw new Error(result.error||'Edge Function fout');
+    document.getElementById('ad-tekst').value=result.tekst||result.content||'';
+    toast('Ad copy gegenereerd ✓');
+  }catch(e){
+    document.getElementById('ad-err').textContent='Genereren mislukt: '+e.message;
+  }finally{
+    btn.disabled=false;btn.textContent='⚡ Genereer met AI';
+  }
+}
+
+async function slaAdOp(){
+  const tekst=document.getElementById('ad-tekst').value.trim();
+  const err=document.getElementById('ad-err');
+  const btn=document.getElementById('ad-save-btn');
+  err.textContent='';
+  if(!tekst){err.textContent='Ad tekst is verplicht.';return;}
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const targeting=document.getElementById('ad-targeting').value.trim();
+    await sbPost('campagne_ads',{
+      campagne_id:document.getElementById('ad-campagne-id').value,
+      platform:document.getElementById('ad-platform').value,
+      ad_type:document.getElementById('ad-type').value,
+      tekst,
+      doelgroep_targeting:targeting||null,
+      budget_per_ad:parseFloat(document.getElementById('ad-budget').value)||null,
+      visual_url:document.getElementById('ad-visual').value.trim()||null,
+      status:'concept'
+    });
+    sluitAdModal();
+    toast('Ad opgeslagen ✓');
+    await tCampagnes();
+  }catch(e){
+    err.textContent='Fout: '+e.message;
+    btn.disabled=false;btn.textContent='Ad opslaan';
+  }
+}
+// ══════════════════════════════════════════════════════════════════════════
 
 function ciPlatLabel(p){return{'linkedin':'LinkedIn','instagram':'Instagram','website':'Website'}[p]||cap(p||'');}
 function ciFmtLabel(f){return{'tekstpost':'Tekstpost','carrousel':'Carrousel','infographic':'Infographic','reels':'Reels'}[f]||cap(f||'');}
