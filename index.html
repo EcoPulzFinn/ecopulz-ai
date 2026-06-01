@@ -446,6 +446,39 @@
 .ad-b-gepauzeerd { background:rgba(245,197,66,.12); color:#F5C542; border:1px solid rgba(245,197,66,.22); }
 .cb-row { display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer; font-size:12.5px; color:var(--t1); user-select:none; }
 .cb-row input[type=checkbox] { width:14px; height:14px; accent-color:var(--teal); cursor:pointer; flex-shrink:0; }
+/* === Werving === */
+.vac-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+@media(max-width:900px){ .vac-grid { grid-template-columns:1fr 1fr; } }
+.vac-card { background:var(--card); border:1px solid var(--bd); padding:16px 18px; cursor:pointer; transition:border-color .13s,transform .1s; border-radius:var(--r); }
+.vac-card:hover { border-color:var(--teal-b); transform:translateY(-1px); }
+.vac-card-titel { font-size:14px; font-weight:700; color:var(--t1); margin-bottom:3px; }
+.vac-card-sub { font-size:11.5px; color:var(--t2); margin-bottom:10px; }
+.vac-status-b { font-size:9px; font-weight:700; padding:2px 7px; border-radius:2px; text-transform:uppercase; letter-spacing:.04em; }
+.vac-b-concept { background:rgba(255,255,255,.07); color:var(--t3); border:1px solid var(--bd); }
+.vac-b-open { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+.vac-b-on_hold { background:rgba(245,197,66,.12); color:#F5C542; border:1px solid rgba(245,197,66,.22); }
+.vac-b-gesloten { background:rgba(229,53,53,.1); color:var(--red); border:1px solid rgba(229,53,53,.2); }
+.vac-b-vervuld { background:rgba(168,224,224,.1); color:var(--blue); border:1px solid rgba(168,224,224,.2); }
+.vac-pipeline { display:flex; height:4px; border-radius:99px; overflow:hidden; margin:10px 0; gap:1px; }
+.vac-pipeline-seg { height:100%; border-radius:99px; min-width:3px; }
+.vac-card-ft { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--t3); }
+.kand-card { background:var(--card); border:1px solid var(--bd); border-radius:var(--r); margin-bottom:8px; overflow:hidden; }
+.kand-card-hdr { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; }
+.kand-body { padding:0 14px 14px; border-top:1px solid var(--bd); }
+.match-score { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+.score-teal { background:var(--teal-dim); color:var(--teal); border:1.5px solid var(--teal-b); }
+.score-yellow { background:rgba(245,197,66,.12); color:#F5C542; border:1.5px solid rgba(245,197,66,.25); }
+.score-red { background:rgba(229,53,53,.1); color:var(--red); border:1.5px solid rgba(229,53,53,.2); }
+.kand-status-b { font-size:9px; font-weight:700; padding:2px 6px; border-radius:2px; text-transform:uppercase; letter-spacing:.03em; }
+.ks-gevonden { background:rgba(255,255,255,.07); color:var(--t3); border:1px solid var(--bd); }
+.ks-benaderd { background:rgba(91,164,232,.12); color:#5BA4E8; border:1px solid rgba(91,164,232,.22); }
+.ks-gereageerd { background:rgba(245,197,66,.12); color:#F5C542; border:1px solid rgba(245,197,66,.22); }
+.ks-interview { background:rgba(251,146,60,.12); color:#fb923c; border:1px solid rgba(251,146,60,.22); }
+.ks-aangenomen { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+.ks-afgewezen { background:rgba(229,53,53,.1); color:var(--red); border:1px solid rgba(229,53,53,.2); }
+.eis-tag { display:inline-flex; align-items:center; font-size:10.5px; padding:3px 8px; border-radius:2px; margin:2px; }
+.eis-tag-must { background:rgba(0,181,147,.1); color:var(--teal); border:1px solid var(--teal-b); }
+.eis-tag-nice { background:rgba(255,255,255,.06); color:var(--t3); border:1px solid var(--bd); }
 /* === Concept Popup === */
 .ci-modal { background:var(--sb); border:1px solid var(--bdm); width:700px; max-width:96vw; max-height:88vh; border-radius:var(--r); display:flex; flex-direction:column; overflow:hidden; }
 .ci-modal-hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px 16px; border-bottom:1px solid var(--bd); flex-shrink:0; }
@@ -645,6 +678,67 @@
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="sluitNieuweReeksModal()">Annuleren</button>
       <button class="btn btn-teal" id="nr-genereer-btn" onclick="genereerReeks()">⚡ Genereer reeks</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vacature modal -->
+<div class="modal-bg" id="vacatureModal" onclick="if(event.target===this)sluitVacatureModal()">
+  <div class="modal" style="width:600px;max-height:90vh;overflow-y:auto;">
+    <h3 id="vacModalTitel">Nieuwe vacature</h3>
+    <input type="hidden" id="vac-edit-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Titel</label><input id="vac-titel" placeholder="Senior Warmtenet Consultant"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Afdeling</label><input id="vac-afdeling" placeholder="Consultancy"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Locatie</label><input id="vac-locatie" placeholder="Utrecht / Hybride"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Type</label>
+        <select id="vac-type">
+          <option value="fulltime">Fulltime</option>
+          <option value="parttime">Parttime</option>
+          <option value="interim">Interim</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-bottom:0;"><label>Salaris range</label><input id="vac-salaris" placeholder="€4.500 - €6.000"></div>
+    </div>
+    <div class="form-row" style="margin-top:12px;"><label>Eisen (één per regel)</label><textarea id="vac-eisen" placeholder="HBO/WO Werktuigbouwkunde of vergelijkbaar&#10;5+ jaar ervaring in warmtenetten&#10;Rijbewijs B" style="min-height:80px;"></textarea></div>
+    <div class="form-row"><label>Nice to have (één per regel)</label><textarea id="vac-nice" placeholder="Ervaring met SCADA-systemen&#10;Kennis van warmtepompen" style="min-height:60px;"></textarea></div>
+    <div class="form-row">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+        <label style="margin-bottom:0;">Vacaturetekst</label>
+        <button class="btn btn-ghost btn-sm" id="vac-ai-btn" onclick="genereerVacaturetekst()" style="font-size:10px;padding:2px 8px;">⚡ Genereer met AI</button>
+      </div>
+      <textarea id="vac-beschrijving" placeholder="Volledige vacaturetekst..." style="min-height:120px;"></textarea>
+    </div>
+    <div id="vac-err" style="font-size:11.5px;color:var(--red);min-height:16px;"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitVacatureModal()">Annuleren</button>
+      <button class="btn btn-teal" id="vac-save-btn" onclick="slaVacatureOp()">Vacature opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kandidaat toevoegen modal -->
+<div class="modal-bg" id="kandidaatModal" onclick="if(event.target===this)sluitKandidaatModal()">
+  <div class="modal" style="width:480px;">
+    <h3>Kandidaat toevoegen</h3>
+    <input type="hidden" id="km-vacature-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Naam</label><input id="km-naam" placeholder="Jan de Vries"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Huidige functie</label><input id="km-functie" placeholder="Asset Manager"></div>
+    </div>
+    <div class="form-row" style="margin-top:12px;"><label>Huidige organisatie</label><input id="km-org" placeholder="Vattenfall Warmte"></div>
+    <div class="form-row"><label>LinkedIn URL</label><input id="km-li" placeholder="https://linkedin.com/in/..."></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;"><label>Email (optioneel)</label><input id="km-email" type="email" placeholder="jan@bedrijf.nl"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>Telefoon (optioneel)</label><input id="km-tel" placeholder="06-12345678"></div>
+    </div>
+    <div class="form-row" style="margin-top:12px;"><label>Notities</label><textarea id="km-notities" placeholder="Eerste indruk, bron, context..." style="min-height:60px;"></textarea></div>
+    <div id="km-err" style="font-size:11.5px;color:var(--red);min-height:16px;"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitKandidaatModal()">Annuleren</button>
+      <button class="btn btn-teal" id="km-save-btn" onclick="slaKandidaatOp()">Toevoegen</button>
     </div>
   </div>
 </div>
@@ -906,6 +1000,7 @@ let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 let expandedReeksen=new Set(), _reeksIdeeënCache={};
 let activeCampagneId=null, expandedAds=new Set();
+let activeVacatureId=null, expandedKandidaten=new Set(), kFilterStatus='alle';
 
 const PH = {
   leads:{
@@ -1286,7 +1381,7 @@ async function tContent(){
       return;
     }
     if(mTab==='werving'){
-      document.getElementById('ca').innerHTML=`${_mSubtabs()}<div class="empty" style="margin-top:60px;"><div style="font-size:32px;margin-bottom:12px;color:var(--t3);">🔒</div>Werving — komt binnenkort</div>`;
+      await tWerving();
       return;
     }
     // Laad reeksen en losse ideeën parallel
@@ -1450,6 +1545,373 @@ function renderReeksSection(reeksen){
   }).join('');
 }
 // ─────────────────────────────────────────────────────────────────────────
+
+// ═══ WERVING ══════════════════════════════════════════════════════════════
+async function tWerving(){
+  const el=document.getElementById('ca');
+  el.innerHTML=`${_mSubtabs()}<div class="loading">Vacatures laden...</div>`;
+  try{
+    const [vacatures,alleKandidaten]=await Promise.all([
+      sbGetSafe('vacatures','select=*&order=created_at.desc').catch(()=>[]),
+      sbGetSafe('kandidaten','select=id,vacature_id,status').catch(()=>[])
+    ]);
+    if(activeVacatureId){
+      const v=vacatures.find(x=>x.id===activeVacatureId);
+      if(v){ await renderVacatureDetail(el,v,alleKandidaten); return; }
+      activeVacatureId=null;
+    }
+    renderVacaturesOverzicht(el,vacatures,alleKandidaten);
+  }catch(e){el.innerHTML=`${_mSubtabs()}<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function _vacStatusBadge(s){
+  const m={concept:'vac-b-concept',open:'vac-b-open',on_hold:'vac-b-on_hold',gesloten:'vac-b-gesloten',vervuld:'vac-b-vervuld'};
+  const l={concept:'Concept',open:'Open',on_hold:'On hold',gesloten:'Gesloten',vervuld:'Vervuld'};
+  return `<span class="vac-status-b ${m[s]||'vac-b-concept'}">${l[s]||s||'Concept'}</span>`;
+}
+function _kStatusBadge(s){
+  const m={gevonden:'ks-gevonden',benaderd:'ks-benaderd',gereageerd:'ks-gereageerd',interview:'ks-interview',aangenomen:'ks-aangenomen',afgewezen:'ks-afgewezen'};
+  const l={gevonden:'Gevonden',benaderd:'Benaderd',gereageerd:'Gereageerd',interview:'Interview',aangenomen:'Aangenomen',afgewezen:'Afgewezen'};
+  return `<span class="kand-status-b ${m[s]||'ks-gevonden'}">${l[s]||s||'–'}</span>`;
+}
+function _matchScore(score){
+  const s=score??'–';
+  const cls=score==null?'score-yellow':score>=70?'score-teal':score>=40?'score-yellow':'score-red';
+  return `<div class="match-score ${cls}">${s}</div>`;
+}
+function _vacPipelineBalk(kands){
+  const statussen=['gevonden','benaderd','gereageerd','interview','aangenomen'];
+  const kleuren=['#576057','#5BA4E8','#F5C542','#fb923c','#00B593'];
+  const totaal=kands.filter(k=>k.status!=='afgewezen').length||1;
+  return `<div class="vac-pipeline">${statussen.map((s,i)=>{
+    const n=kands.filter(k=>k.status===s).length;
+    return n?`<div class="vac-pipeline-seg" style="flex:${n};background:${kleuren[i]};"></div>`:'';
+  }).join('')}</div>`;
+}
+
+function renderVacaturesOverzicht(el,vacatures,alleKandidaten){
+  const open=vacatures.filter(v=>v.status==='open');
+  const totKand=alleKandidaten.filter(k=>open.find(v=>v.id===k.vacature_id)).length;
+  const inInterview=alleKandidaten.filter(k=>k.status==='interview').length;
+  const kpiHtml=`<div class="w-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+    <div class="widget w-teal"><div class="w-num">${open.length}</div><div class="w-label">Open vacatures</div></div>
+    <div class="widget w-blue"><div class="w-num">${totKand}</div><div class="w-label">Totaal kandidaten</div></div>
+    <div class="widget w-sal"><div class="w-num">${inInterview}</div><div class="w-label">In interview</div></div>
+  </div>`;
+  const lijstHtml=vacatures.length
+    ?`<div class="vac-grid">${vacatures.map(v=>{
+        const kands=alleKandidaten.filter(k=>k.vacature_id===v.id);
+        const subparts=[v.afdeling,v.locatie,v.type].filter(Boolean).join(' · ');
+        const statPipe=['gevonden','benaderd','gereageerd','interview','aangenomen'];
+        const telHtml=statPipe.map(s=>{const n=kands.filter(k=>k.status===s).length;return n?`<span style="color:var(--t3);font-size:10px;">${n} ${s}</span>`:''}).filter(Boolean).join(' · ');
+        return `<div class="vac-card" onclick="openVacatureDetail('${v.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+            <div class="vac-card-titel">${v.titel||'–'}</div>
+            ${_vacStatusBadge(v.status)}
+          </div>
+          <div class="vac-card-sub">${subparts||'–'}</div>
+          ${_vacPipelineBalk(kands)}
+          <div class="vac-card-ft">
+            <span>${kands.length} kandidaten</span>
+            <span>${telHtml||'Geen kandidaten'}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>`
+    :`<div class="empty" style="margin-top:40px;"><div style="font-size:28px;margin-bottom:10px;color:var(--t3);">👥</div>Nog geen vacatures. Maak een vacature aan om kandidaten te zoeken.</div>`;
+  el.innerHTML=`${_mSubtabs()}
+    <div style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+      <button class="btn-genereer" onclick="openNieuweVacatureModal()"><span>+</span> Nieuwe vacature</button>
+    </div>
+    ${kpiHtml}${lijstHtml}`;
+}
+
+async function renderVacatureDetail(el,v,alleKandidaten){
+  const kandidaten=await sbGetSafe('kandidaten',`select=*&vacature_id=eq.${v.id}&order=match_score.desc`).catch(()=>[]);
+  const statussen=['gevonden','benaderd','gereageerd','interview','aangenomen','afgewezen'];
+  const sKleuren={gevonden:'#576057',benaderd:'#5BA4E8',gereageerd:'#F5C542',interview:'#fb923c',aangenomen:'#00B593',afgewezen:'#E53535'};
+  const pipeHtml=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+    ${statussen.map(s=>{
+      const n=kandidaten.filter(k=>k.status===s).length;
+      return `<div style="display:flex;align-items:center;gap:5px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${sKleuren[s]};flex-shrink:0;"></div>
+        <span style="font-size:11px;color:${n?'var(--t1)':'var(--t3)'};">${n} ${s}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+  const eisen=Array.isArray(v.eisen)?v.eisen:[];
+  const nice=Array.isArray(v.nice_to_have)?v.nice_to_have:[];
+  const gefilterd=kFilterStatus==='alle'?kandidaten:kandidaten.filter(k=>k.status===kFilterStatus);
+  const filterOpts=['alle',...statussen];
+  const filterHtml=filterOpts.map(s=>`<button class="fbtn${kFilterStatus===s?' active':''}" onclick="kFilterStatus='${s}';render('content')">${s==='alle'?'Alle':s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join('');
+  const kandsHtml=gefilterd.length
+    ?gefilterd.map(k=>{
+        const isExp=expandedKandidaten.has(k.id);
+        return `<div class="kand-card">
+          <div class="kand-card-hdr" onclick="toggleKandidaat('${k.id}')">
+            <div class="l-av ${k.status==='aangenomen'?'t1':'t2'}" style="width:34px;height:34px;font-size:13px;flex-shrink:0;">${(k.naam||'?').charAt(0).toUpperCase()}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.naam||'–'}</div>
+              <div style="font-size:11px;color:var(--t2);">${[k.functie_huidig,k.organisatie_huidig].filter(Boolean).join(' @ ')||'–'}</div>
+            </div>
+            ${_matchScore(k.match_score)}
+            ${_kStatusBadge(k.status)}
+            ${k.linkedin_url?`<a href="${k.linkedin_url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--t3);font-size:13px;text-decoration:none;flex-shrink:0;" title="LinkedIn">in</a>`:''}
+            <span style="color:var(--t3);font-size:10px;flex-shrink:0;">${isExp?'▲':'▼'}</span>
+          </div>
+          ${k.match_reden&&!isExp?`<div style="padding:0 14px 10px;font-size:11px;color:var(--t3);font-style:italic;">${k.match_reden}</div>`:''}
+          ${isExp?`<div class="kand-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;">
+              <div>
+                <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:4px;">Status</div>
+                <select class="btn btn-ghost btn-sm" onchange="setKandidaatStatus('${k.id}',this.value)" style="font-size:11px;padding:3px 8px;cursor:pointer;">
+                  ${statussen.map(s=>`<option value="${s}"${k.status===s?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:4px;">Bron</div>
+                <div style="font-size:12px;color:var(--t2);">${k.bron||'–'}</div>
+              </div>
+            </div>
+            ${k.profiel_context?`<div style="margin-bottom:12px;"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:4px;">Profiel context</div><div style="font-size:12px;color:var(--t2);line-height:1.6;white-space:pre-wrap;">${k.profiel_context}</div></div>`:''}
+            ${k.outreach_bericht?`<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><span style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;">Outreach bericht</span><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 7px;" onclick="navigator.clipboard.writeText(${JSON.stringify(k.outreach_bericht)});toast('Gekopieerd ✓')">Kopieer</button></div><div style="font-size:12px;color:var(--t2);line-height:1.6;background:var(--ch);padding:10px 12px;border-radius:var(--r);white-space:pre-wrap;">${k.outreach_bericht}</div></div>`:''}
+            <div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:4px;">Notities</div><textarea style="width:100%;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);font-family:var(--f);font-size:12px;padding:8px;border-radius:var(--r);resize:vertical;min-height:60px;" placeholder="Voeg notities toe..." onblur="slaKandidaatNotitiesOp('${k.id}',this.value)">${k.notities||''}</textarea></div>
+          </div>`:''}
+        </div>`;
+      }).join('')
+    :`<div style="color:var(--t3);font-size:12px;padding:14px 0;">Geen kandidaten met deze status.</div>`;
+  el.innerHTML=`${_mSubtabs()}
+    <div style="margin-bottom:20px;">
+      <button class="btn btn-ghost btn-sm" onclick="activeVacatureId=null;kFilterStatus='alle';render('content')" style="margin-bottom:12px;">← Terug naar vacatures</button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="flex:1;min-width:0;"><div style="font-size:18px;font-weight:700;color:var(--t1);">${v.titel||'–'}</div></div>
+        <select class="btn btn-ghost btn-sm" onchange="setVacatureStatus('${v.id}',this.value)" style="font-size:12px;padding:5px 10px;cursor:pointer;">
+          ${['concept','open','on_hold','gesloten','vervuld'].map(s=>`<option value="${s}"${v.status===s?' selected':''}>${s==='on_hold'?'On hold':s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="openNieuweVacatureModal(${JSON.stringify(v).replace(/"/g,'&quot;')})">✏️ Bewerken</button>
+        <button class="btn btn-teal btn-sm" id="zoek-kand-btn" onclick="zoekKandidaten('${v.id}')">🔍 Zoek kandidaten</button>
+        <button class="btn btn-ghost-red btn-sm" onclick="verwijderVacature('${v.id}')">Verwijder</button>
+      </div>
+      <div style="background:var(--ch);border:1px solid var(--bd);padding:14px 16px;border-radius:var(--r);margin-bottom:16px;">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:${eisen.length?'12px':'0'};">
+          ${[['Afdeling',v.afdeling],['Locatie',v.locatie],['Type',v.type],['Salaris',v.salaris_range]].filter(([,val])=>val).map(([lbl,val])=>`<div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;">${lbl}</div><div style="font-size:12.5px;color:var(--t1);margin-top:2px;">${val}</div></div>`).join('')}
+        </div>
+        ${eisen.length?`<div style="margin-bottom:8px;"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:5px;">Eisen</div><div>${eisen.map(e=>`<span class="eis-tag eis-tag-must">${e}</span>`).join('')}</div></div>`:''}
+        ${nice.length?`<div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:5px;">Nice to have</div><div>${nice.map(e=>`<span class="eis-tag eis-tag-nice">${e}</span>`).join('')}</div></div>`:''}
+      </div>
+      ${v.beschrijving?`<details style="margin-bottom:16px;background:var(--ch);border:1px solid var(--bd);padding:12px 14px;border-radius:var(--r);"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--t2);">Vacaturetekst bekijken</summary><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-top:10px;white-space:pre-wrap;">${v.beschrijving}</div></details>`:''}
+      <div style="background:var(--ch);border:1px solid var(--bd);padding:12px 14px;border-radius:var(--r);display:flex;gap:8px;align-items:center;margin-bottom:20px;">
+        <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;white-space:nowrap;">Publicatie URL</span>
+        <input id="pub-url-${v.id}" value="${v.publicatie_url||''}" placeholder="https://werkenbij.ecopulz.com/..." style="flex:1;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);font-family:var(--f);font-size:12px;padding:5px 9px;border-radius:var(--r);outline:none;">
+        <button class="btn btn-ghost btn-sm" onclick="slaPublicatieUrlOp('${v.id}')" style="white-space:nowrap;">Opslaan</button>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">${pipeHtml}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;">${filterHtml}</div>
+      <button class="btn btn-ghost btn-sm" onclick="openKandidaatModal('${v.id}')">+ Kandidaat toevoegen</button>
+    </div>
+    ${kandsHtml}`;
+}
+
+function openVacatureDetail(id){activeVacatureId=id;kFilterStatus='alle';expandedKandidaten.clear();render('content');}
+
+function openNieuweVacatureModal(v=null){
+  document.getElementById('vacModalTitel').textContent=v?'Vacature bewerken':'Nieuwe vacature';
+  document.getElementById('vac-edit-id').value=v?.id||'';
+  document.getElementById('vac-titel').value=v?.titel||'';
+  document.getElementById('vac-afdeling').value=v?.afdeling||'';
+  document.getElementById('vac-locatie').value=v?.locatie||'';
+  document.getElementById('vac-type').value=v?.type||'fulltime';
+  document.getElementById('vac-salaris').value=v?.salaris_range||'';
+  document.getElementById('vac-eisen').value=Array.isArray(v?.eisen)?v.eisen.join('\n'):'';
+  document.getElementById('vac-nice').value=Array.isArray(v?.nice_to_have)?v.nice_to_have.join('\n'):'';
+  document.getElementById('vac-beschrijving').value=v?.beschrijving||'';
+  document.getElementById('vac-err').textContent='';
+  document.getElementById('vac-save-btn').disabled=false;
+  document.getElementById('vac-save-btn').textContent='Vacature opslaan';
+  document.getElementById('vacatureModal').classList.add('open');
+}
+function sluitVacatureModal(){
+  document.getElementById('vacatureModal').classList.remove('open');
+  document.getElementById('vac-edit-id').value='';
+}
+
+async function genereerVacaturetekst(){
+  const titel=document.getElementById('vac-titel').value.trim();
+  const afdeling=document.getElementById('vac-afdeling').value.trim();
+  const eisenText=document.getElementById('vac-eisen').value.trim();
+  const niceText=document.getElementById('vac-nice').value.trim();
+  const btn=document.getElementById('vac-ai-btn');
+  const err=document.getElementById('vac-err');
+  err.textContent='';
+  if(!titel){err.textContent='Vul eerst een titel in.';return;}
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const resp=await fetch(`${SB_URL}/functions/v1/genereer-vacaturetekst`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({
+        titel,afdeling,
+        eisen:eisenText.split('\n').filter(e=>e.trim()).map(e=>e.trim()),
+        nice_to_have:niceText.split('\n').filter(e=>e.trim()).map(e=>e.trim())
+      })
+    });
+    const result=await resp.json();
+    if(!resp.ok) throw new Error(result.error||'Edge Function fout');
+    document.getElementById('vac-beschrijving').value=result.tekst||result.content||'';
+    toast('Vacaturetekst gegenereerd ✓');
+  }catch(e){
+    err.textContent='Genereren mislukt: '+e.message;
+  }finally{
+    btn.disabled=false;btn.textContent='⚡ Genereer met AI';
+  }
+}
+
+async function slaVacatureOp(){
+  const titel=document.getElementById('vac-titel').value.trim();
+  const err=document.getElementById('vac-err');
+  const btn=document.getElementById('vac-save-btn');
+  err.textContent='';
+  if(!titel){err.textContent='Titel is verplicht.';return;}
+  const eisenText=document.getElementById('vac-eisen').value.trim();
+  const niceText=document.getElementById('vac-nice').value.trim();
+  const body={
+    titel,
+    afdeling:document.getElementById('vac-afdeling').value.trim()||null,
+    locatie:document.getElementById('vac-locatie').value.trim()||null,
+    type:document.getElementById('vac-type').value,
+    salaris_range:document.getElementById('vac-salaris').value.trim()||null,
+    eisen:eisenText.split('\n').filter(e=>e.trim()).map(e=>e.trim()),
+    nice_to_have:niceText.split('\n').filter(e=>e.trim()).map(e=>e.trim()),
+    beschrijving:document.getElementById('vac-beschrijving').value.trim()||null,
+  };
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const editId=document.getElementById('vac-edit-id').value;
+    if(editId){
+      await sbPatch('vacatures',editId,body);
+    } else {
+      await sbPost('vacatures',{...body,status:'concept'});
+    }
+    sluitVacatureModal();
+    toast('Vacature opgeslagen ✓');
+    await tWerving();
+  }catch(e){
+    err.textContent='Fout: '+e.message;
+    btn.disabled=false;btn.textContent='Vacature opslaan';
+  }
+}
+
+async function setVacatureStatus(id,status){
+  try{
+    await sbPatch('vacatures',id,{status});
+    toast('Status bijgewerkt ✓');
+    await tWerving();
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function verwijderVacature(id){
+  if(!confirm('Vacature en alle bijbehorende kandidaten definitief verwijderen?')) return;
+  try{
+    await sbDelete('vacatures',id);
+    activeVacatureId=null;
+    toast('Vacature verwijderd');
+    await tWerving();
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function zoekKandidaten(vacatureId){
+  const btn=document.getElementById('zoek-kand-btn');
+  if(!btn) return;
+  btn.disabled=true;btn.textContent='Agent zoekt...';
+  const statusEl=document.createElement('div');
+  statusEl.style.cssText='font-size:11.5px;color:var(--t2);margin-top:6px;animation:fadein .3s;';
+  statusEl.textContent='Agent zoekt kandidaten op LinkedIn… Dit duurt ~60 seconden.';
+  btn.parentElement?.appendChild(statusEl);
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const resp=await fetch(`${SB_URL}/functions/v1/recruitment-scanner`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({vacature_id:vacatureId})
+    });
+    const result=await resp.json();
+    if(!resp.ok) throw new Error(result.error||'Edge Function fout');
+    toast(`${result.gevonden||0} kandidaten gevonden ✓`);
+    await tWerving();
+  }catch(e){
+    toast('Fout: '+e.message);
+    btn.disabled=false;btn.textContent='🔍 Zoek kandidaten';
+    statusEl.remove();
+  }
+}
+
+async function slaPublicatieUrlOp(vacatureId){
+  const url=document.getElementById('pub-url-'+vacatureId)?.value?.trim()||null;
+  try{
+    await sbPatch('vacatures',vacatureId,{publicatie_url:url});
+    toast('URL opgeslagen ✓');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+function toggleKandidaat(id){
+  if(expandedKandidaten.has(id)) expandedKandidaten.delete(id); else expandedKandidaten.add(id);
+  render('content');
+}
+
+async function setKandidaatStatus(id,status){
+  try{
+    await sbPatch('kandidaten',id,{status});
+    toast('Status bijgewerkt ✓');
+    await tWerving();
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function slaKandidaatNotitiesOp(id,notities){
+  try{ await sbPatch('kandidaten',id,{notities}); }
+  catch(e){ toast('Fout bij opslaan notities'); }
+}
+
+function openKandidaatModal(vacatureId){
+  document.getElementById('km-vacature-id').value=vacatureId;
+  ['km-naam','km-functie','km-org','km-li','km-email','km-tel','km-notities'].forEach(id=>{ document.getElementById(id).value=''; });
+  document.getElementById('km-err').textContent='';
+  document.getElementById('km-save-btn').disabled=false;
+  document.getElementById('km-save-btn').textContent='Toevoegen';
+  document.getElementById('kandidaatModal').classList.add('open');
+}
+function sluitKandidaatModal(){document.getElementById('kandidaatModal').classList.remove('open');}
+
+async function slaKandidaatOp(){
+  const naam=document.getElementById('km-naam').value.trim();
+  const err=document.getElementById('km-err');
+  const btn=document.getElementById('km-save-btn');
+  err.textContent='';
+  if(!naam){err.textContent='Naam is verplicht.';return;}
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    await sbPost('kandidaten',{
+      vacature_id:document.getElementById('km-vacature-id').value,
+      naam,
+      functie_huidig:document.getElementById('km-functie').value.trim()||null,
+      organisatie_huidig:document.getElementById('km-org').value.trim()||null,
+      linkedin_url:document.getElementById('km-li').value.trim()||null,
+      email:document.getElementById('km-email').value.trim()||null,
+      telefoon:document.getElementById('km-tel').value.trim()||null,
+      notities:document.getElementById('km-notities').value.trim()||null,
+      bron:'handmatig',
+      status:'gevonden'
+    });
+    sluitKandidaatModal();
+    toast('Kandidaat toegevoegd ✓');
+    await tWerving();
+  }catch(e){
+    err.textContent='Fout: '+e.message;
+    btn.disabled=false;btn.textContent='Toevoegen';
+  }
+}
+// ══════════════════════════════════════════════════════════════════════════
 
 // ═══ CAMPAGNES ════════════════════════════════════════════════════════════
 async function tCampagnes(){
