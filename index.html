@@ -400,6 +400,19 @@
 .ci-aanleiding { font-size:11.5px; color:var(--t2); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .ci-footer { margin-top:auto; padding-top:4px; }
 .plat-b.website { background:rgba(168,85,247,.15); color:#d8b4fe; border:1px solid rgba(168,85,247,.25); }
+/* === Reeksen === */
+.reeks-sectie-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.reeks-sectie-titel { font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--t3); }
+.reeks-card { background:var(--card); border:1px solid var(--bd); border-radius:var(--r); margin-bottom:8px; overflow:hidden; transition:border-color .13s; }
+.reeks-card:hover { border-color:var(--bdm); }
+.reeks-hdr { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; cursor:pointer; gap:10px; user-select:none; }
+.reeks-body { padding:0 14px 14px; border-top:1px solid var(--bd); }
+.reeks-status-b { font-size:9px; font-weight:700; padding:2px 6px; border-radius:2px; flex-shrink:0; letter-spacing:.04em; text-transform:uppercase; }
+.reeks-b-idee { background:rgba(255,255,255,.07); color:var(--t3); border:1px solid var(--bd); }
+.reeks-b-actief { background:rgba(168,224,224,.12); color:var(--blue); border:1px solid rgba(168,224,224,.22); }
+.reeks-b-afgerond { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
+.reeks-chevron { color:var(--t3); font-size:10px; transition:transform .2s; }
+.reeks-chevron.open { transform:rotate(180deg); }
 /* === Concept Popup === */
 .ci-modal { background:var(--sb); border:1px solid var(--bdm); width:700px; max-width:96vw; max-height:88vh; border-radius:var(--r); display:flex; flex-direction:column; overflow:hidden; }
 .ci-modal-hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px 16px; border-bottom:1px solid var(--bd); flex-shrink:0; }
@@ -555,6 +568,50 @@
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="sluitPlanPostModal()">Annuleren</button>
       <button class="btn btn-teal" id="pp-bevestig" onclick="bevestigPlanning()">Bevestig planning</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="nieuweReeksModal" onclick="if(event.target===this)sluitNieuweReeksModal()">
+  <div class="modal" style="width:520px;">
+    <h3>Nieuwe content reeks</h3>
+    <div class="form-row">
+      <label>Naam</label>
+      <input id="nr-naam" placeholder="Bijv. Warmtetransitie uitgelegd">
+    </div>
+    <div class="form-row">
+      <label>Onderwerp</label>
+      <textarea id="nr-onderwerp" placeholder="Wat moet de reeks behandelen? Beschrijf het thema, de doelgroep en de boodschap..." style="min-height:80px;"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:12px;">
+      <div class="form-row" style="margin-bottom:0;">
+        <label>Pilaar</label>
+        <select id="nr-pilaar">
+          <option value="">Kies pilaar...</option>
+          <option value="Vakkennis">Vakkennis</option>
+          <option value="Cultuur & mensen">Cultuur &amp; mensen</option>
+          <option value="Praktijk & cases">Praktijk &amp; cases</option>
+          <option value="Mening & visie">Mening &amp; visie</option>
+          <option value="Impact">Impact</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-bottom:0;">
+        <label>Platform</label>
+        <select id="nr-platform">
+          <option value="linkedin">LinkedIn</option>
+          <option value="instagram">Instagram</option>
+          <option value="website">Website</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-bottom:0;">
+        <label>Aantal</label>
+        <input id="nr-aantal" type="number" min="3" max="8" value="5" style="text-align:center;">
+      </div>
+    </div>
+    <div id="nr-err" style="font-size:11.5px;color:var(--red);margin-top:10px;min-height:16px;"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitNieuweReeksModal()">Annuleren</button>
+      <button class="btn btn-teal" id="nr-genereer-btn" onclick="genereerReeks()">⚡ Genereer reeks</button>
     </div>
   </div>
 </div>
@@ -736,6 +793,7 @@ async function sbPost(table, body) {
 let tab='overzicht', lFase='prospecting', lFilter='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
+let expandedReeksen=new Set(), _reeksIdeeënCache={};
 
 const PH = {
   leads:{
@@ -1119,22 +1177,167 @@ async function tContent(){
       document.getElementById('ca').innerHTML=`${_mSubtabs()}<div class="empty" style="margin-top:60px;"><div style="font-size:32px;margin-bottom:12px;color:var(--t3);">🔒</div>Werving — komt binnenkort</div>`;
       return;
     }
+    // Laad reeksen en losse ideeën parallel
     const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost',afgewezen:'afgewezen'};
-    let q=cFilter==='gepland'?'select=*&status=eq.gepland&order=gepland_datum.asc':'select=*&order=created_at.desc';
+    let q=cFilter==='gepland'?'select=*&reeks_id=is.null&status=eq.gepland&order=gepland_datum.asc':'select=*&reeks_id=is.null&order=created_at.desc';
     if(cFilter!=='alle'&&cFilter!=='gepland') q+=`&status=eq.${fm[cFilter]||cFilter}`;
-    ciIdeeën=await sbGetSafe('content_ideas',q);
+    const [reeksen, losseIdeeën] = await Promise.all([
+      sbGetSafe('content_reeksen','select=*&order=created_at.desc').catch(()=>[]),
+      sbGetSafe('content_ideas',q)
+    ]);
+    ciIdeeën = losseIdeeën;
+
     const filterBtns=['Alle','Ideeën','Concept','Gepland','Gepost','Afgewezen'];
     const filterHtml=filterBtns.map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('');
     const gridHtml=cFilter==='gepland'?renderGeplandAgenda(ciIdeeën):`<div class="ci-grid">${ciIdeeën.length?ciIdeeën.map(ciKaart).join(''):'<div class="empty">Geen content in deze categorie</div>'}</div>`;
+
     document.getElementById('ca').innerHTML=`
       ${_mSubtabs()}
       <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--bd);margin-bottom:18px;">
         <div style="display:flex;">${filterHtml}</div>
-        <button class="btn btn-ghost btn-sm" onclick="bedenkIdee()" style="margin-bottom:3px;flex-shrink:0;margin-left:8px;">💡 Bedenk idee</button>
+        <div style="display:flex;gap:6px;margin-bottom:3px;flex-shrink:0;">
+          <button class="btn btn-ghost btn-sm" onclick="openNieuweReeksModal()">📚 Nieuwe reeks</button>
+          <button class="btn btn-ghost btn-sm" onclick="bedenkIdee()">💡 Bedenk idee</button>
+        </div>
+      </div>
+      <div class="reeks-sectie-hdr" style="margin-top:4px;">
+        <span class="reeks-sectie-titel">Content reeksen <span style="color:var(--t3);font-weight:400;">(${reeksen.length})</span></span>
+      </div>
+      <div id="reeksen-container">${renderReeksSection(reeksen)}</div>
+      <div class="reeks-sectie-hdr" style="margin-top:20px;margin-bottom:10px;">
+        <span class="reeks-sectie-titel">Losse ideeën <span style="color:var(--t3);font-weight:400;">(${ciIdeeën.length})</span></span>
       </div>
       ${gridHtml}`;
+
+    // Vul gecachte reeks-ideeën in de DOM (voor al uitgebreide reeksen)
+    for(const reeks of reeksen){
+      if(expandedReeksen.has(reeks.id) && !_reeksIdeeënCache[reeks.id]){
+        _reeksIdeeënCache[reeks.id]=await sbGetSafe('content_ideas',`select=*&reeks_id=eq.${reeks.id}&order=created_at.asc`).catch(()=>[]);
+      }
+    }
+
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
+
+// ─── Reeksen functies ─────────────────────────────────────────────────────
+function openNieuweReeksModal(){
+  document.getElementById('nieuweReeksModal').classList.add('open');
+}
+function sluitNieuweReeksModal(){
+  document.getElementById('nieuweReeksModal').classList.remove('open');
+  document.getElementById('nr-naam').value='';
+  document.getElementById('nr-onderwerp').value='';
+  document.getElementById('nr-pilaar').value='';
+  document.getElementById('nr-platform').value='linkedin';
+  document.getElementById('nr-aantal').value='5';
+  document.getElementById('nr-err').textContent='';
+  const btn=document.getElementById('nr-genereer-btn');
+  btn.disabled=false;btn.textContent='⚡ Genereer reeks';
+}
+
+async function genereerReeks(){
+  const naam=document.getElementById('nr-naam').value.trim();
+  const onderwerp=document.getElementById('nr-onderwerp').value.trim();
+  const pilaar=document.getElementById('nr-pilaar').value;
+  const platform=document.getElementById('nr-platform').value;
+  const aantal_posts=Math.min(8,Math.max(3,parseInt(document.getElementById('nr-aantal').value)||5));
+  const err=document.getElementById('nr-err');
+  const btn=document.getElementById('nr-genereer-btn');
+  err.textContent='';
+  if(!naam){err.textContent='Naam is verplicht.';return;}
+  if(!onderwerp){err.textContent='Onderwerp is verplicht.';return;}
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    // 1. Sla reeks op
+    const inserted=await sbPost('content_reeksen',{naam,onderwerp,pilaar,platform,aantal_posts,status:'idee'});
+    const reeks_id=(Array.isArray(inserted)?inserted[0]:inserted)?.id;
+    if(!reeks_id) throw new Error('Geen reeks ID ontvangen van de database');
+    // 2. Roep Edge Function aan
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const resp=await fetch(`${SB_URL}/functions/v1/genereer-reeks`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({reeks_id,naam,onderwerp,pilaar,platform,aantal_posts})
+    });
+    const result=await resp.json();
+    if(!resp.ok) throw new Error(result.error||'Edge Function fout');
+    // 3. Open de nieuwe reeks direct
+    expandedReeksen.add(reeks_id);
+    _reeksIdeeënCache[reeks_id]=null; // forceer reload
+    sluitNieuweReeksModal();
+    toast('Reeks aangemaakt ✓');
+    await tContent();
+  }catch(e){
+    err.textContent='Fout: '+e.message;
+    btn.disabled=false;btn.textContent='⚡ Genereer reeks';
+  }
+}
+
+async function toggleReeks(id){
+  if(expandedReeksen.has(id)){
+    expandedReeksen.delete(id);
+  } else {
+    expandedReeksen.add(id);
+    if(!_reeksIdeeënCache[id]){
+      _reeksIdeeënCache[id]=await sbGetSafe('content_ideas',`select=*&reeks_id=eq.${id}&order=created_at.asc`).catch(()=>[]);
+    }
+  }
+  // Herrender alleen de reeksen container (niet hele tab)
+  const container=document.getElementById('reeksen-container');
+  if(!container) return;
+  const reeksen=await sbGetSafe('content_reeksen','select=*&order=created_at.desc').catch(()=>[]);
+  container.innerHTML=renderReeksSection(reeksen);
+}
+
+async function updateReeksStatus(reeksId,nieuweStatus){
+  try{
+    await sbPatch('content_reeksen',reeksId,{status:nieuweStatus});
+    toast('Status bijgewerkt ✓');
+    await tContent();
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+function renderReeksSection(reeksen){
+  if(!reeksen||reeksen.length===0){
+    return `<div style="color:var(--t3);font-size:12px;padding:14px 16px;border:1px dashed rgba(255,255,255,.08);border-radius:var(--r);text-align:center;margin-bottom:4px;">Nog geen reeksen. Maak een reeks aan om meerdere posts rond één thema te plannen.</div>`;
+  }
+  return reeksen.map(reeks=>{
+    const isExp=expandedReeksen.has(reeks.id);
+    const sBadge={'idee':'<span class="reeks-status-b reeks-b-idee">Idee</span>','actief':'<span class="reeks-status-b reeks-b-actief">Actief</span>','afgerond':'<span class="reeks-status-b reeks-b-afgerond">Afgerond</span>'}[reeks.status]||'';
+    const platLbl={'linkedin':'LinkedIn','instagram':'Instagram','website':'Website'}[reeks.platform]||reeks.platform||'';
+    const platCls=reeks.platform||'linkedin';
+    const statusBtn=reeks.status==='idee'
+      ?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();updateReeksStatus('${reeks.id}','actief')" style="font-size:10px;padding:2px 8px;">→ Actief</button>`
+      :reeks.status==='actief'
+      ?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();updateReeksStatus('${reeks.id}','afgerond')" style="font-size:10px;padding:2px 8px;">→ Afgerond</button>`:'';
+    let bodyHtml='';
+    if(isExp){
+      const ideeën=_reeksIdeeënCache[reeks.id]||[];
+      bodyHtml=`<div class="reeks-body">${
+        ideeën.length
+          ?`<div class="ci-grid" style="margin-top:12px;">${ideeën.map(ciKaart).join('')}</div>`
+          :`<div style="color:var(--t3);font-size:12px;padding:12px 0;">Geen posts gevonden — de Edge Function vult deze reeks automatisch.</div>`
+      }</div>`;
+    }
+    return `<div class="reeks-card">
+      <div class="reeks-hdr" onclick="toggleReeks('${reeks.id}')">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;overflow:hidden;">
+          <span style="font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${reeks.naam}</span>
+          ${sBadge}
+          <span class="plat-b ${platCls}" style="flex-shrink:0;">${platLbl}</span>
+          ${reeks.pilaar?`<span style="font-size:9.5px;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;font-weight:600;flex-shrink:0;">${reeks.pilaar}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span style="font-size:10.5px;color:var(--t3);">${reeks.aantal_posts||0} posts</span>
+          ${statusBtn}
+          <span class="reeks-chevron${isExp?' open':''}">▼</span>
+        </div>
+      </div>
+      ${bodyHtml}
+    </div>`;
+  }).join('');
+}
+// ─────────────────────────────────────────────────────────────────────────
 
 function ciPlatLabel(p){return{'linkedin':'LinkedIn','instagram':'Instagram','website':'Website'}[p]||cap(p||'');}
 function ciFmtLabel(f){return{'tekstpost':'Tekstpost','carrousel':'Carrousel','infographic':'Infographic','reels':'Reels'}[f]||cap(f||'');}
