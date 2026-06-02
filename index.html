@@ -720,6 +720,23 @@
   </div>
 </div>
 
+<!-- Vacature LinkedIn publiceer modal -->
+<div class="modal-bg" id="vacLiModal" onclick="if(event.target===this)sluitVacLiModal()">
+  <div class="modal" style="width:480px;">
+    <h3>Vacature publiceren op LinkedIn?</h3>
+    <input type="hidden" id="vac-li-id">
+    <div class="li-modal-preview" id="vac-li-preview" style="max-height:90px;"></div>
+    <div style="background:rgba(245,197,66,.08);border:1px solid rgba(245,197,66,.2);border-radius:var(--r);padding:10px 12px;font-size:11.5px;color:#F5C542;line-height:1.5;margin-bottom:14px;">
+      ⚠️ De vacature wordt gepost op de Ecopulz LinkedIn pagina en de status wordt <strong>'open'</strong>. De recruitment scanner zoekt daarna automatisch kandidaten.
+    </div>
+    <div id="vac-li-msg" style="font-size:11.5px;min-height:16px;margin-bottom:8px;"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="sluitVacLiModal()">Annuleren</button>
+      <button class="btn" id="vac-li-pub-btn" style="background:#5BA4E8;border:1px solid #5BA4E8;color:#fff;font-family:var(--f);cursor:pointer;" onclick="publiceerVacatureOpLinkedIn()">📤 Publiceer op LinkedIn</button>
+    </div>
+  </div>
+</div>
+
 <!-- Vacature modal -->
 <div class="modal-bg" id="vacatureModal" onclick="if(event.target===this)sluitVacatureModal()">
   <div class="modal" style="width:600px;max-height:90vh;overflow-y:auto;">
@@ -1642,12 +1659,13 @@ function renderVacaturesOverzicht(el,vacatures,alleKandidaten){
         const subparts=[v.afdeling,v.locatie,v.type].filter(Boolean).join(' · ');
         const statPipe=['gevonden','benaderd','gereageerd','interview','aangenomen'];
         const telHtml=statPipe.map(s=>{const n=kands.filter(k=>k.status===s).length;return n?`<span style="color:var(--t3);font-size:10px;">${n} ${s}</span>`:''}).filter(Boolean).join(' · ');
-        return `<div class="vac-card" onclick="openVacatureDetail('${v.id}')">
+        const isConcept=v.status==='concept';
+        return `<div class="vac-card" onclick="openVacatureDetail('${v.id}')" style="${isConcept?'opacity:.65;border-style:dashed;':''}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
             <div class="vac-card-titel">${v.titel||'–'}</div>
             ${_vacStatusBadge(v.status)}
           </div>
-          <div class="vac-card-sub">${subparts||'–'}</div>
+          <div class="vac-card-sub">${subparts||'–'}${isConcept?` · <em style="color:var(--t3);">Nog niet gepubliceerd</em>`:''}</div>
           ${_vacPipelineBalk(kands)}
           <div class="vac-card-ft">
             <span>${kands.length} kandidaten</span>
@@ -1720,13 +1738,26 @@ async function renderVacatureDetail(el,v,alleKandidaten){
   el.innerHTML=`${_mSubtabs()}
     <div style="margin-bottom:20px;">
       <button class="btn btn-ghost btn-sm" onclick="activeVacatureId=null;kFilterStatus='alle';render('content')" style="margin-bottom:12px;">← Terug naar vacatures</button>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
         <div style="flex:1;min-width:0;"><div style="font-size:18px;font-weight:700;color:var(--t1);">${v.titel||'–'}</div></div>
-        <select class="btn btn-ghost btn-sm" onchange="setVacatureStatus('${v.id}',this.value)" style="font-size:12px;padding:5px 10px;cursor:pointer;">
-          ${['concept','open','on_hold','gesloten','vervuld'].map(s=>`<option value="${s}"${v.status===s?' selected':''}>${s==='on_hold'?'On hold':s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
-        </select>
+        ${_vacStatusBadge(v.status)}
+        ${v.status==='concept'
+          ?`<button class="btn btn-sm" style="background:#5BA4E8;border:1px solid #5BA4E8;color:#fff;font-family:var(--f);cursor:pointer;" onclick="openVacLiModal(${JSON.stringify(v).replace(/"/g,'&quot;')})">📤 Publiceer op LinkedIn</button>`
+          :''}
+        ${v.status==='open'
+          ?`<button class="btn btn-teal btn-sm" id="zoek-kand-btn" onclick="zoekKandidaten('${v.id}')">🔍 Zoek kandidaten</button>`
+          :''}
+        ${v.status==='on_hold'
+          ?`<button class="btn btn-ghost btn-sm" onclick="setVacatureStatus('${v.id}','open')">▶️ Heropen</button>`
+          :''}
+        ${(v.status==='gesloten'||v.status==='open')
+          ?`<select class="btn btn-ghost btn-sm" onchange="setVacatureStatus('${v.id}',this.value)" style="font-size:12px;padding:5px 10px;cursor:pointer;">
+              ${v.status==='open'
+                ?`<option value="open" selected>Open</option><option value="on_hold">On hold</option><option value="gesloten">Gesloten</option>`
+                :`<option value="gesloten" selected>Gesloten</option><option value="open">Heropen</option>`}
+            </select>`
+          :''}
         <button class="btn btn-ghost btn-sm" onclick="openNieuweVacatureModal(${JSON.stringify(v).replace(/"/g,'&quot;')})">✏️ Bewerken</button>
-        <button class="btn btn-teal btn-sm" id="zoek-kand-btn" onclick="zoekKandidaten('${v.id}')">🔍 Zoek kandidaten</button>
         <button class="btn btn-ghost-red btn-sm" onclick="verwijderVacature('${v.id}')">Verwijder</button>
       </div>
       <div style="background:var(--ch);border:1px solid var(--bd);padding:14px 16px;border-radius:var(--r);margin-bottom:16px;">
@@ -1737,11 +1768,18 @@ async function renderVacatureDetail(el,v,alleKandidaten){
         ${nice.length?`<div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;margin-bottom:5px;">Nice to have</div><div>${nice.map(e=>`<span class="eis-tag eis-tag-nice">${e}</span>`).join('')}</div></div>`:''}
       </div>
       ${v.beschrijving?`<details style="margin-bottom:16px;background:var(--ch);border:1px solid var(--bd);padding:12px 14px;border-radius:var(--r);"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--t2);">Vacaturetekst bekijken</summary><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-top:10px;white-space:pre-wrap;">${v.beschrijving}</div></details>`:''}
-      <div style="background:var(--ch);border:1px solid var(--bd);padding:12px 14px;border-radius:var(--r);display:flex;gap:8px;align-items:center;margin-bottom:20px;">
-        <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;white-space:nowrap;">Publicatie URL</span>
-        <input id="pub-url-${v.id}" value="${v.publicatie_url||''}" placeholder="https://werkenbij.ecopulz.com/..." style="flex:1;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);font-family:var(--f);font-size:12px;padding:5px 9px;border-radius:var(--r);outline:none;">
-        <button class="btn btn-ghost btn-sm" onclick="slaPublicatieUrlOp('${v.id}')" style="white-space:nowrap;">Opslaan</button>
-      </div>
+      ${v.publicatie_url
+        ?`<div style="margin-bottom:20px;">
+            <a href="${v.publicatie_url}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#5BA4E8;text-decoration:none;background:rgba(91,164,232,.1);border:1px solid rgba(91,164,232,.22);padding:6px 12px;border-radius:var(--r);transition:background .13s;" onmouseover="this.style.background='rgba(91,164,232,.18)'" onmouseout="this.style.background='rgba(91,164,232,.1)'">
+              <span style="font-weight:700;">📎</span> Bekijk op LinkedIn
+            </a>
+          </div>`
+        :`<div style="background:var(--ch);border:1px solid var(--bd);padding:12px 14px;border-radius:var(--r);display:flex;gap:8px;align-items:center;margin-bottom:20px;">
+            <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--t3);letter-spacing:.08em;white-space:nowrap;">Publicatie URL</span>
+            <input id="pub-url-${v.id}" value="" placeholder="https://linkedin.com/jobs/..." style="flex:1;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);font-family:var(--f);font-size:12px;padding:5px 9px;border-radius:var(--r);outline:none;">
+            <button class="btn btn-ghost btn-sm" onclick="slaPublicatieUrlOp('${v.id}')" style="white-space:nowrap;">Opslaan</button>
+          </div>`
+      }
     </div>
     <div style="margin-bottom:16px;">${pipeHtml}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
@@ -1829,11 +1867,15 @@ async function slaVacatureOp(){
     const editId=document.getElementById('vac-edit-id').value;
     if(editId){
       await sbPatch('vacatures',editId,body);
+      sluitVacatureModal();
+      toast('Vacature opgeslagen ✓');
     } else {
-      await sbPost('vacatures',{...body,status:'concept'});
+      const inserted=await sbPost('vacatures',{...body,status:'concept'});
+      const nieuweId=(Array.isArray(inserted)?inserted[0]:inserted)?.id;
+      sluitVacatureModal();
+      toast('Vacature aangemaakt ✓');
+      if(nieuweId){ activeVacatureId=nieuweId; }
     }
-    sluitVacatureModal();
-    toast('Vacature opgeslagen ✓');
     await tWerving();
   }catch(e){
     err.textContent='Fout: '+e.message;
@@ -1842,11 +1884,53 @@ async function slaVacatureOp(){
 }
 
 async function setVacatureStatus(id,status){
+  if(status==='open'){
+    // open gaat via publiceer-knop of heropen — check of vacature al gepubliceerd was
+    const vacatures=await sbGetSafe('vacatures',`select=id,publicatie_url,status&id=eq.${id}`).catch(()=>[]);
+    const v=vacatures[0];
+    if(v?.status==='concept'){toast('Gebruik de "Publiceer op LinkedIn" knop om een concept te publiceren.');return;}
+  }
   try{
     await sbPatch('vacatures',id,{status});
     toast('Status bijgewerkt ✓');
     await tWerving();
   }catch(e){toast('Fout: '+e.message);}
+}
+
+function openVacLiModal(v){
+  document.getElementById('vac-li-id').value=v.id;
+  const preview=`${v.titel||''}${v.locatie?' · '+v.locatie:''}${v.beschrijving?'\n\n'+(v.beschrijving.substring(0,200))+(v.beschrijving.length>200?'…':''):''}`;
+  document.getElementById('vac-li-preview').textContent=preview;
+  document.getElementById('vac-li-msg').textContent='';
+  document.getElementById('vac-li-msg').style.color='';
+  document.getElementById('vac-li-pub-btn').disabled=false;
+  document.getElementById('vac-li-pub-btn').textContent='📤 Publiceer op LinkedIn';
+  document.getElementById('vacLiModal').classList.add('open');
+}
+function sluitVacLiModal(){document.getElementById('vacLiModal').classList.remove('open');}
+
+async function publiceerVacatureOpLinkedIn(){
+  const id=document.getElementById('vac-li-id').value;
+  const btn=document.getElementById('vac-li-pub-btn');
+  const msg=document.getElementById('vac-li-msg');
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const resp=await fetch(`${SB_URL}/functions/v1/linkedin-vacature-publish`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({vacature_id:id})
+    });
+    const result=await resp.json();
+    if(!resp.ok) throw new Error(result.error||'Edge Function fout');
+    msg.textContent='✓ Vacature gepubliceerd op LinkedIn!';
+    msg.style.color='var(--teal)';
+    setTimeout(async()=>{ sluitVacLiModal(); await tWerving(); },1400);
+  }catch(e){
+    msg.textContent='Fout: '+e.message;
+    msg.style.color='var(--red)';
+    btn.disabled=false;btn.textContent='📤 Publiceer op LinkedIn';
+  }
 }
 
 async function verwijderVacature(id){
