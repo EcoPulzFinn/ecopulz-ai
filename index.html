@@ -413,6 +413,12 @@
 .reeks-b-afgerond { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
 .reeks-chevron { color:var(--t3); font-size:10px; transition:transform .2s; }
 .reeks-chevron.open { transform:rotate(180deg); }
+/* === LinkedIn publiceren === */
+.btn-li-pub { background:rgba(91,164,232,.14); border:1px solid rgba(91,164,232,.28); color:#5BA4E8; font-family:var(--f); font-size:11px; font-weight:600; padding:4px 9px; border-radius:var(--r); cursor:pointer; transition:all .13s; white-space:nowrap; }
+.btn-li-pub:hover { background:rgba(91,164,232,.24); border-color:rgba(91,164,232,.5); }
+.btn-li-pub:disabled { opacity:.5; cursor:not-allowed; }
+.li-gepost-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; padding:2px 6px; border-radius:2px; background:rgba(91,164,232,.12); color:#5BA4E8; border:1px solid rgba(91,164,232,.22); }
+.li-modal-preview { background:var(--ch); border:1px solid var(--bd); border-radius:var(--r); padding:12px 14px; font-size:12px; color:var(--t2); line-height:1.6; white-space:pre-wrap; max-height:120px; overflow-y:auto; margin-bottom:16px; }
 /* === Campagnes === */
 .cmp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
 @media(max-width:900px){ .cmp-grid { grid-template-columns:1fr 1fr; } }
@@ -678,6 +684,38 @@
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="sluitNieuweReeksModal()">Annuleren</button>
       <button class="btn btn-teal" id="nr-genereer-btn" onclick="genereerReeks()">⚡ Genereer reeks</button>
+    </div>
+  </div>
+</div>
+
+<!-- LinkedIn publiceer modal -->
+<div class="modal-bg" id="liPubliceerModal" onclick="if(event.target===this)sluitLiModal()">
+  <div class="modal" style="width:480px;">
+    <h3>Publiceer naar LinkedIn</h3>
+    <input type="hidden" id="li-idee-id">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:6px;">Preview</div>
+    <div class="li-modal-preview" id="li-preview-tekst"></div>
+    <div id="li-plan-sectie" style="display:none;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-row" style="margin-bottom:0;"><label>Datum</label><input id="li-plan-datum" type="date"></div>
+        <div class="form-row" style="margin-bottom:0;"><label>Tijd</label>
+          <select id="li-plan-tijd">
+            <option value="08:00">08:00</option>
+            <option value="09:00">09:00</option>
+            <option value="12:00" selected>12:00</option>
+            <option value="17:00">17:00</option>
+            <option value="19:00">19:00</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="li-msg" style="font-size:11.5px;min-height:16px;margin-bottom:8px;"></div>
+    <div class="modal-ft" style="justify-content:space-between;">
+      <button class="btn btn-ghost" onclick="sluitLiModal()">Annuleren</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="li-plan-toggle-btn" onclick="toggleLiPlanSectie()" style="font-size:12px;">📅 Plan in</button>
+        <button class="btn btn-teal" id="li-pub-btn" onclick="publiceerNaarLinkedIn()">📤 Publiceer nu</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2212,24 +2250,32 @@ function ciKaart(idee){
       ${idee.afwijzing_reden?`<div style="font-size:11px;color:var(--t3);font-style:italic;margin-top:4px;line-height:1.5;">${idee.afwijzing_reden}</div>`:''}
     </div>`;
   }
+  const kanPubliceren=idee.platform==='linkedin'&&idee.slide_1_tekst&&(idee.status==='gepland'||idee.status==='concept');
+  const liGepost=idee.platform==='linkedin'&&idee.status==='gepost';
   const badge=idee.status==='concept'?`<span class="ci-badge ci-badge-concept">✓ Concept klaar</span>`:
                idee.status==='gepland' ?`<span class="ci-badge ci-badge-gepland">Gepland</span>`:
+               liGepost                ?`<span class="li-gepost-badge">✓ LinkedIn</span>`:
                idee.status==='gepost'  ?`<span class="ci-badge ci-badge-gepost">Gepost</span>`:'';
   const klikbaar=idee.status==='concept';
+  const liKnop=kanPubliceren?`<button class="btn-li-pub" onclick="event.stopPropagation();openLiPubliceerModal('${idee.id}')">📤 Publiceer naar LinkedIn</button>`:'';
   let footer='';
   if(idee.status==='concept'){
-    footer=`<div class="ci-footer" style="display:flex;gap:6px;align-items:center;">
+    footer=`<div class="ci-footer" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-green btn-sm" onclick="openConceptPopup('${idee.id}')">Bekijk concept</button>
       <button class="btn btn-ghost-red btn-sm" onclick="openAfwijsIdeeModal('${idee.id}')">Afwijzen</button>
+      ${liKnop}
     </div>`;
   } else if(idee.status==='idee'||!idee.status){
     footer=`<div class="ci-footer" style="display:flex;gap:6px;align-items:center;">
       <button id="ci-btn-${idee.id}" class="btn btn-green btn-sm" onclick="genereerPost('${idee.id}',this)">⚡ Genereer post</button>
       <button class="btn btn-ghost-red btn-sm" onclick="openAfwijsIdeeModal('${idee.id}')">Afwijzen</button>
     </div>`;
-  } else if(idee.status==='gepland'&&idee.gepland_datum){
-    const t=new Date(idee.gepland_datum).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
-    footer=`<div class="ci-footer"><span style="font-size:10.5px;color:var(--t3);">⏰ ${t}</span></div>`;
+  } else if(idee.status==='gepland'){
+    const t=idee.gepland_datum?new Date(idee.gepland_datum).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'';
+    footer=`<div class="ci-footer" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      ${t?`<span style="font-size:10.5px;color:var(--t3);">⏰ ${t}</span>`:''}
+      ${liKnop}
+    </div>`;
   }
   return `<div class="ci-card${klikbaar?' clickable':''}"${klikbaar?` onclick="openConceptPopup('${idee.id}')"`:''}>
     <div class="ci-hdr">
@@ -2269,6 +2315,81 @@ async function genereerPost(id,btn){
     toast('Fout: '+e.message);
   }
 }
+
+// ─── LinkedIn publiceren ────────────────────────────────────────────────
+let _liPlanModus=false;
+
+function openLiPubliceerModal(ideeId){
+  // Zoek idee in ciIdeeën of in cache van reeksen
+  let idee=ciIdeeën.find(i=>i.id===ideeId);
+  if(!idee){
+    for(const arr of Object.values(_reeksIdeeënCache)){
+      if(Array.isArray(arr)){ const gevonden=arr.find(i=>i.id===ideeId); if(gevonden){idee=gevonden;break;} }
+    }
+  }
+  if(!idee||!idee.slide_1_tekst) return;
+  document.getElementById('li-idee-id').value=ideeId;
+  document.getElementById('li-preview-tekst').textContent=(idee.slide_1_tekst||'').substring(0,300)+(idee.slide_1_tekst?.length>300?'…':'');
+  document.getElementById('li-msg').textContent='';
+  document.getElementById('li-msg').style.color='';
+  document.getElementById('li-plan-sectie').style.display='none';
+  document.getElementById('li-plan-toggle-btn').textContent='📅 Plan in';
+  document.getElementById('li-pub-btn').textContent='📤 Publiceer nu';
+  document.getElementById('li-pub-btn').disabled=false;
+  // Zet minimum datum op morgen
+  const morgen=new Date();morgen.setDate(morgen.getDate()+1);
+  document.getElementById('li-plan-datum').min=morgen.toISOString().split('T')[0];
+  document.getElementById('li-plan-datum').value=morgen.toISOString().split('T')[0];
+  _liPlanModus=false;
+  document.getElementById('liPubliceerModal').classList.add('open');
+}
+function sluitLiModal(){
+  document.getElementById('liPubliceerModal').classList.remove('open');
+  _liPlanModus=false;
+}
+function toggleLiPlanSectie(){
+  _liPlanModus=!_liPlanModus;
+  document.getElementById('li-plan-sectie').style.display=_liPlanModus?'block':'none';
+  document.getElementById('li-plan-toggle-btn').textContent=_liPlanModus?'✕ Annuleer planning':'📅 Plan in';
+  document.getElementById('li-pub-btn').textContent=_liPlanModus?'📅 Plan in':'📤 Publiceer nu';
+}
+async function publiceerNaarLinkedIn(){
+  const ideeId=document.getElementById('li-idee-id').value;
+  const btn=document.getElementById('li-pub-btn');
+  const msg=document.getElementById('li-msg');
+  msg.textContent='';
+  let body={content_idea_id:ideeId};
+  if(_liPlanModus){
+    const datum=document.getElementById('li-plan-datum').value;
+    const tijd=document.getElementById('li-plan-tijd').value;
+    if(!datum){msg.textContent='Kies een datum.';msg.style.color='var(--red)';return;}
+    body.gepland_op=`${datum}T${tijd}:00`;
+  }
+  btn.disabled=true;btn.textContent='Bezig...';
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const resp=await fetch(`${SB_URL}/functions/v1/linkedin-post-publish`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify(body)
+    });
+    const result=await resp.json();
+    if(!resp.ok) throw new Error(result.error||'Onbekende fout');
+    if(_liPlanModus){
+      const d=new Date(body.gepland_op).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+      msg.textContent=`✓ Post ingepland voor ${d}!`;
+    } else {
+      msg.textContent='✓ Post gepubliceerd op LinkedIn!';
+    }
+    msg.style.color='var(--teal)';
+    setTimeout(async()=>{ sluitLiModal(); await tContent(); },1400);
+  }catch(e){
+    msg.textContent='Fout: '+e.message;
+    msg.style.color='var(--red)';
+    btn.disabled=false;btn.textContent=_liPlanModus?'📅 Plan in':'📤 Publiceer nu';
+  }
+}
+// ────────────────────────────────────────────────────────────────────────
 
 function ciSlides(idee){
   const slides=[];
