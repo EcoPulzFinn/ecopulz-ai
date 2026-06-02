@@ -78,6 +78,9 @@
     .btn-blue-sf { background:#3b82f6; border-color:#3b82f6; color:#fff; }
     .btn-blue-sf:hover { background:#2563eb; box-shadow:0 0 14px rgba(59,130,246,.32); }
     .btn-sent { background:rgba(255,255,255,.07) !important; border-color:var(--bdm) !important; color:var(--t3) !important; cursor:not-allowed !important; }
+    .btn-adobe { background:linear-gradient(135deg,#6C3AE0,#E03ABA); color:#fff; border:none; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; line-height:1; }
+    .btn-adobe:hover { opacity:.88; }
+    .btn-adobe:disabled { opacity:.45; cursor:not-allowed; }
     .sf-wrap { margin-top:10px; padding-top:10px; border-top:1px solid var(--bd); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .sf-gereageerd { display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:4px 10px; background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); border-radius:2px; }
     .sf-dagen { font-size:11px; color:var(--t2); }
@@ -413,6 +416,23 @@
 .reeks-b-afgerond { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
 .reeks-chevron { color:var(--t3); font-size:10px; transition:transform .2s; }
 .reeks-chevron.open { transform:rotate(180deg); }
+/* === Visual upload === */
+.ci-visual-wrap { position:relative; flex-shrink:0; }
+.ci-visual-thumb { width:110px; height:80px; object-fit:cover; border-radius:5px; display:block; cursor:pointer; }
+.ci-visual-del { position:absolute; top:-5px; right:-5px; width:18px; height:18px; border-radius:50%; background:rgba(229,53,53,.9); color:#fff; border:none; cursor:pointer; font-size:11px; display:none; align-items:center; justify-content:center; line-height:1; }
+.ci-visual-wrap:hover .ci-visual-del { display:flex; }
+.ci-visual-placeholder { width:110px; height:80px; background:var(--inp); border:1px dashed var(--bdm); border-radius:5px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; transition:border-color .13s; flex-shrink:0; }
+.ci-visual-placeholder:hover { border-color:var(--teal-b); }
+.ci-visual-placeholder span { font-size:18px; }
+.ci-visual-placeholder small { font-size:9px; color:var(--t3); }
+.visual-dropzone { border:1.5px dashed var(--bdm); border-radius:var(--r); height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; transition:border-color .13s,background .13s; }
+.visual-dropzone:hover,.visual-dropzone.drag-over { border-color:var(--teal-b); background:var(--teal-dim); }
+.visual-dropzone span { font-size:28px; }
+.visual-dropzone p { font-size:12px; color:var(--t3); margin:0; }
+.visual-preview { max-width:100%; max-height:180px; object-fit:contain; border-radius:var(--r); margin-top:10px; }
+.lightbox-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:999; align-items:center; justify-content:center; cursor:zoom-out; }
+.lightbox-bg.open { display:flex; }
+.lightbox-bg img { max-width:92vw; max-height:90vh; object-fit:contain; border-radius:4px; box-shadow:0 8px 48px rgba(0,0,0,.6); }
 /* === Bedenk Idee modal === */
 .bi-keuze-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:4px; }
 .bi-keuze-card { background:var(--ch); border:1px solid var(--bdm); border-radius:var(--r); padding:20px 16px; cursor:pointer; transition:border-color .13s,background .13s; text-align:center; }
@@ -536,6 +556,7 @@
 .ci-slide-tekst { font-size:13px; color:var(--t1); line-height:1.6; padding:12px; background:var(--inp); border:1px solid var(--bd); white-space:pre-wrap; }
 .ci-visual-blk { background:rgba(255,255,255,.04); border:1px solid var(--bdm); padding:12px; font-size:11.5px; color:var(--t2); line-height:1.55; font-style:italic; white-space:pre-wrap; }
   </style>
+  <script src="https://cc-embed.adobe.com/sdk/v4/CCEverywhere.js" defer></script>
 </head>
 <body>
 <div class="app">
@@ -721,6 +742,39 @@
   </div>
 </div>
 
+<!-- Lightbox -->
+<div class="lightbox-bg" id="lightboxBg" onclick="sluitLightbox()">
+  <img id="lightboxImg" src="" alt="Visual">
+</div>
+
+<!-- Visual upload modal -->
+<div class="modal-bg" id="visualModal" onclick="if(event.target===this)sluitVisualModal()">
+  <div class="modal" style="width:440px;">
+    <h3>📷 Visual toevoegen</h3>
+    <input type="hidden" id="vm-idee-id">
+    <div class="visual-dropzone" id="vm-dropzone" onclick="document.getElementById('vm-file').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="event.preventDefault();this.classList.remove('drag-over');_handleVisualDrop(event.dataTransfer.files[0])">
+      <span>🖼</span>
+      <p>Sleep een afbeelding hierheen of klik om te kiezen</p>
+      <p style="font-size:10.5px;">PNG, JPG, WebP — max 5 MB</p>
+    </div>
+    <input type="file" id="vm-file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="_handleVisualFileSelect(this.files[0])">
+    <div id="vm-preview-wrap" style="display:none;text-align:center;margin-top:10px;">
+      <img id="vm-preview" class="visual-preview" src="" alt="preview">
+    </div>
+    <div id="vm-err" style="font-size:11.5px;color:var(--red);min-height:16px;margin-top:8px;"></div>
+    <div class="modal-ft" style="justify-content:space-between;">
+      <button class="btn-adobe" id="vm-adobe-btn" onclick="openAdobeExpress()">🎨 Maak in Adobe Express</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="sluitVisualModal()">Annuleren</button>
+        <button class="btn btn-teal" id="vm-upload-btn" onclick="uploadVisual()" disabled>⬆ Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Bedenk Idee modal -->
 <div class="modal-bg" id="bedenkIdeeModal" onclick="if(event.target===this)sluitBedenkIdeeModal()">
   <div class="modal" style="width:560px;max-height:88vh;overflow-y:auto;" id="bedenkIdeeInner">
@@ -735,6 +789,7 @@
     <input type="hidden" id="li-idee-id">
     <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:6px;">Preview</div>
     <div class="li-modal-preview" id="li-preview-tekst"></div>
+    <div id="li-visual-blok" style="display:none;margin-top:10px;margin-bottom:10px;"></div>
     <div id="li-plan-sectie" style="display:none;margin-bottom:14px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-row" style="margin-bottom:0;"><label>Datum</label><input id="li-plan-datum" type="date"></div>
@@ -2422,16 +2477,24 @@ function ciKaart(idee){
       ${liKnop}
     </div>`;
   }
+  const visualHtml=idee.visual_url
+    ?`<div class="ci-visual-wrap"><img class="ci-visual-thumb" src="${idee.visual_url}" alt="visual" onclick="event.stopPropagation();openLightbox('${idee.visual_url}')"><button class="ci-visual-del" onclick="event.stopPropagation();verwijderVisual('${idee.id}')" title="Verwijder visual">✕</button></div>`
+    :`<div class="ci-visual-placeholder" onclick="event.stopPropagation();openVisualModal('${idee.id}')" title="Voeg visual toe"><span>📷</span><small>Voeg toe</small></div>`;
   return `<div class="ci-card${klikbaar?' clickable':''}"${klikbaar?` onclick="openConceptPopup('${idee.id}')"`:''}>
-    <div class="ci-hdr">
-      <span class="plat-b ${platCls}">${ciPlatLabel(idee.platform)}</span>
-      ${idee.format?`<span class="ci-fmt-b">${ciFmtLabel(idee.format)}</span>`:''}
-      ${badge}
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="flex:1;min-width:0;">
+        <div class="ci-hdr">
+          <span class="plat-b ${platCls}">${ciPlatLabel(idee.platform)}</span>
+          ${idee.format?`<span class="ci-fmt-b">${ciFmtLabel(idee.format)}</span>`:''}
+          ${badge}
+        </div>
+        <div class="ci-onderwerp">${idee.onderwerp||'–'}</div>
+        ${idee.pilaar?`<div class="ci-pilaar">${idee.pilaar}</div>`:''}
+        ${idee.aanleiding?`<div class="ci-aanleiding">${idee.aanleiding}</div>`:''}
+        ${footer}
+      </div>
+      ${visualHtml}
     </div>
-    <div class="ci-onderwerp">${idee.onderwerp||'–'}</div>
-    ${idee.pilaar?`<div class="ci-pilaar">${idee.pilaar}</div>`:''}
-    ${idee.aanleiding?`<div class="ci-aanleiding">${idee.aanleiding}</div>`:''}
-    ${footer}
   </div>`;
 }
 
@@ -2461,6 +2524,205 @@ async function genereerPost(id,btn){
   }
 }
 
+// ─── Adobe Express Embed SDK ─────────────────────────────────────────────
+const ADOBE_CLIENT_ID='c3fd95787b3544e49d3caf7ed57dfe08'; // TODO: Finn vult juiste Client ID in
+let _ccEverywhere=null;
+
+async function initAdobeExpress(){
+  if(_ccEverywhere) return _ccEverywhere;
+  if(!window.CCEverywhere){ toast('Adobe Express SDK niet geladen'); return null; }
+  try{
+    _ccEverywhere=await window.CCEverywhere.initialize({
+      clientId:ADOBE_CLIENT_ID,
+      appName:'Ecopulz Command Center',
+      locale:'nl_NL',
+    });
+    return _ccEverywhere;
+  }catch(e){
+    console.error('Adobe Express init fout:',e);
+    return null;
+  }
+}
+
+function getCanvasSize(platform){
+  switch(platform){
+    case 'linkedin':  return {width:1200,height:627};
+    case 'instagram': return {width:1080,height:1080};
+    case 'website':   return {width:1200,height:630};
+    default:          return {width:1080,height:1080};
+  }
+}
+
+async function openAdobeExpress(){
+  if(!_visualIdeeId) return;
+  // Zoek idee op voor platform info
+  let idee=ciIdeeën.find(i=>i.id===_visualIdeeId);
+  if(!idee){
+    for(const arr of Object.values(_reeksIdeeënCache)){
+      if(Array.isArray(arr)){const f=arr.find(i=>i.id===_visualIdeeId);if(f){idee=f;break;}}
+    }
+  }
+  const platform=idee?.platform||'linkedin';
+  const ideeId=_visualIdeeId; // vastleggen voor async callback
+
+  const btn=document.getElementById('vm-adobe-btn');
+  if(btn){btn.disabled=true;btn.textContent='Laden...';}
+  const cc=await initAdobeExpress();
+  if(btn){btn.disabled=false;btn.textContent='🎨 Maak in Adobe Express';}
+  if(!cc){ toast('Adobe Express kon niet geladen worden'); return; }
+
+  cc.createDesign({
+    callbacks:{
+      onCancel:()=>{},
+      onPublish:async(publishParams)=>{
+        try{
+          const imageData=publishParams.asset[0].data;
+          const imageBlob=await fetch(imageData).then(r=>r.blob());
+          const fileName=`${ideeId}-${Date.now()}.png`;
+          // Upload naar Supabase Storage
+          const upResp=await fetch(`${SB_URL}/storage/v1/object/${VISUAL_BUCKET}/${fileName}`,{
+            method:'POST',
+            headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'image/png','x-upsert':'true'},
+            body:imageBlob
+          });
+          if(!upResp.ok){const t=await upResp.text();throw new Error(t||`Upload mislukt (${upResp.status})`);}
+          const publicUrl=`${SB_URL}/storage/v1/object/public/${VISUAL_BUCKET}/${fileName}`;
+          await sbPatch('content_ideas',ideeId,{visual_url:publicUrl});
+          sluitVisualModal();
+          toast('Visual opgeslagen vanuit Adobe Express ✓');
+          await tContent();
+        }catch(e){
+          toast('Fout bij opslaan visual: '+e.message);
+        }
+      },
+      onError:(err)=>{ console.error('Adobe Express error:',err); toast('Adobe Express fout'); },
+    },
+    inputParams:{
+      templateType:'Social media',
+      canvasSize:getCanvasSize(platform),
+    },
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────
+
+// ─── Content Visuals (Supabase Storage) ─────────────────────────────────
+let _visualIdeeId=null;
+const VISUAL_BUCKET='content-visuals';
+
+function openVisualModal(ideeId){
+  _visualIdeeId=ideeId;
+  document.getElementById('vm-preview-wrap').style.display='none';
+  document.getElementById('vm-preview').src='';
+  document.getElementById('vm-file').value='';
+  document.getElementById('vm-err').textContent='';
+  const btn=document.getElementById('vm-upload-btn');
+  btn.disabled=true;btn.textContent='⬆ Upload';
+  document.getElementById('visualModal').classList.add('open');
+}
+function sluitVisualModal(){
+  document.getElementById('visualModal').classList.remove('open');
+  _visualIdeeId=null;
+}
+
+function _handleVisualDrop(file){
+  if(file) _previewVisualFile(file);
+}
+function _handleVisualFileSelect(file){
+  if(file) _previewVisualFile(file);
+}
+function _previewVisualFile(file){
+  if(!file.type.startsWith('image/')){
+    document.getElementById('vm-err').textContent='Alleen afbeeldingen toegestaan.';
+    return;
+  }
+  if(file.size>5*1024*1024){
+    document.getElementById('vm-err').textContent='Afbeelding is te groot (max 5 MB).';
+    return;
+  }
+  document.getElementById('vm-err').textContent='';
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    document.getElementById('vm-preview').src=ev.target.result;
+    document.getElementById('vm-preview-wrap').style.display='block';
+    const btn=document.getElementById('vm-upload-btn');
+    btn.disabled=false;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadVisual(){
+  if(!_visualIdeeId){return;}
+  const file=document.getElementById('vm-file').files[0];
+  const err=document.getElementById('vm-err');
+  const btn=document.getElementById('vm-upload-btn');
+  err.textContent='';
+  if(!file){err.textContent='Selecteer eerst een afbeelding.';return;}
+  if(!file.type.startsWith('image/')){err.textContent='Alleen afbeeldingen toegestaan.';return;}
+  btn.disabled=true;btn.textContent='Uploaden...';
+  try{
+    const ext=file.name.split('.').pop().toLowerCase();
+    const fileName=`${_visualIdeeId}-${Date.now()}.${ext}`;
+    // Upload naar Supabase Storage
+    const upResp=await fetch(`${SB_URL}/storage/v1/object/${VISUAL_BUCKET}/${fileName}`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':file.type,'x-upsert':'true'},
+      body:file
+    });
+    if(!upResp.ok){
+      const t=await upResp.text();
+      throw new Error(t||`Upload mislukt (${upResp.status})`);
+    }
+    const publicUrl=`${SB_URL}/storage/v1/object/public/${VISUAL_BUCKET}/${fileName}`;
+    // Sla URL op in de row
+    await sbPatch('content_ideas',_visualIdeeId,{visual_url:publicUrl});
+    sluitVisualModal();
+    toast('Visual opgeslagen ✓');
+    await tContent();
+  }catch(e){
+    err.textContent='Fout: '+e.message;
+    btn.disabled=false;btn.textContent='⬆ Upload';
+  }
+}
+
+async function verwijderVisual(ideeId){
+  if(!confirm('Visual verwijderen?')) return;
+  // Haal huidige url op
+  let idee=ciIdeeën.find(i=>i.id===ideeId);
+  if(!idee){
+    for(const arr of Object.values(_reeksIdeeënCache)){
+      if(Array.isArray(arr)){const f=arr.find(i=>i.id===ideeId);if(f){idee=f;break;}}
+    }
+  }
+  if(!idee?.visual_url) return;
+  try{
+    // Haal bestandsnaam op uit URL
+    const parts=idee.visual_url.split(`/public/${VISUAL_BUCKET}/`);
+    const fileName=parts[1];
+    if(fileName){
+      await fetch(`${SB_URL}/storage/v1/object/${VISUAL_BUCKET}`,{
+        method:'DELETE',
+        headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'},
+        body:JSON.stringify({prefixes:[fileName]})
+      });
+    }
+    await sbPatch('content_ideas',ideeId,{visual_url:null});
+    toast('Visual verwijderd');
+    await tContent();
+  }catch(e){
+    toast('Fout bij verwijderen: '+e.message);
+  }
+}
+
+function openLightbox(url){
+  document.getElementById('lightboxImg').src=url;
+  document.getElementById('lightboxBg').classList.add('open');
+}
+function sluitLightbox(){
+  document.getElementById('lightboxBg').classList.remove('open');
+  document.getElementById('lightboxImg').src='';
+}
+// ────────────────────────────────────────────────────────────────────────
+
 // ─── LinkedIn publiceren ────────────────────────────────────────────────
 let _liPlanModus=false;
 
@@ -2475,6 +2737,17 @@ function openLiPubliceerModal(ideeId){
   if(!idee||!idee.slide_1_tekst) return;
   document.getElementById('li-idee-id').value=ideeId;
   document.getElementById('li-preview-tekst').textContent=(idee.slide_1_tekst||'').substring(0,300)+(idee.slide_1_tekst?.length>300?'…':'');
+  // Visual preview of warning
+  const liVisEl=document.getElementById('li-visual-blok');
+  if(liVisEl){
+    if(idee.visual_url){
+      liVisEl.innerHTML=`<img src="${idee.visual_url}" alt="visual" style="max-width:200px;border-radius:6px;display:block;">`;
+      liVisEl.style.display='block';
+    } else {
+      liVisEl.innerHTML=`<div style="font-size:12px;color:#b45309;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;">⚠️ Geen visual gekoppeld. De post wordt zonder afbeelding geplaatst.</div>`;
+      liVisEl.style.display='block';
+    }
+  }
   document.getElementById('li-msg').textContent='';
   document.getElementById('li-msg').style.color='';
   document.getElementById('li-plan-sectie').style.display='none';
