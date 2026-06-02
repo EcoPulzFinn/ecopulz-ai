@@ -413,6 +413,39 @@
 .reeks-b-afgerond { background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal-b); }
 .reeks-chevron { color:var(--t3); font-size:10px; transition:transform .2s; }
 .reeks-chevron.open { transform:rotate(180deg); }
+/* === Bedenk Idee modal === */
+.bi-keuze-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:4px; }
+.bi-keuze-card { background:var(--ch); border:1px solid var(--bdm); border-radius:var(--r); padding:20px 16px; cursor:pointer; transition:border-color .13s,background .13s; text-align:center; }
+.bi-keuze-card:hover { border-color:var(--teal-b); background:var(--teal-dim); }
+.bi-keuze-icon { font-size:28px; margin-bottom:8px; }
+.bi-keuze-titel { font-size:13px; font-weight:700; color:var(--t1); margin-bottom:4px; }
+.bi-keuze-desc { font-size:11px; color:var(--t3); line-height:1.5; }
+.bi-result-card { background:var(--ch); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:10px; transition:opacity .2s; }
+.bi-result-card.opgeslagen { opacity:.45; }
+.bi-result-onderwerp { font-size:14px; font-weight:700; color:var(--t1); margin-bottom:8px; line-height:1.4; }
+.bi-result-hook { font-size:12px; color:var(--t2); font-style:italic; margin:8px 0; line-height:1.5; }
+.bi-result-badges { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+.bi-result-acties { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--bd); }
+/* === Kalender === */
+.cal-toggle { display:flex; gap:0; border:1px solid var(--bdm); border-radius:var(--r); overflow:hidden; margin-bottom:14px; }
+.cal-toggle-btn { padding:5px 14px; font-family:var(--f); font-size:12px; font-weight:600; color:var(--t3); background:none; border:none; cursor:pointer; transition:all .13s; }
+.cal-toggle-btn.active { background:var(--teal); color:#fff; }
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.cal-nav-btn { background:none; border:1px solid var(--bdm); border-radius:var(--r); color:var(--t2); font-family:var(--f); font-size:13px; padding:4px 10px; cursor:pointer; transition:all .13s; }
+.cal-nav-btn:hover { border-color:var(--teal-b); color:var(--teal); }
+.cal-nav-titel { font-size:14px; font-weight:700; color:var(--t1); }
+.cal-weekdagen { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:2px; }
+.cal-weekdag { text-align:center; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--t3); padding:4px 0; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-cell { min-height:80px; background:var(--inp); border:1px solid var(--bd); padding:4px; font-size:11px; border-radius:2px; vertical-align:top; }
+.cal-cell.buiten-maand { opacity:.3; }
+.cal-cell.today { border-color:var(--teal); border-width:2px; }
+.cal-day { font-size:10px; color:var(--t3); margin-bottom:3px; }
+.cal-post { padding:2px 5px; border-radius:3px; margin-bottom:2px; font-size:10px; color:#fff; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4; }
+.cal-post.linkedin { background:#5BA4E8; }
+.cal-post.instagram { background:#F07090; }
+.cal-post.website { background:var(--teal); }
+.cal-post.gepost { opacity:.5; }
 /* === LinkedIn publiceren === */
 .btn-li-pub { background:rgba(91,164,232,.14); border:1px solid rgba(91,164,232,.28); color:#5BA4E8; font-family:var(--f); font-size:11px; font-weight:600; padding:4px 9px; border-radius:var(--r); cursor:pointer; transition:all .13s; white-space:nowrap; }
 .btn-li-pub:hover { background:rgba(91,164,232,.24); border-color:rgba(91,164,232,.5); }
@@ -685,6 +718,13 @@
       <button class="btn btn-ghost" onclick="sluitNieuweReeksModal()">Annuleren</button>
       <button class="btn btn-teal" id="nr-genereer-btn" onclick="genereerReeks()">⚡ Genereer reeks</button>
     </div>
+  </div>
+</div>
+
+<!-- Bedenk Idee modal -->
+<div class="modal-bg" id="bedenkIdeeModal" onclick="if(event.target===this)sluitBedenkIdeeModal()">
+  <div class="modal" style="width:560px;max-height:88vh;overflow-y:auto;" id="bedenkIdeeInner">
+    <!-- Dynamisch gevuld door JS -->
   </div>
 </div>
 
@@ -1056,6 +1096,8 @@ let ciIdeeën=[], ciActiveIdee=null;
 let expandedReeksen=new Set(), _reeksIdeeënCache={};
 let activeCampagneId=null, expandedAds=new Set();
 let activeVacatureId=null, expandedKandidaten=new Set(), kFilterStatus='alle';
+let contentView='lijst', kalenderMaand=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+let _bedenkStap='keuze', _bedenkModus=null, _bedenkResultaten=[], _bedenkParams={};
 
 const PH = {
   leads:{
@@ -1453,11 +1495,30 @@ async function tContent(){
     const filterHtml=filterBtns.map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('');
     const gridHtml=cFilter==='gepland'?renderGeplandAgenda(ciIdeeën):`<div class="ci-grid">${ciIdeeën.length?ciIdeeën.map(ciKaart).join(''):'<div class="empty">Geen content in deze categorie</div>'}</div>`;
 
+    const viewToggle=`<div class="cal-toggle">
+      <button class="cal-toggle-btn${contentView==='lijst'?' active':''}" onclick="contentView='lijst';render('content')">📋 Lijst</button>
+      <button class="cal-toggle-btn${contentView==='kalender'?' active':''}" onclick="contentView='kalender';render('content')">📅 Kalender</button>
+    </div>`;
+
+    if(contentView==='kalender'){
+      document.getElementById('ca').innerHTML=`
+        ${_mSubtabs()}
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openNieuweReeksModal()">📚 Nieuwe reeks</button>
+          <button class="btn btn-ghost btn-sm" onclick="bedenkIdee()">💡 Bedenk idee</button>
+        </div>
+        ${viewToggle}
+        <div id="kalender-container"></div>`;
+      await renderContentKalender();
+      return;
+    }
+
     document.getElementById('ca').innerHTML=`
       ${_mSubtabs()}
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--bd);margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--bd);margin-bottom:14px;">
         <div style="display:flex;">${filterHtml}</div>
         <div style="display:flex;gap:6px;margin-bottom:3px;flex-shrink:0;">
+          ${viewToggle}
           <button class="btn btn-ghost btn-sm" onclick="openNieuweReeksModal()">📚 Nieuwe reeks</button>
           <button class="btn btn-ghost btn-sm" onclick="bedenkIdee()">💡 Bedenk idee</button>
         </div>
@@ -2632,7 +2693,239 @@ function renderGeplandAgenda(ideeën){
   `).join('');
 }
 
-function bedenkIdee(){toast('Bedenk idee — komt binnenkort');}
+// ─── Bedenk Idee ─────────────────────────────────────────────────────────
+const _PILAREN=['Vakkennis','Cultuur & mensen','Praktijk & cases','Mening & visie','Impact'];
+
+function bedenkIdee(){
+  _bedenkStap='keuze';_bedenkModus=null;_bedenkResultaten=[];_bedenkParams={};
+  _renderBedenkModal();
+  document.getElementById('bedenkIdeeModal').classList.add('open');
+}
+function sluitBedenkIdeeModal(){
+  document.getElementById('bedenkIdeeModal').classList.remove('open');
+}
+
+function _renderBedenkModal(){
+  const el=document.getElementById('bedenkIdeeInner');
+  if(_bedenkStap==='keuze') el.innerHTML=_bModalKeuze();
+  else if(_bedenkStap==='brainstorm') el.innerHTML=_bModalBrainstorm();
+  else if(_bedenkStap==='uitwerken') el.innerHTML=_bModalUitwerken();
+  else if(_bedenkStap==='resultaten') el.innerHTML=_bModalResultaten();
+  else if(_bedenkStap==='laden') el.innerHTML=_bModalLaden();
+}
+
+function _bPlatOptions(sel=''){
+  return ['','linkedin','instagram','website'].map(v=>`<option value="${v}"${sel===v?' selected':''}>${v===''?'Alle platforms':v==='linkedin'?'LinkedIn':v==='instagram'?'Instagram':'Website'}</option>`).join('');
+}
+function _bPilaarOptions(sel=''){
+  return ['',..._PILAREN].map(v=>`<option value="${v}"${sel===v?' selected':''}>${v||'Alle pilaren'}</option>`).join('');
+}
+
+function _bModalKeuze(){return`
+  <h3>💡 Bedenk idee</h3>
+  <div class="bi-keuze-grid">
+    <div class="bi-keuze-card" onclick="_bedenkModus='brainstorm';_bedenkStap='brainstorm';_renderBedenkModal()">
+      <div class="bi-keuze-icon">🧠</div>
+      <div class="bi-keuze-titel">Idee bedenken</div>
+      <div class="bi-keuze-desc">Claude bedenkt verrassende ideeën op basis van je content strategie</div>
+    </div>
+    <div class="bi-keuze-card" onclick="_bedenkModus='uitwerken';_bedenkStap='uitwerken';_renderBedenkModal()">
+      <div class="bi-keuze-icon">✍️</div>
+      <div class="bi-keuze-titel">Idee uitwerken</div>
+      <div class="bi-keuze-desc">Jij geeft input, Claude werkt het uit tot een kant-en-klare post</div>
+    </div>
+  </div>
+  <div class="modal-ft"><button class="btn btn-ghost" onclick="sluitBedenkIdeeModal()">Annuleren</button></div>`;}
+
+function _bModalBrainstorm(){return`
+  <h3>🧠 Idee bedenken</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:14px;">
+    <div class="form-row" style="margin-bottom:0;"><label>Platform</label><select id="bi-platform">${_bPlatOptions()}</select></div>
+    <div class="form-row" style="margin-bottom:0;"><label>Pilaar</label><select id="bi-pilaar">${_bPilaarOptions()}</select></div>
+    <div class="form-row" style="margin-bottom:0;"><label>Aantal</label><input id="bi-aantal" type="number" min="1" max="5" value="3" style="text-align:center;"></div>
+  </div>
+  <div id="bi-err" style="font-size:11.5px;color:var(--red);min-height:16px;"></div>
+  <div class="modal-ft">
+    <button class="btn btn-ghost" onclick="_bedenkStap='keuze';_renderBedenkModal()">← Terug</button>
+    <button class="btn btn-teal" id="bi-gen-btn" onclick="_startBedenkGenereren()">⚡ Genereer ideeën</button>
+  </div>`;}
+
+function _bModalUitwerken(){return`
+  <h3>✍️ Idee uitwerken</h3>
+  <div class="form-row"><label>Jouw input</label><textarea id="bi-input" placeholder="Plak hier je idee, half uitgeschreven post, bullet points, of gewoon een gedachte..." style="min-height:100px;"></textarea></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div class="form-row" style="margin-bottom:0;"><label>Platform</label><select id="bi-platform">${_bPlatOptions()}</select></div>
+    <div class="form-row" style="margin-bottom:0;"><label>Pilaar</label><select id="bi-pilaar">${_bPilaarOptions()}</select></div>
+  </div>
+  <div id="bi-err" style="font-size:11.5px;color:var(--red);min-height:16px;"></div>
+  <div class="modal-ft">
+    <button class="btn btn-ghost" onclick="_bedenkStap='keuze';_renderBedenkModal()">← Terug</button>
+    <button class="btn btn-teal" id="bi-gen-btn" onclick="_startBedenkGenereren()">✍️ Werk uit</button>
+  </div>`;}
+
+function _bModalLaden(){const msg=_bedenkModus==='brainstorm'?'Claude bedenkt ideeën... ⚡':'Claude werkt je idee uit... ✍️';
+  return`<h3>${_bedenkModus==='brainstorm'?'🧠 Idee bedenken':'✍️ Idee uitwerken'}</h3>
+  <div style="padding:32px 0;text-align:center;color:var(--t2);font-size:13px;">${msg}</div>`;}
+
+function _bModalResultaten(){
+  if(!_bedenkResultaten.length) return`<h3>Resultaten</h3><div class="empty">Geen ideeën ontvangen.</div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="_bedenkStap='${_bedenkModus}';_renderBedenkModal()">← Terug</button></div>`;
+  const cards=_bedenkResultaten.map((idee,i)=>{
+    const opgeslagen=idee._opgeslagen;
+    const platCls=idee.platform||'linkedin';
+    const platLbl={'linkedin':'LinkedIn','instagram':'Instagram','website':'Website'}[idee.platform]||idee.platform||'–';
+    return`<div class="bi-result-card${opgeslagen?' opgeslagen':''}" id="bi-card-${i}">
+      <div class="bi-result-badges">
+        <span class="plat-b ${platCls}" style="font-size:9px;">${platLbl}</span>
+        ${idee.pilaar?`<span class="ci-pilaar" style="font-size:9px;">${idee.pilaar}</span>`:''}
+        ${idee.format?`<span class="ci-badge" style="font-size:9px;background:rgba(255,255,255,.06);color:var(--t3);border:1px solid var(--bd);margin-left:0;">${idee.format}</span>`:''}
+        ${idee.higgsfield_geschikt?`<span style="font-size:9px;color:#fb923c;" title="Geschikt voor Higgsfield video">🎬</span>`:''}
+      </div>
+      <div class="bi-result-onderwerp">${idee.onderwerp||'–'}</div>
+      ${idee.hook?`<div class="bi-result-hook">"${idee.hook}"</div>`:''}
+      ${idee.hook_vorm?`<div style="font-size:10px;color:var(--t3);margin-bottom:4px;">Hook vorm: ${idee.hook_vorm}</div>`:''}
+      ${idee.volledige_tekst?`<details style="margin-bottom:6px;"><summary style="cursor:pointer;font-size:11px;color:var(--t3);">Volledige tekst bekijken</summary><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-top:6px;white-space:pre-wrap;">${idee.volledige_tekst}</div></details>`:''}
+      <div class="bi-result-acties">
+        ${opgeslagen
+          ?`<span style="font-size:11px;color:var(--teal);">✓ Opgeslagen</span>`
+          :`<button class="btn btn-green btn-sm" onclick="_slaResultaatOp(${i})">✅ Opslaan als idee</button>
+            ${idee.higgsfield_geschikt?`<button class="btn btn-ghost btn-sm" disabled title="Binnenkort beschikbaar" style="opacity:.5;cursor:not-allowed;">🎬 Higgsfield video</button>`:''}
+            <button class="btn btn-ghost-red btn-sm" onclick="_verwijderResultaat(${i})">❌</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+  return`<h3>${_bedenkModus==='brainstorm'?'🧠':'✍️'} Resultaten <span style="font-size:13px;font-weight:400;color:var(--t3);">(${_bedenkResultaten.length})</span></h3>
+    ${cards}
+    <div class="modal-ft" style="justify-content:space-between;">
+      <button class="btn btn-ghost" onclick="_bedenkStap='${_bedenkModus}';_renderBedenkModal()">← Terug</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="_startBedenkGenereren()">🔄 Opnieuw genereren</button>
+        <button class="btn btn-ghost" onclick="sluitBedenkIdeeModal()">Sluiten</button>
+      </div>
+    </div>`;}
+
+async function _startBedenkGenereren(){
+  const platform=document.getElementById('bi-platform')?.value||'';
+  const pilaar=document.getElementById('bi-pilaar')?.value||'';
+  const aantal=parseInt(document.getElementById('bi-aantal')?.value)||3;
+  const input=document.getElementById('bi-input')?.value?.trim()||'';
+  const err=document.getElementById('bi-err');
+  if(_bedenkModus==='uitwerken'&&!input){if(err)err.textContent='Vul je input in.';return;}
+  _bedenkParams={platform,pilaar,aantal,input};
+  _bedenkStap='laden';_renderBedenkModal();
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const body={modus:_bedenkModus,platform:platform||undefined,pilaar:pilaar||undefined,aantal};
+    if(_bedenkModus==='uitwerken') body.input=input;
+    const resp=await fetch(`${SB_URL}/functions/v1/bedenk-idee`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify(body)
+    });
+    const data=await resp.json();
+    if(!resp.ok) throw new Error(data.error||'Edge Function fout');
+    _bedenkResultaten=(Array.isArray(data)?data:data.ideeën||data.resultaten||[]).map(i=>({...i,_opgeslagen:false}));
+    _bedenkStap='resultaten';_renderBedenkModal();
+  }catch(e){
+    _bedenkStap=_bedenkModus;_renderBedenkModal();
+    setTimeout(()=>{const errEl=document.getElementById('bi-err');if(errEl)errEl.textContent='Fout: '+e.message;},50);
+  }
+}
+
+function _bedenkModusKiezen(m){_bedenkModus=m;_bedenkStap=m;_renderBedenkModal();}
+
+async function _slaResultaatOp(i){
+  const idee=_bedenkResultaten[i];
+  if(!idee) return;
+  try{
+    await sbPost('content_ideas',{
+      onderwerp:idee.onderwerp,
+      pilaar:idee.pilaar||null,
+      platform:idee.platform||'linkedin',
+      format:idee.format||null,
+      slide_1_tekst:idee.volledige_tekst||idee.hook||null,
+      aanleiding:idee.hook||null,
+      status:'idee'
+    });
+    _bedenkResultaten[i]._opgeslagen=true;
+    _renderBedenkModal();
+    toast('Idee opgeslagen ✓');
+  }catch(e){toast('Fout: '+e.message);}
+}
+function _verwijderResultaat(i){
+  _bedenkResultaten.splice(i,1);
+  _renderBedenkModal();
+}
+
+// ─── Content Kalender ─────────────────────────────────────────────────────
+async function renderContentKalender(){
+  const el=document.getElementById('kalender-container');
+  if(!el) return;
+  el.innerHTML='<div class="loading">Kalender laden...</div>';
+  const jaar=kalenderMaand.getFullYear();
+  const maand=kalenderMaand.getMonth();
+  const van=new Date(jaar,maand,1).toISOString().split('T')[0];
+  const tot=new Date(jaar,maand+1,0).toISOString().split('T')[0];
+  const [gepland,gepost]=await Promise.all([
+    sbGetSafe('content_ideas',`select=id,onderwerp,platform,format,slide_1_tekst,gepland_datum&status=eq.gepland&gepland_datum=gte.${van}&gepland_datum=lte.${tot}&order=gepland_datum.asc`).catch(()=>[]),
+    sbGetSafe('content_ideas',`select=id,onderwerp,platform,format,gepland_datum&status=eq.gepost&gepland_datum=gte.${van}&gepland_datum=lte.${tot}`).catch(()=>[])
+  ]);
+  const allePosts=[...gepland.map(p=>({...p,_type:'gepland'})),...gepost.map(p=>({...p,_type:'gepost'}))];
+  // Bouw dag-map
+  const dagMap={};
+  allePosts.forEach(p=>{
+    if(!p.gepland_datum) return;
+    const key=p.gepland_datum.split('T')[0];
+    if(!dagMap[key]) dagMap[key]=[];
+    dagMap[key].push(p);
+  });
+  const maandNaam=new Date(jaar,maand,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
+  const today=new Date();today.setHours(0,0,0,0);
+  // Eerste dag van de maand (0=zondag → omzetten naar Ma=0)
+  let startDag=(new Date(jaar,maand,1).getDay()+6)%7; // ma=0
+  const dagenInMaand=new Date(jaar,maand+1,0).getDate();
+  const totaleCellen=Math.ceil((startDag+dagenInMaand)/7)*7;
+  const weekdagen=['Ma','Di','Wo','Do','Vr','Za','Zo'];
+  let cellen='';
+  for(let c=0;c<totaleCellen;c++){
+    const dagNr=c-startDag+1;
+    const geldig=dagNr>=1&&dagNr<=dagenInMaand;
+    const datum=geldig?new Date(jaar,maand,dagNr):null;
+    const isToday=geldig&&datum&&datum.getTime()===today.getTime();
+    const key=datum?datum.toISOString().split('T')[0]:'';
+    const posts=geldig&&key?dagMap[key]||[]:[];
+    const postsHtml=posts.map(p=>{
+      const platCls=p.platform||'linkedin';
+      const dimmed=p._type==='gepost'?' gepost':'';
+      const preview=(p.onderwerp||'').substring(0,30);
+      return `<div class="cal-post ${platCls}${dimmed}" title="${p.onderwerp||''}" onclick="event.stopPropagation();_kalenderPostClick('${p.id}')">${p._type==='gepost'?'✓ ':''} ${preview}</div>`;
+    }).join('');
+    cellen+=`<div class="cal-cell${!geldig?' buiten-maand':''}${isToday?' today':''}">
+      ${geldig?`<div class="cal-day">${dagNr}</div>`:''} ${postsHtml}
+    </div>`;
+  }
+  el.innerHTML=`
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="kalenderMaand=new Date(kalenderMaand.getFullYear(),kalenderMaand.getMonth()-1,1);renderContentKalender()">←</button>
+      <span class="cal-nav-titel">${maandNaam.charAt(0).toUpperCase()+maandNaam.slice(1)}</span>
+      <button class="cal-nav-btn" onclick="kalenderMaand=new Date(kalenderMaand.getFullYear(),kalenderMaand.getMonth()+1,1);renderContentKalender()">→</button>
+    </div>
+    <div class="cal-weekdagen">${weekdagen.map(d=>`<div class="cal-weekdag">${d}</div>`).join('')}</div>
+    <div class="cal-grid">${cellen}</div>`;
+}
+
+function _kalenderPostClick(id){
+  // Switch naar lijst view en scroll naar het idee
+  contentView='lijst';
+  cFilter='gepland';
+  render('content');
+  setTimeout(()=>{
+    const el=document.querySelector(`[onclick*="${id}"]`);
+    if(el) el.closest('.ci-card')?.scrollIntoView({behavior:'smooth',block:'center'});
+  },300);
+}
+// ────────────────────────────────────────────────────────────────────────
 
 // ── TAKEN ──────────────────────────────────────────────
 async function tTaken(){
