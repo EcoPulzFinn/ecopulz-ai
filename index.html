@@ -2735,10 +2735,12 @@ async function openAdobeExpress(){
 
 // ─── Content Visuals (Supabase Storage) ─────────────────────────────────
 let _visualIdeeId=null;
+let _selectedVisualFile=null;
 const VISUAL_BUCKET='content-visuals';
 
 function openVisualModal(ideeId){
   _visualIdeeId=ideeId;
+  _selectedVisualFile=null;
   document.getElementById('vm-preview-wrap').style.display='none';
   document.getElementById('vm-preview').src='';
   document.getElementById('vm-file').value='';
@@ -2750,6 +2752,7 @@ function openVisualModal(ideeId){
 function sluitVisualModal(){
   document.getElementById('visualModal').classList.remove('open');
   _visualIdeeId=null;
+  _selectedVisualFile=null;
 }
 
 function _handleVisualDrop(file){
@@ -2768,6 +2771,7 @@ function _previewVisualFile(file){
     return;
   }
   document.getElementById('vm-err').textContent='';
+  _selectedVisualFile=file;
   const reader=new FileReader();
   reader.onload=ev=>{
     document.getElementById('vm-preview').src=ev.target.result;
@@ -2780,7 +2784,7 @@ function _previewVisualFile(file){
 
 async function uploadVisual(){
   if(!_visualIdeeId){return;}
-  const file=document.getElementById('vm-file').files[0];
+  const file=_selectedVisualFile||document.getElementById('vm-file').files[0];
   const err=document.getElementById('vm-err');
   const btn=document.getElementById('vm-upload-btn');
   err.textContent='';
