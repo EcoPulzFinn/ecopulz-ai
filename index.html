@@ -475,7 +475,9 @@
 .cal-post.linkedin { background:#5BA4E8; }
 .cal-post.instagram { background:#F07090; }
 .cal-post.website { background:var(--teal); }
-.cal-post.gepost { opacity:.5; }
+.cal-post.gepost { opacity:.7; border:1px solid rgba(255,255,255,.2); }
+.post-metrics { display:flex; gap:14px; margin-top:8px; padding-top:8px; border-top:1px solid var(--bd); font-size:12px; color:var(--t3); flex-wrap:wrap; }
+.post-metrics span { display:flex; align-items:center; gap:3px; }
 /* === LinkedIn publiceren === */
 .btn-li-pub { background:rgba(91,164,232,.14); border:1px solid rgba(91,164,232,.28); color:#5BA4E8; font-family:var(--f); font-size:11px; font-weight:600; padding:4px 9px; border-radius:var(--r); cursor:pointer; transition:all .13s; white-space:nowrap; }
 .btn-li-pub:hover { background:rgba(91,164,232,.24); border-color:rgba(91,164,232,.5); }
@@ -1550,7 +1552,8 @@ async function tContent(){
     }
     // Laad reeksen en losse ideeën parallel
     const fm={'ideeën':'idee',concept:'concept',gepland:'gepland',gepost:'gepost',afgewezen:'afgewezen'};
-    let q=cFilter==='gepland'?'select=*&reeks_id=is.null&status=eq.gepland&order=gepland_datum.asc':'select=*&reeks_id=is.null&order=created_at.desc';
+    const _cols='select=id,onderwerp,platform,format,pilaar,aanleiding,status,slide_1_tekst,gepland_datum,visual_url,likes,comments,shares,impressies,metrics_updated_at,afwijzing_reden&reeks_id=is.null';
+    let q=cFilter==='gepland'?`${_cols}&status=eq.gepland&order=gepland_datum.asc`:`${_cols}&order=created_at.desc`;
     if(cFilter!=='alle'&&cFilter!=='gepland') q+=`&status=eq.${fm[cFilter]||cFilter}`;
     const [reeksen, losseIdeeën] = await Promise.all([
       sbGetSafe('content_reeksen','select=*&order=created_at.desc').catch(()=>[]),
@@ -1558,8 +1561,15 @@ async function tContent(){
     ]);
     ciIdeeën = losseIdeeën;
 
-    const filterBtns=['Alle','Ideeën','Concept','Gepland','Gepost','Afgewezen'];
-    const filterHtml=filterBtns.map(f=>`<button class="fbtn${cFilter===f.toLowerCase()?' active':''}" onclick="setCF('${f.toLowerCase()}')">${f}</button>`).join('');
+    const filterBtns=[
+      {label:'Alle',value:'alle'},
+      {label:'Ideeën',value:'ideeën'},
+      {label:'Concept',value:'concept'},
+      {label:'📅 Contentkalender',value:'gepland'},
+      {label:'Gepost',value:'gepost'},
+      {label:'Afgewezen',value:'afgewezen'},
+    ];
+    const filterHtml=filterBtns.map(f=>`<button class="fbtn${cFilter===f.value?' active':''}" onclick="setCF('${f.value}')">${f.label}</button>`).join('');
     const gridHtml=`<div class="ci-grid">${ciIdeeën.length?ciIdeeën.map(ciKaart).join(''):'<div class="empty">Geen content in deze categorie</div>'}</div>`;
 
     // Gepland tab → kalenderweergave
@@ -2488,6 +2498,16 @@ function ciKaart(idee){
       ${t?`<span style="font-size:10.5px;color:var(--t3);">⏰ ${t}</span>`:''}
       ${liKnop}
     </div>`;
+  } else if(idee.status==='gepost'){
+    const totMetrics=(idee.likes||0)+(idee.comments||0)+(idee.shares||0)+(idee.impressies||0);
+    if(totMetrics>0){
+      footer=`<div class="post-metrics">
+        <span>❤️ ${idee.likes||0}</span>
+        <span>💬 ${idee.comments||0}</span>
+        <span>🔄 ${idee.shares||0}</span>
+        <span>👁 ${idee.impressies||0}</span>
+      </div>`;
+    }
   }
 
   const visualHtml=idee.visual_url
@@ -2611,6 +2631,26 @@ function _renderIdeeExpand(idee){
       ${visualExpandHtml}
     </div>
     ${actieKnoppen?`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--bd);">${actieKnoppen}</div>`:''}
+    ${idee.status==='gepost'?_renderMetricsBlok(idee):''}
+  </div>`;
+}
+
+function _renderMetricsBlok(idee){
+  const heeftData=(idee.likes||0)+(idee.comments||0)+(idee.shares||0)+(idee.impressies||0)>0;
+  const bijgewerkt=idee.metrics_updated_at
+    ?new Date(idee.metrics_updated_at).toLocaleString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+    :null;
+  return `<div style="margin-top:14px;padding:12px 14px;background:var(--inp);border:1px solid var(--bd);border-radius:var(--r);">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px;">LinkedIn performance</div>
+    ${heeftData
+      ?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;">
+          <div><div style="font-size:20px;font-weight:800;color:var(--t1);">${idee.likes||0}</div><div style="font-size:10px;color:var(--t3);">Likes</div></div>
+          <div><div style="font-size:20px;font-weight:800;color:var(--t1);">${idee.comments||0}</div><div style="font-size:10px;color:var(--t3);">Comments</div></div>
+          <div><div style="font-size:20px;font-weight:800;color:var(--t1);">${idee.shares||0}</div><div style="font-size:10px;color:var(--t3);">Shares</div></div>
+          <div><div style="font-size:20px;font-weight:800;color:var(--t1);">${idee.impressies||0}</div><div style="font-size:10px;color:var(--t3);">Impressies</div></div>
+        </div>`
+      :`<div style="font-size:12px;color:var(--t3);">Metrics worden dagelijks opgehaald</div>`}
+    ${bijgewerkt?`<div style="font-size:10px;color:var(--t3);margin-top:8px;">Bijgewerkt: ${bijgewerkt}</div>`:''}
   </div>`;
 }
 // ─────────────────────────────────────────────────────────────────────────
@@ -3264,6 +3304,9 @@ function _verwijderResultaat(i){
 }
 
 // ─── Content Kalender ─────────────────────────────────────────────────────
+// Kalender post cache (voor popover)
+let _kalPostCache={};
+
 async function renderContentKalender(){
   const el=document.getElementById('kalender-container');
   if(!el) return;
@@ -3272,11 +3315,14 @@ async function renderContentKalender(){
   const maand=kalenderMaand.getMonth();
   const van=new Date(jaar,maand,1).toISOString().split('T')[0];
   const tot=new Date(jaar,maand+1,0).toISOString().split('T')[0];
+  const cols='id,onderwerp,platform,format,slide_1_tekst,gepland_datum,likes,comments,shares,impressies,metrics_updated_at';
   const [gepland,gepost]=await Promise.all([
-    sbGetSafe('content_ideas',`select=id,onderwerp,platform,format,slide_1_tekst,gepland_datum&status=eq.gepland&gepland_datum=gte.${van}&gepland_datum=lte.${tot}&order=gepland_datum.asc`).catch(()=>[]),
-    sbGetSafe('content_ideas',`select=id,onderwerp,platform,format,gepland_datum&status=eq.gepost&gepland_datum=gte.${van}&gepland_datum=lte.${tot}`).catch(()=>[])
+    sbGetSafe('content_ideas',`select=${cols}&status=eq.gepland&gepland_datum=gte.${van}&gepland_datum=lte.${tot}&order=gepland_datum.asc`).catch(()=>[]),
+    sbGetSafe('content_ideas',`select=${cols}&status=eq.gepost&gepland_datum=gte.${van}&gepland_datum=lte.${tot}`).catch(()=>[])
   ]);
   const allePosts=[...gepland.map(p=>({...p,_type:'gepland'})),...gepost.map(p=>({...p,_type:'gepost'}))];
+  _kalPostCache={};
+  allePosts.forEach(p=>{ _kalPostCache[p.id]=p; });
   // Bouw dag-map
   const dagMap={};
   allePosts.forEach(p=>{
@@ -3287,8 +3333,7 @@ async function renderContentKalender(){
   });
   const maandNaam=new Date(jaar,maand,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
   const today=new Date();today.setHours(0,0,0,0);
-  // Eerste dag van de maand (0=zondag → omzetten naar Ma=0)
-  let startDag=(new Date(jaar,maand,1).getDay()+6)%7; // ma=0
+  let startDag=(new Date(jaar,maand,1).getDay()+6)%7;
   const dagenInMaand=new Date(jaar,maand+1,0).getDate();
   const totaleCellen=Math.ceil((startDag+dagenInMaand)/7)*7;
   const weekdagen=['Ma','Di','Wo','Do','Vr','Za','Zo'];
@@ -3302,11 +3347,11 @@ async function renderContentKalender(){
     const posts=geldig&&key?dagMap[key]||[]:[];
     const postsHtml=posts.map(p=>{
       const platCls=p.platform||'linkedin';
-      const dimmed=p._type==='gepost'?' gepost':'';
-      const preview=(p.onderwerp||'').substring(0,30);
-      return `<div class="cal-post ${platCls}${dimmed}" title="${p.onderwerp||''}" onclick="event.stopPropagation();_kalenderPostClick('${p.id}')">${p._type==='gepost'?'✓ ':''} ${preview}</div>`;
+      const gepostCls=p._type==='gepost'?' gepost':'';
+      const preview=(p.onderwerp||'').substring(0,28);
+      return `<div class="cal-post ${platCls}${gepostCls}" title="${p.onderwerp||''}" onclick="event.stopPropagation();_kalenderPostClick('${p.id}')">${p._type==='gepost'?'✓ '+''}${preview}</div>`;
     }).join('');
-    cellen+=`<div class="cal-cell${!geldig?' buiten-maand':''}${isToday?' today':''}">
+    cellen+=`<div class="cal-cell${!geldig?' buiten-maand':''}${isToday?' today':''}" onclick="sluitKalPopover()">
       ${geldig?`<div class="cal-day">${dagNr}</div>`:''} ${postsHtml}
     </div>`;
   }
@@ -3317,17 +3362,58 @@ async function renderContentKalender(){
       <button class="cal-nav-btn" onclick="kalenderMaand=new Date(kalenderMaand.getFullYear(),kalenderMaand.getMonth()+1,1);renderContentKalender()">→</button>
     </div>
     <div class="cal-weekdagen">${weekdagen.map(d=>`<div class="cal-weekdag">${d}</div>`).join('')}</div>
-    <div class="cal-grid">${cellen}</div>`;
+    <div class="cal-grid" id="cal-grid">${cellen}</div>
+    <div id="kal-popover" style="display:none;position:fixed;z-index:200;background:var(--card);border:1px solid var(--bdm);border-radius:var(--r);padding:14px 16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.4);font-size:13px;"></div>`;
 }
 
 function _kalenderPostClick(id){
-  // Switch naar 'alle' (lijst) en scroll naar het idee
-  cFilter='alle';
-  render('content');
-  setTimeout(()=>{
-    const el=document.querySelector(`[onclick*="${id}"]`);
-    if(el) el.closest('.ci-card')?.scrollIntoView({behavior:'smooth',block:'center'});
-  },400);
+  const p=_kalPostCache[id];
+  if(!p){return;}
+  const pop=document.getElementById('kal-popover');
+  if(!pop) return;
+  const heeftMetrics=(p.likes||0)+(p.comments||0)+(p.shares||0)+(p.impressies||0)>0;
+  const isGepost=p._type==='gepost';
+
+  let html=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+    <strong style="font-size:13px;line-height:1.3;flex:1;margin-right:8px;">${p.onderwerp||'Geen titel'}</strong>
+    <button onclick="sluitKalPopover()" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:16px;line-height:1;flex-shrink:0;">×</button>
+  </div>`;
+  if(p.slide_1_tekst){
+    html+=`<div style="font-size:11.5px;color:var(--t2);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${p.slide_1_tekst}</div>`;
+  }
+  if(isGepost&&heeftMetrics){
+    html+=`<div class="post-metrics" style="margin-top:6px;padding-top:6px;">
+      <span>❤️ ${p.likes||0}</span>
+      <span>💬 ${p.comments||0}</span>
+      <span>🔄 ${p.shares||0}</span>
+      <span>👁 ${p.impressies||0}</span>
+    </div>`;
+  }
+  if(!isGepost){
+    html+=`<div style="display:flex;gap:6px;margin-top:10px;">
+      <button class="btn-li-pub" style="font-size:11px;padding:5px 9px;" onclick="sluitKalPopover();openLiPubliceerModal('${id}')">📤 Publiceer</button>
+      <button class="btn btn-ghost btn-sm" onclick="sluitKalPopover();cFilter='alle';render('content');setTimeout(()=>{const e=document.getElementById('ci-card-${id}');if(e){expandedIdee='${id}';_renderEénKaart('${id}');e.scrollIntoView({behavior:'smooth',block:'center'});}},400)">✏️ Bekijk</button>
+    </div>`;
+  } else {
+    html+=`<div style="margin-top:10px;">
+      <button class="btn btn-ghost btn-sm" onclick="sluitKalPopover();cFilter='alle';render('content');setTimeout(()=>{const e=document.getElementById('ci-card-${id}');if(e){expandedIdee='${id}';_renderEénKaart('${id}');e.scrollIntoView({behavior:'smooth',block:'center'});}},400)">📋 Bekijk kaart</button>
+    </div>`;
+  }
+
+  pop.innerHTML=html;
+  // Positioneer naast de geklikte cel
+  const clickedEl=event?.target?.closest('.cal-post');
+  if(clickedEl){
+    const rect=clickedEl.getBoundingClientRect();
+    const left=Math.min(rect.left,window.innerWidth-280);
+    pop.style.left=left+'px';
+    pop.style.top=(rect.bottom+6)+'px';
+  }
+  pop.style.display='block';
+}
+function sluitKalPopover(){
+  const pop=document.getElementById('kal-popover');
+  if(pop) pop.style.display='none';
 }
 // ────────────────────────────────────────────────────────────────────────
 
