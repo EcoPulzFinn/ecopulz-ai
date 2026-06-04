@@ -3676,7 +3676,7 @@ function setRF(f){rFilter=f;render('radar');}
 const _reactiesMap={};
 async function tReacties(){
   try{
-    let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at,gereageerd_op,updated_at&order=created_at.desc';
+    let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at,gereageerd_op&order=created_at.desc';
     if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
     const items=await sbGetSafe('sector_reactions',q);
     items.forEach(r=>{ _reactiesMap[r.id]=r; });
@@ -3710,7 +3710,7 @@ function reactieKaart(r){
 
   // WIJZIGING 3: readonly kaart voor gereageerd
   if(r.status==='gereageerd'){
-    const datumG=r.gereageerd_op||r.updated_at;
+    const datumG=r.gereageerd_op||r.created_at;
     return `<div class="reactie-card rc-readonly${r.koopsignaal?' koopsignaal':''}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;">
         <div style="min-width:0">
