@@ -200,7 +200,7 @@
     .chev { color:var(--t3); flex-shrink:0; transition:transform .22s,color .14s; }
     .lead-row.open .chev { transform:rotate(180deg); color:var(--teal); }
     .lead-body { max-height:0; overflow:hidden; transition:max-height .32s cubic-bezier(.4,0,.2,1); }
-    .lead-body.show { max-height:900px; }
+    .lead-body.show { max-height:4000px; }
     .lead-bdy-inner { padding:0 15px 20px; border-top:1px solid var(--bd); }
     .icp-row { display:flex; justify-content:space-between; align-items:center; margin:16px 0 6px; }
     .icp-lbl { font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); }
@@ -583,10 +583,58 @@
 .ci-slide-panel.hidden { display:none; }
 .ci-slide-tekst { font-size:13px; color:var(--t1); line-height:1.6; padding:12px; background:var(--inp); border:1px solid var(--bd); white-space:pre-wrap; }
 .ci-visual-blk { background:rgba(255,255,255,.04); border:1px solid var(--bdm); padding:12px; font-size:11.5px; color:var(--t2); line-height:1.55; font-style:italic; white-space:pre-wrap; }
+/* === F14: Lead Funnel === */
+.funnel-wrap { margin-bottom:22px; }
+.funnel-stages { display:flex; align-items:stretch; gap:0; margin-bottom:10px; border-radius:var(--r); overflow:hidden; }
+.funnel-step { position:relative; padding:12px 18px 12px 26px; flex:1; cursor:pointer; transition:filter .15s,opacity .15s; display:flex; flex-direction:column; justify-content:center; min-width:0; clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%); }
+.funnel-step:first-child { padding-left:14px; }
+.funnel-step:hover { filter:brightness(1.18); }
+.funnel-step.active { outline:2px solid rgba(255,255,255,.35); outline-offset:-2px; filter:brightness(1.22); }
+.fs-num { font-size:8.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; opacity:.65; margin-bottom:2px; }
+.fs-naam { font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#e8ece8; line-height:1.25; }
+.fs-count { font-size:14px; font-weight:800; margin-top:4px; font-variant-numeric:tabular-nums; }
+.fs-bedrag { font-size:9px; opacity:.7; margin-top:1px; }
+.funnel-end-states { display:flex; gap:8px; align-items:center; }
+.funnel-end-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:var(--r); font-size:12px; font-weight:700; cursor:pointer; transition:opacity .13s,transform .13s; border:1.5px solid; }
+.funnel-end-badge:hover { opacity:.82; transform:translateY(-1px); }
+.feb-gescoord { background:rgba(34,197,94,.12); color:#86efac; border-color:rgba(34,197,94,.3); }
+.feb-gescoord.active { background:rgba(34,197,94,.22); border-color:#86efac; }
+.feb-niet-gescoord { background:rgba(229,53,53,.1); color:#fca5a5; border-color:rgba(229,53,53,.25); }
+.feb-niet-gescoord.active { background:rgba(229,53,53,.2); border-color:#fca5a5; }
+/* === F14: Fase nav card === */
+.fase-nav-card { background:var(--card); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; }
+.fase-badge-lg { display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:99px; font-size:13px; font-weight:700; border:1.5px solid; }
+.fase-nav-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
+/* === F14: Forecast / Pricing card === */
+.pricing-card { background:var(--card); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; }
+.pricing-nums { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+.pricing-num-block { background:rgba(0,201,164,.05); border:1px solid var(--teal-b); border-radius:var(--r); padding:12px 14px; text-align:center; }
+.pricing-num-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--t3); margin-bottom:5px; }
+.pricing-num-val { font-size:22px; font-weight:800; color:var(--teal); font-variant-numeric:tabular-nums; }
+.pricing-num-sub { font-size:9.5px; color:var(--t3); margin-top:3px; }
+.pricing-form { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+.pf-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pf-lbl { font-size:10.5px; font-weight:600; color:var(--t3); white-space:nowrap; min-width:130px; }
+.pf-inp { background:var(--inp); border:1px solid var(--bdm); color:var(--t1); font-family:var(--f); font-size:12px; padding:6px 10px; border-radius:var(--r); outline:none; transition:border-color .13s; }
+.pf-inp:focus { border-color:var(--teal-b); }
+/* === F14: Opvolgacties card === */
+.opvolg-card { background:var(--card); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; }
+.opvolg-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--bd); }
+.opvolg-item:last-child { border-bottom:none; }
+.opvolg-item.overdue .opvolg-txt { color:#fca5a5; }
+.opvolg-item.overdue .opvolg-dl { color:#fca5a5; font-weight:700; }
+.opvolg-item.done .opvolg-txt { text-decoration:line-through; opacity:.4; }
+.opvolg-txt { flex:1; font-size:12.5px; color:var(--t1); line-height:1.4; }
+.opvolg-dl { font-size:10px; color:var(--t3); white-space:nowrap; flex-shrink:0; padding-top:2px; }
+/* === F14: AFAS card === */
+.afas-card { background:var(--card); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; }
+.afas-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:99px; font-size:11px; font-weight:700; margin-bottom:10px; }
+.afas-badge.in { background:rgba(34,197,94,.12); color:#86efac; border:1px solid rgba(34,197,94,.25); }
+.afas-badge.out { background:rgba(255,255,255,.05); color:var(--t3); border:1px solid var(--bdm); }
 /* === Glassmorphism surfaces === */
 .c-card,.reactie-card,.bedrijf-card,.lead-row,.ci-card,.ag-card,.reeks-card,.kand-card,.phase-step,.rapport-card,.bi-result-card,.bi-keuze-card,.cmp-card,.vac-card,.ad-card { backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); box-shadow:var(--shadow-card); }
 .ci-modal { background:rgba(22,24,26,.92); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); box-shadow:0 8px 40px rgba(0,0,0,.55); }
-.task-row { backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); }
+.task-row,.fase-nav-card,.pricing-card,.opvolg-card,.afas-card { backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); }
   </style>
   <script src="https://cc-embed.adobe.com/sdk/v4/CCEverywhere.js" defer></script>
 </head>
@@ -1178,7 +1226,7 @@ async function sbDelete(table, id) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-let tab='overzicht', lFase='prospecting', lFilter='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
+let tab='overzicht', lFase='000', lFilter='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 let expandedReeksen=new Set(), _reeksIdeeënCache={};
@@ -1330,7 +1378,7 @@ async function tOvz(){
 }
 
 function naarLead(id){
-  lFase='prospecting'; lFilter='alle';
+  lFase='000'; lFilter='alle';
   expanded.add(id);
   go('leadfunnel');
   setTimeout(()=>{const el=document.getElementById('lr-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},600);
@@ -1338,102 +1386,158 @@ function naarLead(id){
 
 // ── LEAD FUNNEL ────────────────────────────────────────
 const _leadDataMap={};
-async function tLead(){
-  try{
-    const allLeads=await sbGetSafe('leads','select=fase_detail&fase_detail=not.in.(verloren)');
-    const telFase=(f)=>(allLeads||[]).filter(l=>l.fase_detail===f).length;
-    let q=`select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin&fase_detail=eq.${lFase}&order=icp_score.desc`;
-    if(lFilter==='afgewezen') q+=`&status=eq.afgewezen`;
-    else if(lFilter!=='alle') q+=`&status=eq.${lFilter}`;
-    else q+=`&status=neq.afgewezen`;
-    const leads=await sbGetSafe('leads',q);
-    leads.forEach(l=>{ _leadDataMap[l.id]=l; });
-    const arr=`<div class="phase-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
-    document.getElementById('ca').innerHTML=`
-      <div class="phase-nav">
-        ${ps('prospecting','01','Prospecting','Leads in beeld',telFase('prospecting'),false)}
-        ${arr}
-        ${ps('gekwalificeerd','02','Gekwalificeerd','Interesse bevestigd',telFase('gekwalificeerd'),false)}
-        ${arr}
-        ${ps('probleemanalyse','03','Probleemanalyse','Behoefte helder',telFase('probleemanalyse'),false)}
-        ${arr}
-        ${ps('offerte','04','Offerte','Voorstel verstuurd',telFase('offerte'),false)}
-        ${arr}
-        ${ps('gewonnen','05','Gewonnen','Klant',telFase('gewonnen'),false)}
-      </div>
-      <div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
-      <div class="leads-list">${leads.length?leads.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
-  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+let _faseMappingCache=null;
+async function laadFaseMapping(){
+  if(_faseMappingCache&&_faseMappingCache.length) return _faseMappingCache;
+  try{ _faseMappingCache=await sbGetSafe('fase_mapping','select=*&order=volgorde.asc'); }
+  catch(e){ _faseMappingCache=[]; }
+  return _faseMappingCache;
 }
 
-function ps(id,num,label,sub,count,isSys){
-  return `<div class="phase-step${lFase===id?' active':''}" onclick="setPhase('${id}')">
-    ${isSys?'<span class="this-sys">DIT SYSTEEM</span>':''}
-    <div class="p-num">FASE ${num}</div>
-    <span class="p-label">${label}</span>
-    <div class="p-sub">${sub}</div>
-    <div class="p-count">${count} ${count===1?'klant':'klanten'}</div>
-  </div>`;
+function fmtBedrag(n){
+  if(!n||n===0) return '0';
+  if(n>=1000000) return (n/1000000).toFixed(1).replace('.0','')+'M';
+  if(n>=1000) return Math.round(n/1000)+'k';
+  return Math.round(n).toString();
 }
-function setPhase(p){lFase=p;lFilter='alle';render('leadfunnel');}
+
+async function tLead(){
+  const el=document.getElementById('ca');
+  el.innerHTML='<div class="loading">Pipeline laden...</div>';
+  try{
+    const [fases,alleLeads]=await Promise.all([
+      laadFaseMapping(),
+      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_uren&order=icp_score.desc')
+    ]);
+    alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
+
+    const actieveFases=fases.filter(f=>f.code!=='100'&&f.code!=='999');
+    const cntPerFase={},bedragPerFase={};
+    fases.forEach(f=>{cntPerFase[f.code]=0;bedragPerFase[f.code]=0;});
+    alleLeads.forEach(l=>{
+      const code=l.afas_fase_code||'000';
+      if(cntPerFase[code]!==undefined){
+        cntPerFase[code]++;
+        bedragPerFase[code]+=(l.verwacht_bedrag||l.prijs_jaar_1||0);
+      }
+    });
+    const gescoordCount=cntPerFase['100']||0;
+    const nietGescoordCount=cntPerFase['999']||0;
+
+    // Reset lFase if it's old string format
+    if(actieveFases.length&&!fases.find(f=>f.code===lFase)&&lFase!=='100'&&lFase!=='999'){
+      lFase=actieveFases[0].code;
+    }
+
+    let filtered=alleLeads.filter(l=>(l.afas_fase_code||'000')===lFase);
+    if(lFilter==='afgewezen') filtered=filtered.filter(l=>l.status==='afgewezen');
+    else if(lFilter!=='alle') filtered=filtered.filter(l=>l.status===lFilter);
+
+    const funnelHtml=actieveFases.length?actieveFases.map(f=>{
+      const cnt=cntPerFase[f.code]||0;
+      const bedrag=bedragPerFase[f.code]||0;
+      const kleur=f.kleur||'#00C9A4';
+      return `<div class="funnel-step${lFase===f.code?' active':''}"
+        style="background:${kleur}28;border-right:1px solid ${kleur}33;"
+        onclick="setPhase('${f.code}')">
+        <div class="fs-num" style="color:${kleur};">${f.code}</div>
+        <div class="fs-naam">${f.naam||'–'}</div>
+        <div class="fs-count" style="color:${kleur};">${cnt}</div>
+        ${bedrag>0?`<div class="fs-bedrag" style="color:${kleur};">€ ${fmtBedrag(bedrag)}</div>`:''}
+      </div>`;
+    }).join(''):`<div style="padding:20px;color:var(--t3);font-size:12px;">Geen fase_mapping gevonden — voeg fases toe in Supabase</div>`;
+
+    el.innerHTML=`
+      <div class="funnel-wrap">
+        <div class="funnel-stages">${funnelHtml}</div>
+        <div class="funnel-end-states">
+          <button class="funnel-end-badge feb-gescoord${lFase==='100'?' active':''}" onclick="setPhase('100')">&#10003; Gescoord (${gescoordCount})</button>
+          <button class="funnel-end-badge feb-niet-gescoord${lFase==='999'?' active':''}" onclick="setPhase('999')">&#10005; Niet gescoord (${nietGescoordCount})</button>
+        </div>
+      </div>
+      <div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
+      <div class="leads-list">${filtered.length?filtered.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
+  }catch(e){el.innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function setPhase(code){lFase=code;lFilter='alle';render('leadfunnel');}
 function setLF(f){lFilter=f;render('leadfunnel');}
 
 function leadRow(l){
   const exp=expanded.has(l.id);
-  const ph=PH[l.fase]||PH.leads;
   return `<div class="lead-row${exp?' open':''}" id="lr-${l.id}">
     <div class="lead-hdr" onclick="toggleL('${l.id}')">
       <div class="sdot ${l.status||'nieuw'}"></div>
       <div class="l-name-blk">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <div class="l-name">${l.naam}</div>
-          ${faseBadge(l.fase_detail)}
+          ${faseBadge(l)}
         </div>
-        <div class="l-co">${l.organisatie}</div>
+        <div class="l-co">${l.organisatie||'–'} · ${l.functie||'–'}</div>
       </div>
-      <span class="tier-b ${l.tier===1?'t1':'t2'}">Tier ${l.tier}</span>
-      <span class="score-n" style="margin-right:4px">${l.icp_score??'–'}/100</span>
+      ${l.verwacht_bedrag||l.prijs_jaar_1?`<span style="font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap;flex-shrink:0;">€ ${fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1)}</span>`:''}
+      <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier||'?'}</span>
+      <span class="score-n" style="margin-right:4px">${l.icp_score??'–'}</span>
       <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="lead-body${exp?' show':''}" id="lb-${l.id}">
       <div class="lead-bdy-inner">
         ${leadCtx(l)}
-        <div class="actor-section-lbl">Actoren & activiteiten</div>
-        <div class="actor-grid">
-          ${['klant','commercial','platform','ai'].map(a=>`
-            <div class="actor-col ${a}">
-              <div class="ac-hdr">${a==='ai'?'AI':cap(a)}</div>
-              <ul class="ac-list">${ph.actors[a].map(x=>`<li>${x}</li>`).join('')}</ul>
-            </div>`).join('')}
-        </div>
-        <div class="tools-row">${ph.tools.map(t=>`<span class="tool-tag">${t}</span>`).join('')}</div>
-        <div class="streef-blk">
-          <div class="streef-top"><span class="streef-lbl">Streefwaarden</span><span class="streef-pct">${ph.pct}%</span></div>
-          <div class="streef-trk"><div class="streef-fill" style="width:${ph.pct}%"></div></div>
-          <div class="streef-txt"><strong>${ph.streef}</strong> · ${ph.streef2}</div>
-        </div>
-        <div class="lead-actions">
+        <div class="lead-actions" style="margin-bottom:16px;">
           <button class="btn btn-ghost btn-sm" onclick="copyMsg('${l.id}')">Kopieer bericht</button>
-          <button class="btn btn-ghost btn-sm" onclick="openLI('${l.id}')">Open LinkedIn</button>
-          <button class="btn btn-ghost btn-sm" onclick="markBen('${l.id}')">Markeer benaderd</button>
-          ${volgendeFaseBtn(l)}
-          ${l.fase_detail!=='gewonnen'&&l.fase_detail!=='verloren'?`<button class="btn btn-red btn-sm" style="font-size:10px;" onclick="markeerVerloren('${l.id}')">Verloren</button>`:''}
-          ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;padding:4px 0;">✕ Afgewezen</span>'}
+          <button class="btn btn-ghost btn-sm" onclick="openLI('${l.id}')">LinkedIn</button>
+          <button class="btn btn-ghost btn-sm" onclick="markBen('${l.id}')">Benaderd</button>
+          ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;">✕ Afgewezen</span>'}
         </div>
         ${statusFlow(l)}
+        ${forecastCard(l)}
+        <div id="opvolg-${l.id}" class="opvolg-card">
+          <div class="card-title" style="margin-bottom:8px;">Opvolgacties</div>
+          <div style="color:var(--t3);font-size:12px;">Laden...</div>
+        </div>
+        ${afasCard(l)}
       </div>
     </div>
   </div>`;
 }
 
 function leadCtx(l){
+  const fases=_faseMappingCache||[];
+  const huidige=fases.find(f=>f.code===(l.afas_fase_code||'000'));
+  const kleur=huidige?.kleur||'#00C9A4';
+  const faseNaam=huidige?.naam||(l.fase_detail?cap(l.fase_detail):'Fase onbekend');
+  const kans=l.scoringskans||huidige?.scoringskans||0;
+  const actieveFases=fases.filter(f=>f.code!=='100'&&f.code!=='999');
+  const hIdx=actieveFases.findIndex(f=>f.code===(l.afas_fase_code||'000'));
+  const volgende=hIdx>=0&&hIdx<actieveFases.length-1?actieveFases[hIdx+1]:null;
+  const dropdownOpties=actieveFases.map(f=>`<option value="${f.code}"${(l.afas_fase_code||'000')===f.code?' selected':''}>${f.code} — ${f.naam}</option>`).join('');
+
   return `
+    <div class="fase-nav-card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span class="fase-badge-lg" style="background:${kleur}22;color:${kleur};border-color:${kleur}55;">${faseNaam}</span>
+        ${kans?`<span style="font-size:11px;color:var(--t3);">${kans}% scoringskans</span>`:''}
+      </div>
+      <div class="fase-nav-row">
+        ${volgende?`<button class="btn btn-teal btn-sm" onclick="volgendeFase('${l.id}','${l.afas_fase_code||'000'}')">&#8594; ${volgende.naam}</button>`:''}
+        ${dropdownOpties?`<select class="pf-inp" style="font-size:11px;padding:5px 8px;" onchange="springNaarFase('${l.id}',this.value)">${dropdownOpties}</select>`:''}
+        <button class="btn btn-green btn-sm" onclick="markeerGescoord('${l.id}')">&#10003; Gescoord</button>
+        <button class="btn btn-red btn-sm" onclick="markeerNietGescoord('${l.id}')">&#10005; Niet gescoord</button>
+      </div>
+    </div>
     <div class="icp-row"><span class="icp-lbl">ICP Score</span><span class="icp-val">${l.icp_score??'–'} / 100</span></div>
     <div class="icp-trk"><div class="icp-fill" style="width:${l.icp_score??0}%"></div></div>
     <div class="detail-grid">
       <div><div class="d-lbl">Functie</div><div class="d-val">${l.functie||'–'}</div></div>
       <div><div class="d-lbl">Status</div><div class="d-val" style="text-transform:capitalize">${l.status||'nieuw'}</div></div>
-      <div><div class="d-lbl">Verantwoordelijke</div><div class="d-val" style="text-transform:capitalize">${l.admin||'–'}</div></div>
+      <div><div class="d-lbl">Verantwoordelijke</div>
+        <select class="pf-inp" style="font-size:11px;padding:4px 8px;" onchange="slaAdminOp('${l.id}',this.value)">
+          <option value=""${!l.admin?' selected':''}>—</option>
+          <option value="finn"${l.admin==='finn'?' selected':''}>Finn</option>
+          <option value="olaf"${l.admin==='olaf'?' selected':''}>Olaf</option>
+        </select>
+      </div>
+      <div><div class="d-lbl">Verwacht bedrag</div><div class="d-val" style="color:var(--teal);font-weight:700;">${l.verwacht_bedrag||l.prijs_jaar_1?'&#8364; '+fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1):'–'}</div></div>
       ${l.status==='afgewezen'&&l.notities?`<div class="fspan"><div class="d-lbl" style="color:#e57575">Reden afwijzing</div><div class="d-val m" style="color:#e57575">${l.notities}</div></div>`:''}
       ${l.reden?`<div class="fspan"><div class="d-lbl">Reden tot aanschrijven</div><div class="d-val m">${l.reden}</div></div>`:''}
       ${l.outreach_bericht?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
@@ -1449,7 +1553,17 @@ function toggleL(id){
   const row=document.getElementById(`lr-${id}`);
   if(!body||!row)return;
   if(expanded.has(id)){expanded.delete(id);body.classList.remove('show');row.classList.remove('open');}
-  else{expanded.add(id);body.classList.add('show');row.classList.add('open');}
+  else{expanded.add(id);body.classList.add('show');row.classList.add('open');laadLeadDetails(id);}
+}
+
+async function laadLeadDetails(id){
+  try{
+    const taken=await sbGetSafe('tasks',`select=*&lead_id=eq.${id}&order=deadline.asc`);
+    renderOpvolgActies(id,taken);
+  }catch(e){
+    const el=document.getElementById(`opvolg-${id}`);
+    if(el) el.innerHTML=`<div class="card-title" style="margin-bottom:8px;">Opvolgacties</div><div style="color:var(--t3);font-size:12px;">Geen acties gevonden</div>`;
+  }
 }
 
 async function copyMsg(id){
@@ -3430,7 +3544,7 @@ function taakNavigeer(id){
   if(!t||!t.bron_id) return;
   const cat=(t.categorie||t.type||'').toLowerCase();
   if(cat==='leads'||cat==='sdr'){
-    lFase='leads';lFilter='alle';
+    lFase='000';lFilter='alle';
     expanded.add(t.bron_id);
     go('leadfunnel');
   } else if(cat==='linkedin'){
@@ -3673,7 +3787,10 @@ async function laadLeadStats() {
   if (!el) return;
   el.innerHTML = '<div class="loading">Statistieken laden...</div>';
   try {
-    const leads = await sbGetSafe('leads','select=id,naam,organisatie,tier,icp_score,status,fase_detail,instroompunt,created_at,verwerkt&order=icp_score.desc');
+    const [leads] = await Promise.all([
+      sbGetSafe('leads','select=id,naam,organisatie,tier,icp_score,status,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,instroompunt,created_at,verwerkt&order=icp_score.desc'),
+      laadFaseMapping()
+    ]);
     const nu = Date.now();
     const d7  = new Date(nu - 7*864e5);
     const d30 = new Date(nu - 30*864e5);
@@ -3692,11 +3809,21 @@ async function laadLeadStats() {
     const convReag  = benaderd?Math.round(gereageerd/benaderd*100):0;
     const top5      = leads.slice(0,5);
 
-    // Funnel data
-    const fFasen  = ['prospecting','gekwalificeerd','probleemanalyse','offerte','gewonnen'];
-    const fLabels = ['Prospecting','Gekwalificeerd','Analyse','Offerte','Gewonnen'];
-    const fCounts = fFasen.map(f=>leads.filter(l=>l.fase_detail===f).length);
-    const fColors = ['rgba(87,96,87,.85)','rgba(168,224,224,.85)','rgba(251,146,60,.85)','rgba(167,139,250,.85)','rgba(0,181,147,.85)'];
+    // Funnel data — uit fase_mapping of fallback
+    let fFasen=[],fLabels=[],fCounts=[],fColors=[];
+    const fMapping=_faseMappingCache||[];
+    const fActief=fMapping.filter(f=>f.code!=='100'&&f.code!=='999');
+    if(fActief.length){
+      fFasen=fActief.map(f=>f.code);
+      fLabels=fActief.map(f=>f.naam||f.code);
+      fCounts=fActief.map(f=>leads.filter(l=>(l.afas_fase_code||'000')===f.code).length);
+      fColors=fActief.map(f=>(f.kleur||'#00C9A4')+'BB');
+    }else{
+      fFasen=['prospecting','gekwalificeerd','probleemanalyse','offerte','gewonnen'];
+      fLabels=['Prospecting','Gekwalificeerd','Analyse','Offerte','Gewonnen'];
+      fCounts=fFasen.map(f=>leads.filter(l=>l.fase_detail===f).length);
+      fColors=['rgba(87,96,87,.85)','rgba(168,224,224,.85)','rgba(251,146,60,.85)','rgba(167,139,250,.85)','rgba(0,181,147,.85)'];
+    }
 
     // Instroompunten
     const iMap={};
@@ -4158,41 +4285,84 @@ async function saveLead(){
 }
 
 // ── FASE DETAIL HELPERS ────────────────────────────────
-function faseBadge(fd){
+function faseBadge(l){
+  const code=l.afas_fase_code;
+  const fases=_faseMappingCache||[];
+  const fase=fases.find(f=>f.code===code);
+  if(fase){
+    const kleur=fase.kleur||'#00C9A4';
+    return `<span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:99px;background:${kleur}22;color:${kleur};border:1px solid ${kleur}44;flex-shrink:0;">${fase.naam}</span>`;
+  }
+  const fd=l.fase_detail;
   const m={
     prospecting:{t:'Prospecting',bg:'rgba(87,96,87,.18)',c:'var(--t3)',b:'var(--bdm)'},
     gekwalificeerd:{t:'Gekwalificeerd',bg:'var(--blue-dim)',c:'var(--blue)',b:'var(--blue-b)'},
     probleemanalyse:{t:'Analyse',bg:'rgba(251,146,60,.12)',c:'#fb923c',b:'rgba(251,146,60,.3)'},
     offerte:{t:'Offerte',bg:'rgba(167,139,250,.12)',c:'#a78bfa',b:'rgba(167,139,250,.3)'},
-    gewonnen:{t:'Gewonnen ✓',bg:'var(--teal-dim)',c:'var(--teal)',b:'var(--teal-b)'},
+    gewonnen:{t:'Gewonnen',bg:'var(--teal-dim)',c:'var(--teal)',b:'var(--teal-b)'},
     verloren:{t:'Verloren',bg:'rgba(229,53,53,.12)',c:'var(--red)',b:'rgba(229,53,53,.3)'}
   }[fd];
   if(!m)return'';
-  return `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:2px;background:${m.bg};color:${m.c};border:1px solid ${m.b};flex-shrink:0;">${m.t}</span>`;
+  return `<span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:99px;background:${m.bg};color:${m.c};border:1px solid ${m.b};flex-shrink:0;">${m.t}</span>`;
 }
 
-function volgendeFaseBtn(l){
-  const flow={
-    prospecting:{next:'gekwalificeerd',label:'→ Gekwalificeerd'},
-    gekwalificeerd:{next:'probleemanalyse',label:'→ Probleemanalyse'},
-    probleemanalyse:{next:'offerte',label:'→ Offerte'},
-    offerte:{next:'gewonnen',label:'→ Gewonnen'}
-  }[l.fase_detail];
-  if(!flow)return'';
-  return `<button class="btn btn-teal btn-sm" onclick="setFaseDetail('${l.id}','${flow.next}')">${flow.label}</button>`;
-}
-
-async function setFaseDetail(leadId,nieuweFase){
+async function volgendeFase(leadId, huidigCode){
+  const fases=await laadFaseMapping();
+  const actief=fases.filter(f=>f.code!=='100'&&f.code!=='999');
+  const idx=actief.findIndex(f=>f.code===huidigCode);
+  if(idx<0||idx>=actief.length-1){toast('Al in laatste actieve fase');return;}
+  const volgende=actief[idx+1];
   try{
-    await sbPatch('leads',leadId,{fase_detail:nieuweFase});
-    toast(`Lead doorgestuurd naar ${nieuweFase} →`);
+    await sbPatch('leads',leadId,{
+      afas_fase_code:volgende.code,
+      fase_detail:volgende.fase_detail||volgende.naam?.toLowerCase().replace(/\s+/g,'_')||volgende.code,
+      scoringskans:volgende.scoringskans||null
+    });
+    await maakOpvolgacties(leadId,volgende.code);
+    _faseMappingCache=null;
+    toast(`Fase &#8594; ${volgende.naam} &#10003;`);
+    render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function springNaarFase(leadId, code){
+  const fases=await laadFaseMapping();
+  const fase=fases.find(f=>f.code===code);
+  if(!fase) return;
+  try{
+    await sbPatch('leads',leadId,{
+      afas_fase_code:code,
+      fase_detail:fase.fase_detail||fase.naam?.toLowerCase().replace(/\s+/g,'_')||code,
+      scoringskans:fase.scoringskans||null
+    });
+    await maakOpvolgacties(leadId,code);
+    _faseMappingCache=null;
+    toast(`Fase &#8594; ${fase.naam} &#10003;`);
+    render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function markeerGescoord(leadId){
+  if(!confirm('Lead markeren als Gescoord?')) return;
+  try{
+    await sbPatch('leads',leadId,{afas_fase_code:'100',fase_detail:'gewonnen',scoringskans:100});
+    toast('Lead gescoord &#10003;');
+    render('leadfunnel');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function markeerNietGescoord(leadId){
+  if(!confirm('Lead markeren als Niet gescoord?')) return;
+  try{
+    await sbPatch('leads',leadId,{afas_fase_code:'999',fase_detail:'verloren',scoringskans:0,status:'afgewezen'});
+    toast('Lead niet gescoord');
     render('leadfunnel');
   }catch(e){toast('Fout: '+e.message);}
 }
 
 async function markeerVerloren(leadId){
   try{
-    await sbPatch('leads',leadId,{fase_detail:'verloren',status:'afgewezen'});
+    await sbPatch('leads',leadId,{fase_detail:'verloren',afas_fase_code:'999',status:'afgewezen'});
     toast('Lead gemarkeerd als verloren');
     render('leadfunnel');
   }catch(e){toast('Fout: '+e.message);}
@@ -4204,6 +4374,217 @@ async function slaNotitiesOp(leadId){
     await sbPatch('leads',leadId,{notities_intern:tekst});
     toast('Notities opgeslagen ✓');
   }catch(e){toast('Fout: '+e.message);}
+}
+
+// ── F14: FORECAST & PRICING ──────────────────────────
+function forecastCard(l){
+  const dienst=l.dienst_type||'';
+  const impl=l.prijs_implementatie||0;
+  const perMaand=l.prijs_per_maand||0;
+  const jaar1=l.prijs_jaar_1||0;
+  const kans=l.scoringskans||0;
+  const forecast=l.forecast_bedrag||(jaar1*(kans/100));
+
+  const dienstOpts=['','smp','bvc','advies','onderhoud'].map(v=>{
+    const lbl={smp:'Storingsmeldpunt',bvc:'Bedrijfsvoeringscentrum',advies:'Advies & Interim',onderhoud:'Onderhoud','':`Kies dienst...`}[v]||v;
+    return `<option value="${v}"${dienst===v?' selected':''}>${lbl}</option>`;
+  }).join('');
+
+  let velden='';
+  if(dienst==='smp'){
+    velden=`<div class="pf-row"><span class="pf-lbl">Aantal projecten</span><input class="pf-inp" type="number" min="1" value="${l.aantal_projecten||''}" placeholder="bijv. 2" oninput="updatePricingVeld('${l.id}','aantal_projecten',+this.value)"></div>
+    <div class="pf-row"><span class="pf-lbl">Aantal aansluitingen</span><input class="pf-inp" type="number" min="1" value="${l.aantal_aansluitingen||''}" placeholder="bijv. 250" oninput="updatePricingVeld('${l.id}','aantal_aansluitingen',+this.value)"></div>`;
+  } else if(dienst==='bvc'){
+    velden=`<div class="pf-row"><span class="pf-lbl">Aantal projecten</span><input class="pf-inp" type="number" min="1" value="${l.aantal_projecten||''}" placeholder="bijv. 1" oninput="updatePricingVeld('${l.id}','aantal_projecten',+this.value)"></div>`;
+  } else if(dienst==='advies'){
+    const rollen=['Partner','Senior','Medior','Junior','Uitvoeringscoördinatie'];
+    velden=`<div class="pf-row"><span class="pf-lbl">Rol</span><select class="pf-inp" onchange="updatePricingVeld('${l.id}','advies_rol',this.value)">${rollen.map(r=>`<option value="${r}"${(l.advies_rol||'')==r?' selected':''}>${r}</option>`).join('')}</select></div>
+    <div class="pf-row"><span class="pf-lbl">Uren</span><input class="pf-inp" type="number" min="0" value="${l.advies_uren||''}" placeholder="bijv. 80" oninput="updatePricingVeld('${l.id}','advies_uren',+this.value)"></div>`;
+  } else if(dienst==='onderhoud'){
+    velden=`<div class="pf-row"><span class="pf-lbl">Bedrag (op aanvraag)</span><input class="pf-inp" type="number" value="${jaar1||''}" placeholder="0" oninput="updatePricingDirect('${l.id}',+this.value)"></div>`;
+  }
+
+  return `<div class="pricing-card">
+    <div class="card-title">Forecast &amp; Pricing</div>
+    <div class="pf-row">
+      <span class="pf-lbl">Dienst</span>
+      <select class="pf-inp" onchange="updateDienst('${l.id}',this.value)">${dienstOpts}</select>
+    </div>
+    ${velden?`<div class="pricing-form">${velden}</div>`:''}
+    <div class="pricing-nums">
+      <div class="pricing-num-block">
+        <div class="pricing-num-lbl">Implementatie</div>
+        <div class="pricing-num-val" id="pn-impl-${l.id}">&#8364; ${fmtBedrag(impl)}</div>
+      </div>
+      <div class="pricing-num-block">
+        <div class="pricing-num-lbl">Per maand</div>
+        <div class="pricing-num-val" id="pn-maand-${l.id}">&#8364; ${fmtBedrag(perMaand)}</div>
+      </div>
+      <div class="pricing-num-block" style="background:rgba(0,201,164,.08);border-color:rgba(0,201,164,.35);">
+        <div class="pricing-num-lbl">Jaar 1 totaal</div>
+        <div class="pricing-num-val" id="pn-jaar-${l.id}" style="font-size:26px;">&#8364; ${fmtBedrag(jaar1)}</div>
+        ${kans?`<div class="pricing-num-sub">Forecast: &#8364; ${fmtBedrag(forecast)} &middot; ${kans}%</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function afasCard(l){
+  const inAfas=!!(l.afas_relatienummer||l.afas_opportunity_id);
+  return `<div class="afas-card">
+    <div class="card-title">AFAS Status</div>
+    <span class="afas-badge ${inAfas?'in':'out'}">${inAfas?'&#10003; In AFAS':'&#9634; Niet in AFAS'}</span>
+    <div class="detail-grid" style="margin-top:4px;">
+      ${l.afas_relatienummer?`<div><div class="d-lbl">Relatienummer</div><div class="d-val">${l.afas_relatienummer}</div></div>`:''}
+      ${l.afas_opportunity_id?`<div><div class="d-lbl">Opportunity ID</div><div class="d-val">${l.afas_opportunity_id}</div></div>`:''}
+      ${l.afas_last_sync?`<div><div class="d-lbl">Laatste sync</div><div class="d-val">${fmtDate(l.afas_last_sync)}</div></div>`:''}
+      <div><div class="d-lbl">Administratie</div><div class="d-val">Ecopulz Assetmanagement B.V.</div></div>
+    </div>
+  </div>`;
+}
+
+function renderOpvolgActies(leadId, taken){
+  const el=document.getElementById(`opvolg-${leadId}`);
+  if(!el) return;
+  const nu=new Date();
+  nu.setHours(0,0,0,0);
+  const items=taken.map(t=>{
+    const dl=t.deadline?new Date(t.deadline):null;
+    const overdue=dl&&dl<nu&&t.status!=='afgerond';
+    const done=t.status==='afgerond';
+    return `<div class="opvolg-item${overdue?' overdue':''}${done?' done':''}">
+      <div class="cb${done?' on':''}" style="flex-shrink:0;margin-top:1px;" onclick="toggleActie('${t.id}','${leadId}',${done})" title="${done?'Opnieuw openen':'Markeer afgerond'}">
+        ${done?'<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </div>
+      <div class="opvolg-txt">${t.omschrijving||'–'}</div>
+      ${dl?`<div class="opvolg-dl">${fmtDate(dl.toISOString())}</div>`:''}
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div class="card-title" style="margin-bottom:0;">Opvolgacties <span style="font-size:10px;font-weight:400;color:var(--t3);">(${taken.filter(t=>t.status!=='afgerond').length} open)</span></div>
+    <button class="btn btn-ghost btn-xs" onclick="voegActieToe('${leadId}')">+ Toevoegen</button>
+  </div>
+  ${items||'<div style="color:var(--t3);font-size:12px;padding:6px 0;">Geen acties — worden automatisch aangemaakt bij fase-overgang</div>'}`;
+}
+
+async function maakOpvolgacties(leadId, faseCode){
+  try{
+    const acties=await sbGetSafe('fase_opvolgacties',`select=*&fase_code=eq.${faseCode}`);
+    const nu=new Date();
+    for(const actie of acties){
+      const dl=new Date(nu);
+      dl.setDate(dl.getDate()+(actie.dagen_na_fase||3));
+      await sbPost('tasks',{
+        lead_id:leadId,
+        omschrijving:actie.actie_omschrijving,
+        deadline:dl.toISOString().split('T')[0],
+        status:'open',
+        type:actie.type||'follow-up'
+      });
+    }
+  }catch(e){/* fase_opvolgacties tabel leeg of niet aanwezig */}
+}
+
+async function toggleActie(taakId, leadId, wasDone){
+  try{
+    await sbPatch('tasks',taakId,{status:wasDone?'open':'afgerond'});
+    const taken=await sbGetSafe('tasks',`select=*&lead_id=eq.${leadId}&order=deadline.asc`);
+    renderOpvolgActies(leadId,taken);
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+async function voegActieToe(leadId){
+  const omschrijving=prompt('Omschrijving actie:');
+  if(!omschrijving) return;
+  const dl=new Date(Date.now()+3*864e5).toISOString().split('T')[0];
+  const deadline=prompt('Deadline (JJJJ-MM-DD):',dl)||dl;
+  try{
+    await sbPost('tasks',{lead_id:leadId,omschrijving,deadline,status:'open',type:'handmatig'});
+    const taken=await sbGetSafe('tasks',`select=*&lead_id=eq.${leadId}&order=deadline.asc`);
+    renderOpvolgActies(leadId,taken);
+    toast('Actie toegevoegd &#10003;');
+  }catch(e){toast('Fout: '+e.message);}
+}
+
+const _pricingTimers={};
+function updatePricingVeld(leadId, veld, waarde){
+  const l=_leadDataMap[leadId];
+  if(!l) return;
+  l[veld]=waarde;
+  clearTimeout(_pricingTimers[leadId]);
+  _pricingTimers[leadId]=setTimeout(()=>berekenEnSlaOp(leadId),700);
+}
+
+function updateDienst(leadId, dienst){
+  const l=_leadDataMap[leadId];
+  if(!l) return;
+  l.dienst_type=dienst;
+  render('leadfunnel');
+}
+
+function updatePricingDirect(leadId, bedrag){
+  document.getElementById(`pn-jaar-${leadId}`)?.textContent=`€ ${fmtBedrag(bedrag)}`;
+  clearTimeout(_pricingTimers[leadId]);
+  _pricingTimers[leadId]=setTimeout(async()=>{
+    try{await sbPatch('leads',leadId,{prijs_jaar_1:bedrag||null,verwacht_bedrag:bedrag||null});}
+    catch(e){toast('Fout bij opslaan');}
+  },700);
+}
+
+async function berekenEnSlaOp(leadId){
+  const l=_leadDataMap[leadId];
+  if(!l||!l.dienst_type||l.dienst_type==='onderhoud') return;
+  const p=await berekenPricing(l.dienst_type,l.aantal_projecten||0,l.aantal_aansluitingen||0,l.advies_rol||'Partner',l.advies_uren||0,0);
+  l.prijs_implementatie=p.implementatie;l.prijs_per_maand=p.perMaand;l.prijs_jaar_1=p.jaar1;
+  const kans=l.scoringskans||0;
+  l.forecast_bedrag=Math.round(p.jaar1*(kans/100));
+  l.verwacht_bedrag=p.jaar1;
+  const upd=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=`€ ${fmtBedrag(val)}`;};
+  upd(`pn-impl-${leadId}`,p.implementatie);
+  upd(`pn-maand-${leadId}`,p.perMaand);
+  upd(`pn-jaar-${leadId}`,p.jaar1);
+  try{
+    await sbPatch('leads',leadId,{
+      dienst_type:l.dienst_type,aantal_projecten:l.aantal_projecten||null,
+      aantal_aansluitingen:l.aantal_aansluitingen||null,advies_rol:l.advies_rol||null,
+      advies_uren:l.advies_uren||null,prijs_implementatie:p.implementatie||null,
+      prijs_per_maand:p.perMaand||null,prijs_jaar_1:p.jaar1||null,
+      verwacht_bedrag:p.jaar1||null,forecast_bedrag:l.forecast_bedrag||null
+    });
+    toast('Pricing bijgewerkt &#10003;');
+  }catch(e){toast('Fout bij opslaan: '+e.message);}
+}
+
+async function berekenPricing(dienstType,aantalProjecten,aantalAansluitingen,adviesRol,adviesUren,adviesDagen){
+  let implementatie=0,perMaand=0,jaar1=0;
+  try{
+    if(dienstType==='smp'&&aantalProjecten>0){
+      const impl=await sbGetSafe('pricing_smp_implementatie',`select=tarief&projecten_van=lte.${aantalProjecten}&projecten_tot=gte.${aantalProjecten}&limit=1`);
+      implementatie=(impl[0]?.tarief||0)*aantalProjecten;
+      if(aantalAansluitingen>0){
+        const abo=await sbGetSafe('pricing_smp_abonnement',`select=tarief_per_aansluiting&aansluitingen_van=lte.${aantalAansluitingen}&aansluitingen_tot=gte.${aantalAansluitingen}&limit=1`);
+        perMaand=(abo[0]?.tarief_per_aansluiting||0)*aantalAansluitingen;
+      }
+      jaar1=implementatie+(perMaand*12);
+    }
+    if(dienstType==='bvc'&&aantalProjecten>0){
+      const impl=await sbGetSafe('pricing_bvc_implementatie',`select=tarief&projecten_van=lte.${aantalProjecten}&projecten_tot=gte.${aantalProjecten}&limit=1`);
+      const abo=await sbGetSafe('pricing_bvc_abonnement',`select=tarief_per_maand&projecten_van=lte.${aantalProjecten}&projecten_tot=gte.${aantalProjecten}&limit=1`);
+      implementatie=(impl[0]?.tarief||0)*aantalProjecten;
+      perMaand=abo[0]?.tarief_per_maand||0;
+      jaar1=implementatie+(perMaand*12);
+    }
+    if(dienstType==='advies'&&adviesRol){
+      const tarief=await sbGetSafe('pricing_advies',`select=uurtarief,dagtarief&rol=eq.${encodeURIComponent(adviesRol)}&limit=1`);
+      jaar1=adviesDagen>0?(tarief[0]?.dagtarief||0)*adviesDagen:(tarief[0]?.uurtarief||0)*(adviesUren||0);
+    }
+  }catch(e){/* pricing tabellen nog niet aanwezig */}
+  return{implementatie,perMaand,jaar1};
+}
+
+async function slaAdminOp(leadId, admin){
+  try{await sbPatch('leads',leadId,{admin});toast('Opgeslagen &#10003;');}
+  catch(e){toast('Fout: '+e.message);}
 }
 
 // ── HELPERS ────────────────────────────────────────────
