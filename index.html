@@ -4523,7 +4523,7 @@ function updateDienst(leadId, dienst){
 }
 
 function updatePricingDirect(leadId, bedrag){
-  document.getElementById(`pn-jaar-${leadId}`)?.textContent=`€ ${fmtBedrag(bedrag)}`;
+  const _pjEl=document.getElementById(`pn-jaar-${leadId}`);if(_pjEl)_pjEl.textContent=`€ ${fmtBedrag(bedrag)}`;
   clearTimeout(_pricingTimers[leadId]);
   _pricingTimers[leadId]=setTimeout(async()=>{
     try{await sbPatch('leads',leadId,{prijs_jaar_1:bedrag||null,verwacht_bedrag:bedrag||null});}
