@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\FinnvanVeldhuisen\\\\Desktop\\\\ultimotransformer\"; $env:PYTHONUTF8='1'; python patch_multiproject_v2.py)"
+    ]
+  }
+}
