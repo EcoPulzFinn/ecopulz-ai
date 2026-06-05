@@ -379,6 +379,15 @@
 .btn-reageer-alles:disabled { opacity:.45;cursor:not-allowed;transform:none; }
 .rc-readonly { border-color:var(--bd);cursor:default; }
 .rc-readonly:hover { border-color:var(--bd); }
+.rc-selected { border-color:var(--teal)!important;background:rgba(0,201,164,.06)!important; }
+.reacties-filterbar { display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:8px 0 4px;border-bottom:1px solid var(--bd);margin-bottom:10px; }
+.rfb-groep { display:flex;align-items:center;gap:4px;flex-wrap:wrap; }
+.rfb-lbl { font-size:10.5px;color:var(--t3);font-weight:600;margin-right:2px;white-space:nowrap; }
+.rfb-btn { background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:20px;padding:3px 10px;font-size:10.5px;cursor:pointer;font-family:var(--f);transition:all .13s; }
+.rfb-btn:hover { border-color:var(--bdm);color:var(--t2); }
+.rfb-btn.active { background:var(--teal);border-color:var(--teal);color:#fff; }
+.reacties-selectbar { display:none;align-items:center;gap:8px;padding:7px 12px;background:rgba(0,201,164,.1);border:1px solid var(--teal-b);border-radius:var(--r);margin-bottom:10px;flex-wrap:wrap; }
+.reacties-selectbar span { font-size:12px;font-weight:600;color:var(--teal);flex:1; }
 /* === Analyse tab === */
 .analyse-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
 .analyse-title { font-size:1.4rem; font-weight:700; color:var(--t1); margin:0 0 0.25rem 0; }
@@ -3678,12 +3687,40 @@ function setRF(f){rFilter=f;render('radar');}
 
 // ── LINKEDIN REACTIES ──────────────────────────────────
 const _reactiesMap={};
+let rTaal='alle',rDatumPost='alle',rDatumSysteem='alle';
+const _selectedReacties=new Set();
+
+function detectTaal(tekst=''){
+  const nl=/\b(de|het|een|van|voor|niet|dat|zijn|met|ook|maar|als|dit|heeft|aan|over|door|bij|worden|je|we|ze|uw|naar)\b/gi;
+  const en=/\b(the|and|with|this|that|from|have|been|will|they|their|which|also|when|your|our|are|for|not|but|was)\b/gi;
+  const nlN=(tekst.match(nl)||[]).length;
+  const enN=(tekst.match(en)||[]).length;
+  if(!nlN&&!enN)return 'anders';
+  return nlN>=enN?'nl':'en';
+}
+function datumValtBinnen(datumStr,filter){
+  if(filter==='alle'||!datumStr)return true;
+  const d=new Date(datumStr);
+  const nu=new Date();
+  const vandag=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate());
+  if(filter==='vandaag')return d>=vandag;
+  if(filter==='week'){const w=new Date(vandag);w.setDate(w.getDate()-7);return d>=w;}
+  if(filter==='maand')return d.getMonth()===nu.getMonth()&&d.getFullYear()===nu.getFullYear();
+  return true;
+}
+
 async function tReacties(){
   try{
     let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at,gereageerd_op&order=created_at.desc';
     if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
-    const items=await sbGetSafe('sector_reactions',q);
-    items.forEach(r=>{ _reactiesMap[r.id]=r; });
+    const allItems=await sbGetSafe('sector_reactions',q);
+    allItems.forEach(r=>{ _reactiesMap[r.id]=r; });
+    const items=allItems.filter(r=>{
+      if(rTaal!=='alle'&&detectTaal(r.post_tekst||'')!==rTaal)return false;
+      if(!datumValtBinnen(r.datum_post,rDatumPost))return false;
+      if(!datumValtBinnen(r.created_at,rDatumSysteem))return false;
+      return true;
+    });
     const filters=['nieuw','gereageerd','overgeslagen','alle'];
     const vandaag=new Date().toDateString();
     const dagLabel=d=>d===vandaag?'Vandaag':new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'long'});
@@ -3697,16 +3734,80 @@ async function tReacties(){
       ?`<button class="btn-reageer-alles" onclick="openBulkModal()">&#128640; Reageer op alles (${nieuwItems.length})</button>`:'';
     const bulkPauzeBtn=(_bulkRunning&&rReacties==='nieuw')
       ?`<button class="btn btn-ghost btn-sm" onclick="toggleBulkPause()" style="font-size:10px;">${_bulkPaused?'&#9654; Hervat':'&#9646;&#9646; Pauzeer'}</button>`:'';
+    const taalOpts=['alle','nl','en','anders'];
+    const datumOpts=['alle','vandaag','week','maand'];
+    const taalLbl={alle:'Alle',nl:'NL',en:'EN',anders:'Anders'};
+    const datumLbl={alle:'Alle',vandaag:'Vandaag',week:'7 dagen',maand:'Deze maand'};
+    const nSel=_selectedReacties.size;
     document.getElementById('ca').innerHTML=`
       <div class="filter-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         ${filters.map(f=>`<button class="fbtn${rReacties===f?' active':''}" onclick="setReactiesFilter('${f}')">${cap(f)}</button>`).join('')}
         <span style="flex:1;"></span>
         ${bulkBtn}${bulkPauzeBtn}
       </div>
+      <div class="reacties-filterbar">
+        <div class="rfb-groep">
+          <span class="rfb-lbl">Taal</span>
+          ${taalOpts.map(t=>`<button class="rfb-btn${rTaal===t?' active':''}" onclick="setRTaal('${t}')">${taalLbl[t]}</button>`).join('')}
+        </div>
+        <div class="rfb-groep">
+          <span class="rfb-lbl">Datum post</span>
+          ${datumOpts.map(t=>`<button class="rfb-btn${rDatumPost===t?' active':''}" onclick="setRDatumPost('${t}')">${datumLbl[t]}</button>`).join('')}
+        </div>
+        <div class="rfb-groep">
+          <span class="rfb-lbl">In systeem</span>
+          ${datumOpts.map(t=>`<button class="rfb-btn${rDatumSysteem===t?' active':''}" onclick="setRDatumSysteem('${t}')">${datumLbl[t]}</button>`).join('')}
+        </div>
+      </div>
+      <div class="reacties-selectbar" id="reactiesSelectBar" style="${nSel>0?'display:flex':'display:none'}">
+        <span>${nSel} geselecteerd</span>
+        <button class="btn btn-ghost btn-sm" onclick="selectAllReacties()">Alles selecteren</button>
+        <button class="btn btn-ghost btn-sm" onclick="deselectAllReacties()">Wissen</button>
+        <button class="btn btn-ghost-red btn-sm" onclick="bulkOverslaanSelected()">Overslaan</button>
+      </div>
       ${items.length?groepHTML:'<div class="empty">Geen reacties gevonden</div>'}`;
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
-function setReactiesFilter(f){rReacties=f;render('reacties');}
+function setReactiesFilter(f){rReacties=f;_selectedReacties.clear();render('reacties');}
+function setRTaal(t){rTaal=t;_selectedReacties.clear();render('reacties');}
+function setRDatumPost(t){rDatumPost=t;_selectedReacties.clear();render('reacties');}
+function setRDatumSysteem(t){rDatumSysteem=t;_selectedReacties.clear();render('reacties');}
+
+function toggleSelectReactie(id,checked){
+  if(checked)_selectedReacties.add(id);
+  else _selectedReacties.delete(id);
+  const bar=document.getElementById('reactiesSelectBar');
+  const n=_selectedReacties.size;
+  if(bar){bar.style.display=n>0?'flex':'none';const sp=bar.querySelector('span');if(sp)sp.textContent=n+' geselecteerd';}
+}
+function selectAllReacties(){
+  document.querySelectorAll('.rc-select-cb').forEach(cb=>{_selectedReacties.add(cb.dataset.id);cb.checked=true;});
+  const bar=document.getElementById('reactiesSelectBar');
+  if(bar){bar.style.display='flex';const sp=bar.querySelector('span');if(sp)sp.textContent=_selectedReacties.size+' geselecteerd';}
+}
+function deselectAllReacties(){
+  _selectedReacties.clear();
+  document.querySelectorAll('.rc-select-cb').forEach(cb=>{cb.checked=false;});
+  const bar=document.getElementById('reactiesSelectBar');
+  if(bar)bar.style.display='none';
+}
+async function bulkOverslaanSelected(){
+  const ids=[..._selectedReacties];
+  if(!ids.length)return;
+  const btn=document.querySelector('.reacties-selectbar .btn-ghost-red');
+  if(btn){btn.textContent=`Bezig (${ids.length})...`;btn.disabled=true;}
+  let ok=0;
+  for(const id of ids){
+    try{
+      await sbPatch('sector_reactions',id,{status:'overgeslagen'});
+      if(_reactiesMap[id])_reactiesMap[id].status='overgeslagen';
+      ok++;
+    }catch(e){console.error('[bulk overslaan]',id,e);}
+  }
+  _selectedReacties.clear();
+  toast(`${ok} reacties overgeslagen`);
+  render('reacties');
+}
 
 function reactieKaart(r){
   const ptId='pt-'+r.id, rvId='rv-'+r.id;
@@ -3734,11 +3835,14 @@ function reactieKaart(r){
   }
 
   // Normaal (nieuw / overgeslagen)
-  return `<div class="reactie-card${r.koopsignaal?' koopsignaal':''}">
+  return `<div class="reactie-card${r.koopsignaal?' koopsignaal':''}${_selectedReacties.has(r.id)?' rc-selected':''}">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;">
-      <div style="min-width:0">
-        <span style="font-size:12.5px;font-weight:700;color:var(--t1);">${r.auteur||'–'}</span>
-        ${r.organisatie?`<span style="font-size:10.5px;color:var(--t3);margin-left:6px;">${r.organisatie}</span>`:''}
+      <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+        <input type="checkbox" class="rc-select-cb" data-id="${r.id}" ${_selectedReacties.has(r.id)?'checked':''} onchange="toggleSelectReactie('${r.id}',this.checked)" style="margin-top:3px;accent-color:var(--teal);flex-shrink:0;cursor:pointer;width:14px;height:14px;">
+        <div>
+          <span style="font-size:12.5px;font-weight:700;color:var(--t1);">${r.auteur||'–'}</span>
+          ${r.organisatie?`<span style="font-size:10.5px;color:var(--t3);margin-left:6px;">${r.organisatie}</span>`:''}
+        </div>
       </div>
       <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
         ${r.koopsignaal?'<span class="badge-koop">&#127919;</span>':''}
