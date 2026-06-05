@@ -1474,7 +1474,7 @@ async function tLead(){
   try{
     const [fases,alleLeads]=await Promise.all([
       laadFaseMapping(),
-      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_uren&order=icp_score.desc')
+      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen&order=icp_score.desc')
     ]);
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
 
@@ -1532,6 +1532,13 @@ function setLF(f){lFilter=f;render('leadfunnel');}
 
 function leadRow(l){
   const exp=expanded.has(l.id);
+  const _cg=parseInt(l.afas_fase_code||'000')>=2;
+  const actieBtns=_cg
+    ?`<span style="font-size:12px;font-weight:600;color:var(--teal);">&#10003; Contact gelegd</span>`
+    :`<button class="btn btn-ghost btn-sm" onclick="copyMsg('${l.id}')">Kopieer bericht</button>
+    <button class="btn btn-ghost btn-sm" onclick="openLI('${l.id}')">LinkedIn</button>
+    <button class="btn btn-ghost btn-sm" onclick="markBen('${l.id}')">Benaderd</button>
+    ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;">&#10007; Afgewezen</span>'}`;
   return `<div class="lead-row${exp?' open':''}" id="lr-${l.id}">
     <div class="lead-hdr" onclick="toggleL('${l.id}')">
       <div class="sdot ${l.status||'nieuw'}"></div>
@@ -1551,10 +1558,7 @@ function leadRow(l){
       <div class="lead-bdy-inner">
         ${leadCtx(l)}
         <div class="lead-actions" style="margin-bottom:16px;">
-          <button class="btn btn-ghost btn-sm" onclick="copyMsg('${l.id}')">Kopieer bericht</button>
-          <button class="btn btn-ghost btn-sm" onclick="openLI('${l.id}')">LinkedIn</button>
-          <button class="btn btn-ghost btn-sm" onclick="markBen('${l.id}')">Benaderd</button>
-          ${l.status!=='afgewezen'?`<button class="btn btn-ghost-red btn-sm" onclick="openAfwijzenModal('${l.id}')">Afwijzen</button>`:'<span style="font-size:11px;color:#e57575;">✕ Afgewezen</span>'}
+          ${actieBtns}
         </div>
         ${statusFlow(l)}
         ${forecastCard(l)}
@@ -1607,7 +1611,7 @@ function leadCtx(l){
       <div><div class="d-lbl">Verwacht bedrag</div><div class="d-val" style="color:var(--teal);font-weight:700;">${l.verwacht_bedrag||l.prijs_jaar_1?'&#8364; '+fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1):'–'}</div></div>
       ${l.status==='afgewezen'&&l.notities?`<div class="fspan"><div class="d-lbl" style="color:#e57575">Reden afwijzing</div><div class="d-val m" style="color:#e57575">${l.notities}</div></div>`:''}
       ${l.reden?`<div class="fspan"><div class="d-lbl">Reden tot aanschrijven</div><div class="d-val m">${l.reden}</div></div>`:''}
-      ${l.outreach_bericht?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
+      ${(parseInt(l.afas_fase_code||'000')<2&&l.outreach_bericht)?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
       <div class="fspan">
         <div class="d-lbl">Interne notities</div>
         <textarea id="notities-${l.id}" onblur="slaNotitiesOp('${l.id}')" placeholder="Aantekeningen, afspraken, probleemanalyse..." style="width:100%;min-height:80px;background:var(--inp);border:1px solid var(--bdm);color:var(--t1);padding:10px;font-family:var(--f);font-size:12px;resize:vertical;border-radius:var(--r);">${l.notities_intern||''}</textarea>
@@ -4472,6 +4476,13 @@ async function slaNotitiesOp(leadId){
   try{
     await sbPatch('leads',leadId,{notities_intern:tekst});
     toast('Notities opgeslagen ✓');
+    if(_leadDataMap[leadId]?.afas_opportunity_id){
+      fetch(`${SB_URL}/functions/v1/afas-push`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('sb_token')||SB_KEY)},
+        body:JSON.stringify({lead_id:leadId})
+      }).catch(()=>{});
+    }
   }catch(e){toast('Fout: '+e.message);}
 }
 
@@ -4498,12 +4509,12 @@ function forecastCard(l){
   } else if(dienst==='advies'){
     const rollen=['Partner','Senior','Medior','Junior','Uitvoeringscoördinatie'];
     velden=`<div class="pf-row"><span class="pf-lbl">Rol</span><select class="pf-inp" onchange="updatePricingVeld('${l.id}','advies_rol',this.value)">${rollen.map(r=>`<option value="${r}"${(l.advies_rol||'')==r?' selected':''}>${r}</option>`).join('')}</select></div>
-    <div class="pf-row"><span class="pf-lbl">Uren</span><input class="pf-inp" type="number" min="0" value="${l.advies_uren||''}" placeholder="bijv. 80" oninput="updatePricingVeld('${l.id}','advies_uren',+this.value)"></div>`;
+    <div class="pf-row"><span class="pf-lbl">Dagen</span><input class="pf-inp" type="number" min="0" value="${l.advies_dagen||''}" placeholder="bijv. 10" oninput="updatePricingVeld('${l.id}','advies_dagen',+this.value)"></div>`;
   } else if(dienst==='onderhoud'){
     velden=`<div class="pf-row"><span class="pf-lbl">Bedrag (op aanvraag)</span><input class="pf-inp" type="number" value="${jaar1||''}" placeholder="0" oninput="updatePricingDirect('${l.id}',+this.value)"></div>`;
   }
 
-  return `<div class="pricing-card">
+  return `<div class="pricing-card" id="pcard-${l.id}">
     <div class="card-title">Forecast &amp; Pricing</div>
     <div class="pf-row">
       <span class="pf-lbl">Dienst</span>
@@ -4618,7 +4629,13 @@ function updateDienst(leadId, dienst){
   const l=_leadDataMap[leadId];
   if(!l) return;
   l.dienst_type=dienst;
-  render('leadfunnel');
+  const pcardEl=document.getElementById(`pcard-${leadId}`);
+  if(pcardEl){
+    pcardEl.outerHTML=forecastCard(l);
+    berekenEnSlaOp(leadId);
+  } else {
+    render('leadfunnel');
+  }
 }
 
 function updatePricingDirect(leadId, bedrag){
@@ -4633,7 +4650,7 @@ function updatePricingDirect(leadId, bedrag){
 async function berekenEnSlaOp(leadId){
   const l=_leadDataMap[leadId];
   if(!l||!l.dienst_type||l.dienst_type==='onderhoud') return;
-  const p=await berekenPricing(l.dienst_type,l.aantal_projecten||0,l.aantal_aansluitingen||0,l.advies_rol||'Partner',l.advies_uren||0,0);
+  const p=await berekenPricing(l.dienst_type,l.aantal_projecten||0,l.aantal_aansluitingen||0,l.advies_rol||'Partner',0,l.advies_dagen||0);
   l.prijs_implementatie=p.implementatie;l.prijs_per_maand=p.perMaand;l.prijs_jaar_1=p.jaar1;
   const kans=l.scoringskans||0;
   l.forecast_bedrag=Math.round(p.jaar1*(kans/100));
@@ -4646,7 +4663,7 @@ async function berekenEnSlaOp(leadId){
     await sbPatch('leads',leadId,{
       dienst_type:l.dienst_type,aantal_projecten:l.aantal_projecten||null,
       aantal_aansluitingen:l.aantal_aansluitingen||null,advies_rol:l.advies_rol||null,
-      advies_uren:l.advies_uren||null,prijs_implementatie:p.implementatie||null,
+      advies_dagen:l.advies_dagen||null,prijs_implementatie:p.implementatie||null,
       prijs_per_maand:p.perMaand||null,prijs_jaar_1:p.jaar1||null,
       verwacht_bedrag:p.jaar1||null,forecast_bedrag:l.forecast_bedrag||null
     });
