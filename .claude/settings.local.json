@@ -3,7 +3,11 @@
     "allow": [
       "PowerShell(cd \"c:\\\\Users\\\\FinnvanVeldhuisen\\\\Desktop\\\\ultimotransformer\"; $env:PYTHONUTF8='1'; python patch_multiproject_v2.py)",
       "PowerShell(cd \"c:\\\\Users\\\\FinnvanVeldhuisen\\\\Desktop\\\\ultimotransformer\"; $env:PYTHONUTF8='1'; python patch_bulk_import.py)",
-      "Bash(powershell -Command ' *)"
+      "Bash(powershell -Command ' *)",
+      "Bash(find \"c:/Users/FinnvanVeldhuisen/ecopulz-ai\" -name \"*.ts\" -o -name \"index.js\" 2>/dev/null | head -30)",
+      "Read(//c/Users/FinnvanVeldhuisen/ecopulz-ai/**)",
+      "Bash(find \"c:/Users/FinnvanVeldhuisen\" -name \"index.ts\" -not -path \"*/node_modules/*\" 2>/dev/null | head -20; find \"c:/Users/FinnvanVeldhuisen\" -name \"linkedin*\" -not -path \"*/node_modules/*\" 2>/dev/null | head -20)",
+      "Read(//c/Users/FinnvanVeldhuisen/**)"
     ]
   }
 }

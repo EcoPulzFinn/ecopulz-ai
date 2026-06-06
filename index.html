@@ -3849,7 +3849,10 @@ function reactieKaart(r){
         <span class="badge-${r.status||'nieuw'}">${cap(r.status||'nieuw')}</span>
       </div>
     </div>
-    <div style="font-size:10px;color:var(--t3);margin-bottom:5px;">${fmtDate(r.datum_post)}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+      <span style="font-size:10px;color:var(--t3);">${fmtDate(r.datum_post)}</span>
+      ${r.post_url?`<a href="${r.post_url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;">Bekijk post &#8599;</a>`:''}
+    </div>
     ${r.post_tekst?`<div id="${ptId}" class="reactie-post-tekst">${r.post_tekst}</div>${lang?`<button class="reactie-lees-meer" onclick="togglePostTekst('${ptId}',this)">Lees meer &#8595;</button>`:''}` : ''}
     ${r.waarom_relevant?`<div style="font-size:10.5px;color:var(--teal);font-style:italic;margin-bottom:4px;">&#8627; ${r.waarom_relevant}</div>`:''}
     ${r.reactie_voorstel?`<button class="reactie-voorstel-toggle" onclick="toggleVoorstel('${rvId}',this)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>Reactievoorstel</button><div id="${rvId}" class="reactie-voorstel hidden">${r.reactie_voorstel}</div>`:''}
@@ -4829,7 +4832,9 @@ function openReageerModal(id){
   const r=_reactiesMap[id];
   if(!r) return;
   _liCmId=id;
-  document.getElementById('liCmMeta').textContent=(r.auteur||'')+(r.organisatie?' — '+r.organisatie:'');
+  const _metaEl=document.getElementById('liCmMeta');
+  _metaEl.innerHTML=(r.auteur||'')+(r.organisatie?' &mdash; '+r.organisatie:'')
+    +(r.post_url?` <a href="${r.post_url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--teal);margin-left:8px;text-decoration:none;">Bekijk post &#8599;</a>`:'');
   document.getElementById('liCmTa').value=r.reactie_voorstel||'';
   document.getElementById('liCmErr').textContent='';
   document.getElementById('liCmBtn').textContent='Plaatsen';
