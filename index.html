@@ -4870,14 +4870,13 @@ async function plaatsEnkelReactie(){
     errEl.textContent='Fout: '+e.message;
     btn.textContent='Plaatsen';btn.disabled=false;
     const fallbackId='li-cm-fallback';
-    if(!document.getElementById(fallbackId)){
-      const r=_reactiesMap[_liCmId];
-      const postUrl=r?.post_url||'';
-      errEl.insertAdjacentHTML('afterend',`<div id="${fallbackId}" style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('liCmTa').value).then(()=>toast('Gekopieerd &#10003;'))">Kopieer naar klembord</button>
-        ${postUrl?`<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('liCmTa').value);${postUrl?`window.open('${postUrl.replace(/'/g,"\\'")}','_blank');`:''}toast('Gekopieerd — post geopend &#10003;')">Naar post gaan</button>`:''}
-      </div>`);
-    }
+    document.getElementById(fallbackId)?.remove();
+    const r=_reactiesMap[_liCmId];
+    const postUrl=r?.post_url||'';
+    errEl.insertAdjacentHTML('afterend',`<div id="${fallbackId}" style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('liCmTa').value).then(()=>toast('Gekopieerd &#10003;'))">Kopieer naar klembord</button>
+      ${postUrl?`<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('liCmTa').value);window.open('${postUrl.replace(/'/g,"\\'")}','_blank');toast('Gekopieerd — post geopend &#10003;')">Naar post gaan</button>`:''}
+    </div>`);
   }
 }
 
@@ -4961,7 +4960,7 @@ function updateBulkProgress(done,total,flash){
   document.getElementById('bulkProgressTxt').innerHTML=`Bezig: ${done} van ${total} reacties geplaatst...`;
   document.getElementById('bulkProgressFlash').innerHTML=flash||'';
 }
-
+S
 function toggleBulkPause(){
   _bulkPaused=!_bulkPaused;
   const btn=document.getElementById('bulkPauseBtn');
