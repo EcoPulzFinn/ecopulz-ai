@@ -677,6 +677,95 @@
 .c-card,.reactie-card,.bedrijf-card,.lead-row,.ci-card,.ag-card,.reeks-card,.kand-card,.phase-step,.rapport-card,.bi-result-card,.bi-keuze-card,.cmp-card,.vac-card,.ad-card { backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); box-shadow:var(--shadow-card); }
 .ci-modal { background:rgba(22,24,26,.92); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); box-shadow:0 8px 40px rgba(0,0,0,.55); }
 .task-row,.fase-nav-card,.pricing-card,.opvolg-card,.afas-card { backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); }
+
+/* ════ Sprint 1 — UI polish & motion ════ */
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes modalIn { from{opacity:0;transform:translateY(16px) scale(.96)} to{opacity:1;transform:none} }
+@keyframes skelSlide { to{transform:translateX(100%)} }
+@keyframes barGrow { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+
+/* — scrollbars — */
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,.09); border-radius:99px; border:3px solid transparent; background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color:rgba(255,255,255,.16); }
+
+/* — consistente radius op alle surfaces — */
+.widget,.card,.lead-row,.phase-step,.reactie-card,.bedrijf-card,.c-card,.actor-col,.streef-blk,.msg-blk,.ci-caption-blk,.ci-slide-tekst,.ci-visual-blk,.reactie-voorstel,.cal-cell,.cmp-card { border-radius:var(--r); }
+.widget { overflow:hidden; }
+
+/* — page & card entrance — */
+.content-area>* { animation:fadeUp .42s cubic-bezier(.22,1,.36,1) both; }
+.content-area>*:nth-child(2) { animation-delay:.06s; }
+.content-area>*:nth-child(3) { animation-delay:.12s; }
+.content-area>*:nth-child(4) { animation-delay:.18s; }
+.content-area>*:nth-child(n+5) { animation-delay:.22s; }
+.w-grid .widget { animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both; }
+.w-grid .widget:nth-child(2) { animation-delay:.05s; }
+.w-grid .widget:nth-child(3) { animation-delay:.1s; }
+.w-grid .widget:nth-child(4) { animation-delay:.15s; }
+.w-grid .widget:nth-child(5) { animation-delay:.2s; }
+.w-grid .widget:nth-child(6) { animation-delay:.25s; }
+.leads-list .lead-row { animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both; }
+.leads-list .lead-row:nth-child(2) { animation-delay:.04s; }
+.leads-list .lead-row:nth-child(3) { animation-delay:.08s; }
+.leads-list .lead-row:nth-child(4) { animation-delay:.12s; }
+.leads-list .lead-row:nth-child(5) { animation-delay:.16s; }
+.leads-list .lead-row:nth-child(6) { animation-delay:.2s; }
+.leads-list .lead-row:nth-child(7) { animation-delay:.24s; }
+.leads-list .lead-row:nth-child(8) { animation-delay:.28s; }
+.leads-list .lead-row:nth-child(n+9) { animation-delay:.32s; }
+
+/* — micro-interactions — */
+.widget { transition:border-color .18s,box-shadow .18s,transform .18s; }
+.widget:hover { transform:translateY(-3px); }
+.btn { transition:all .15s cubic-bezier(.4,0,.2,1); }
+.btn:not(:disabled):hover { transform:translateY(-1px); }
+.btn:not(:disabled):active { transform:translateY(0) scale(.97); }
+.nav-icon { transition:color .15s,transform .15s; }
+.nav-item:hover .nav-icon { transform:scale(1.1); }
+.lead-row { transition:border-color .16s,box-shadow .16s; }
+.lead-row:hover { box-shadow:0 6px 22px rgba(0,0,0,.28); }
+.lead-row.open { box-shadow:0 8px 30px rgba(0,0,0,.34),0 0 0 1px rgba(0,201,164,.12); }
+.prev-item { transition:background .14s,transform .14s; }
+.prev-item:hover { transform:translateX(3px); }
+.icp-fill,.streef-fill { transform-origin:left; animation:barGrow .7s cubic-bezier(.22,1,.36,1) both; }
+
+/* — modal & toast motion — */
+.modal-bg.open { animation:fadeIn .18s ease both; }
+.modal-bg.open .modal,.modal-bg.open .ci-modal { animation:modalIn .28s cubic-bezier(.22,1,.36,1) both; }
+.li-cm-modal.open .li-cm-box,.bulk-modal.open .bulk-modal-box { animation:modalIn .28s cubic-bezier(.22,1,.36,1) both; }
+.toast { animation:fadeUp .3s cubic-bezier(.22,1,.36,1); }
+
+/* — skeleton loading — */
+.skel { position:relative; overflow:hidden; background:rgba(255,255,255,.045); border:1px solid var(--bd); border-radius:var(--r); }
+.skel::after { content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); animation:skelSlide 1.3s ease infinite; }
+.skel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+
+/* — dashboard: snelle acties — */
+.qa-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.qa-btn { display:inline-flex; align-items:center; gap:7px; padding:9px 16px; background:var(--card); border:1px solid var(--bd); border-radius:var(--r); color:var(--t2); font-family:var(--f); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); }
+.qa-btn:hover { border-color:var(--teal-b); color:var(--teal); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,.25); }
+
+/* — dashboard: pipeline verdeling — */
+.pipe-bar { display:flex; gap:2px; height:36px; border-radius:var(--r); overflow:hidden; }
+.pipe-seg { display:flex; align-items:center; justify-content:center; min-width:30px; cursor:pointer; transition:filter .15s; }
+.pipe-seg:hover { filter:brightness(1.3); }
+.pipe-cnt { font-size:11.5px; font-weight:800; text-shadow:0 1px 3px rgba(0,0,0,.45); font-variant-numeric:tabular-nums; }
+.pipe-legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:12px; }
+.pipe-leg { display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--t2); cursor:pointer; transition:color .13s; }
+.pipe-leg:hover { color:var(--t1); }
+.pipe-leg-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+
+/* — leads: fase progress per lead — */
+.fase-prog { display:flex; gap:3px; margin-top:12px; }
+.fase-prog-seg { flex:1; height:4px; border-radius:99px; background:rgba(255,255,255,.08); }
+
+/* — leads: AFAS sync badge — */
+.afas-mini { display:inline-flex; align-items:center; gap:3px; font-size:8.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; padding:2px 7px; border-radius:99px; background:rgba(34,197,94,.12); color:#86efac; border:1px solid rgba(34,197,94,.28); flex-shrink:0; }
+
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
   </style>
   <script src="https://cc-embed.adobe.com/sdk/v4/CCEverywhere.js" defer></script>
 </head>
@@ -1389,20 +1478,45 @@ function renderNav(){
 }
 function go(id){tab=id;document.getElementById('pgTitle').textContent=NAV.find(n=>n.id===id).label;renderNav();render(id);}
 function render(id){
-  document.getElementById('ca').innerHTML='<div class="loading">Data ophalen</div>';
+  document.getElementById('ca').innerHTML=skelPage();
   ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents,reacties:tReacties,bedrijven:tBedrijven,analyse:tAnalyse})[id]();
+}
+
+// Skeleton placeholder tijdens data laden
+function skelPage(){
+  return `<div class="skel-grid">${[0,1,2].map(i=>`<div class="skel" style="height:96px;"></div>`).join('')}</div>
+    <div class="two-col"><div class="skel" style="height:210px;"></div><div class="skel" style="height:210px;"></div></div>
+    <div class="skel" style="height:130px;"></div>`;
+}
+
+// Tel KPI-getallen op van 0 naar eindwaarde
+function animateNums(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('[data-cnt]').forEach(el=>{
+    const end=parseFloat(el.dataset.cnt)||0;
+    el.removeAttribute('data-cnt');
+    if(end<=0) return;
+    const dur=650+Math.min(end,50)*6, t0=performance.now();
+    const tick=t=>{
+      const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(end*e);
+      if(p<1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
 }
 
 // ── OVERZICHT ──────────────────────────────────────────
 async function tOvz(){
   try{
-    const [leads,tasks,signals,content,reacties,bedrijven]=await Promise.all([
-      sbGetSafe('leads','select=id,fase'),
+    const [leads,tasks,signals,content,reacties,bedrijven,fases]=await Promise.all([
+      sbGetSafe('leads','select=id,afas_fase_code'),
       sbGetSafe('tasks','select=id,status,urgent'),
       sbGetSafe('sector_signals','select=id,datum&order=datum.desc&limit=3'),
       sbGetSafe('content_posts','select=id,status'),
       sbGetSafe('sector_reactions','select=id,status'),
-      sbGetSafe('company_leads','select=id,status')
+      sbGetSafe('company_leads','select=id,status'),
+      laadFaseMapping()
     ]);
     const open=tasks.filter(t=>t.status!=='done'&&t.status!=='klaar');
     const urg=open.filter(t=>t.urgent);
@@ -1420,36 +1534,63 @@ async function tOvz(){
         ? base.replace('<div class="sig-item">',`<div class="sig-item" onclick="window.open('${s.url.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','_blank')" style="cursor:pointer">`)
         : base;
     };
+    // Pipeline verdeling over actieve fases
+    const actieveFases=fases.filter(f=>f.code!=='100'&&f.code!=='999');
+    const faseCnt={};actieveFases.forEach(f=>faseCnt[f.code]=0);
+    let inFunnel=0;
+    leads.forEach(l=>{const c=l.afas_fase_code||'000';if(faseCnt[c]!==undefined){faseCnt[c]++;inFunnel++;}});
+    const pipeHtml=(actieveFases.length&&inFunnel)?`
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-title">Pipeline verdeling</div>
+        <div class="pipe-bar">${actieveFases.map(f=>{
+          const c=faseCnt[f.code]||0;if(!c)return'';
+          const k=f.kleur||'#00C9A4';
+          return `<div class="pipe-seg" style="flex:${c};background:${k}30;border-top:2px solid ${k};" title="${f.naam}: ${c} lead${c===1?'':'s'}" onclick="lFase='${f.code}';go('leadfunnel')"><span class="pipe-cnt" style="color:${k};">${c}</span></div>`;
+        }).join('')}</div>
+        <div class="pipe-legend">${actieveFases.map(f=>{
+          const k=f.kleur||'#00C9A4';
+          return `<span class="pipe-leg" onclick="lFase='${f.code}';go('leadfunnel')"><span class="pipe-leg-dot" style="background:${k};"></span>${f.naam} <strong style="color:var(--t1);">${faseCnt[f.code]||0}</strong></span>`;
+        }).join('')}</div>
+      </div>`:'';
+    const openTaken=topT.filter(t=>t.status!=='done'&&t.status!=='klaar').slice(0,4);
     document.getElementById('ca').innerHTML=`
-      <div class="w-grid">
-        <div class="widget w-teal" onclick="go('leadfunnel')"><div class="w-num">${leads.length}</div><div class="w-label">Actieve leads</div><div class="w-sub">In pipeline</div></div>
-        <div class="widget w-sal" onclick="go('taken')"><div class="w-num">${open.length}</div><div class="w-label">Openstaande taken</div><div class="w-sub">Incl. ${urg.length} urgent</div></div>
-        <div class="widget w-blue" onclick="cFilter='gepland';go('content')"><div class="w-num">${gepland}</div><div class="w-label">Content gepland</div><div class="w-sub">Wacht op publicatie</div></div>
-        <div class="widget w-gray" onclick="go('radar')"><div class="w-num">${signals.length}</div><div class="w-label">Verse signalen</div><div class="w-sub">Laatste ophaalronde</div></div>
-        <div class="widget w-blue" onclick="rReacties='nieuw';go('reacties')"><div class="w-num">${openReacties}</div><div class="w-label">Reacties te doen</div><div class="w-sub">LinkedIn posts wachten</div></div>
-        <div class="widget w-gray" onclick="go('bedrijven')"><div class="w-num">${openBedrijven}</div><div class="w-label">Bedrijf leads</div><div class="w-sub">Koopsignalen wachten</div></div>
+      <div class="qa-row">
+        <button class="qa-btn" onclick="openLeadModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Lead toevoegen</button>
+        <button class="qa-btn" onclick="openTaakModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Taak toevoegen</button>
+        <button class="qa-btn" onclick="bedenkIdee()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 4 12.7c-.6.5-1 1.3-1 2.3h-6c0-1-.4-1.8-1-2.3A7 7 0 0 1 12 2z"/></svg>Bedenk content-idee</button>
+        <button class="qa-btn" onclick="go('radar')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.49-.01a6 6 0 0 1 0-8.49"/></svg>Sector radar</button>
       </div>
+      <div class="w-grid">
+        <div class="widget w-teal" onclick="go('leadfunnel')"><div class="w-num" data-cnt="${leads.length}">${leads.length}</div><div class="w-label">Actieve leads</div><div class="w-sub">In pipeline</div></div>
+        <div class="widget w-sal" onclick="go('taken')"><div class="w-num" data-cnt="${open.length}">${open.length}</div><div class="w-label">Openstaande taken</div><div class="w-sub">Incl. ${urg.length} urgent</div></div>
+        <div class="widget w-blue" onclick="cFilter='gepland';go('content')"><div class="w-num" data-cnt="${gepland}">${gepland}</div><div class="w-label">Content gepland</div><div class="w-sub">Wacht op publicatie</div></div>
+        <div class="widget w-gray" onclick="go('radar')"><div class="w-num" data-cnt="${signals.length}">${signals.length}</div><div class="w-label">Verse signalen</div><div class="w-sub">Laatste ophaalronde</div></div>
+        <div class="widget w-blue" onclick="rReacties='nieuw';go('reacties')"><div class="w-num" data-cnt="${openReacties}">${openReacties}</div><div class="w-label">Reacties te doen</div><div class="w-sub">LinkedIn posts wachten</div></div>
+        <div class="widget w-gray" onclick="go('bedrijven')"><div class="w-num" data-cnt="${openBedrijven}">${openBedrijven}</div><div class="w-label">Bedrijf leads</div><div class="w-sub">Koopsignalen wachten</div></div>
+      </div>
+      ${pipeHtml}
       <div class="two-col">
         <div class="card">
           <div class="card-title">Top leads</div>
-          ${topL.map(l=>`<div class="prev-item" onclick="naarLead('${l.id}')">
+          ${topL.length?topL.map(l=>`<div class="prev-item" onclick="naarLead('${l.id}')">
             <div class="l-av ${l.tier===1?'t1':'t2'}">${ini(l.naam)}</div>
             <div class="prev-inf"><div class="prev-n">${l.naam}</div><div class="prev-c">${l.organisatie}</div></div>
             <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier}</span>
             <span class="score-n">${l.icp_score??'–'}</span>
-          </div>`).join('')}
+          </div>`).join(''):'<div class="empty" style="padding:24px 12px;">Nog geen leads — voeg er één toe of run de pipeline</div>'}
         </div>
         <div class="card">
           <div class="card-title">Openstaande taken</div>
-          ${topT.filter(t=>t.status!=='done'&&t.status!=='klaar').slice(0,4).map(t=>`
+          ${openTaken.length?openTaken.map(t=>`
             <div class="tp-item">
               <div class="t-dot ${t.urgent?'urgent':'normal'}"></div>
               <span class="t-txt ${t.urgent?'urgent':''}">${t.titel}</span>
               <span class="t-dl ${t.urgent?'urgent':''}">${fmtDate(t.deadline)}</span>
-            </div>`).join('')}
+            </div>`).join(''):'<div class="empty" style="padding:24px 12px;">Geen openstaande taken 🎉</div>'}
         </div>
       </div>
-      <div class="card"><div class="card-title">Verse sector-signalen</div>${topS.map(ovzSigRow).join('')}</div>`;
+      <div class="card"><div class="card-title">Verse sector-signalen</div>${topS.length?topS.map(ovzSigRow).join(''):'<div class="empty" style="padding:24px 12px;">Nog geen signalen — de sector radar vult dit automatisch</div>'}</div>`;
+    animateNums();
   }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 
@@ -1479,7 +1620,9 @@ function fmtBedrag(n){
 
 async function tLead(){
   const el=document.getElementById('ca');
-  el.innerHTML='<div class="loading">Pipeline laden...</div>';
+  el.innerHTML=`<div class="skel" style="height:72px;margin-bottom:14px;"></div>
+    <div class="skel" style="height:34px;margin-bottom:18px;"></div>
+    <div style="display:flex;flex-direction:column;gap:6px;">${[0,1,2,3,4].map(()=>'<div class="skel" style="height:56px;"></div>').join('')}</div>`;
   try{
     const [fases,alleLeads]=await Promise.all([
       laadFaseMapping(),
@@ -1518,7 +1661,7 @@ async function tLead(){
         onclick="setPhase('${f.code}')">
         <div class="fs-num" style="color:${kleur};">${f.code}</div>
         <div class="fs-naam">${f.naam||'–'}</div>
-        <div class="fs-count" style="color:${kleur};">${cnt}</div>
+        <div class="fs-count" style="color:${kleur};" data-cnt="${cnt}">${cnt}</div>
         ${bedrag>0?`<div class="fs-bedrag" style="color:${kleur};">€ ${fmtBedrag(bedrag)}</div>`:''}
       </div>`;
     }).join(''):`<div style="padding:20px;color:var(--t3);font-size:12px;">Geen fase_mapping gevonden — voeg fases toe in Supabase</div>`;
@@ -1533,6 +1676,7 @@ async function tLead(){
       </div>
       <div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
       <div class="leads-list">${filtered.length?filtered.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
+    animateNums();
   }catch(e){el.innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 
@@ -1555,6 +1699,7 @@ function leadRow(l){
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <div class="l-name">${l.naam}</div>
           ${faseBadge(l)}
+          ${(l.afas_relatienummer||l.afas_opportunity_id)?'<span class="afas-mini" title="Gesynchroniseerd met AFAS">&#10003; AFAS</span>':''}
         </div>
         <div class="l-co">${l.organisatie||'–'} · ${l.functie||'–'}</div>
       </div>
@@ -1598,6 +1743,12 @@ function leadCtx(l){
         <span class="fase-badge-lg" style="background:${kleur}22;color:${kleur};border-color:${kleur}55;">${faseNaam}</span>
         ${kans?`<span style="font-size:11px;color:var(--t3);">${kans}% scoringskans</span>`:''}
       </div>
+      ${actieveFases.length?`<div class="fase-prog">${actieveFases.map((f,i)=>{
+        const won=(l.afas_fase_code==='100');
+        const filled=won||(hIdx>=0&&i<=hIdx);
+        const k=f.kleur||'#00C9A4';
+        return `<div class="fase-prog-seg" title="${f.code} — ${f.naam}" style="${filled?`background:${k};box-shadow:0 0 6px ${k}66;`:''}"></div>`;
+      }).join('')}</div>`:''}
       <div class="fase-nav-row">
         ${volgende?`<button class="btn btn-teal btn-sm" onclick="volgendeFase('${l.id}','${l.afas_fase_code||'000'}')">&#8594; ${volgende.naam}</button>`:''}
         ${dropdownOpties?`<select class="pf-inp" style="font-size:11px;padding:5px 8px;" onchange="springNaarFase('${l.id}',this.value)">${dropdownOpties}</select>`:''}
