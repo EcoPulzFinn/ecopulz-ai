@@ -627,11 +627,11 @@
 .ci-visual-blk { background:rgba(255,255,255,.04); border:1px solid var(--bdm); padding:12px; font-size:11.5px; color:var(--t2); line-height:1.55; font-style:italic; white-space:pre-wrap; }
 /* === F14: Lead Funnel === */
 .funnel-wrap { margin-bottom:22px; }
-.funnel-stages { display:flex; align-items:stretch; gap:0; margin-bottom:10px; border-radius:var(--r); overflow:hidden; }
-.funnel-step { position:relative; padding:12px 18px 12px 26px; flex:1; cursor:pointer; transition:filter .15s,opacity .15s; display:flex; flex-direction:column; justify-content:center; min-width:0; clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%); }
+.funnel-stages { display:flex; align-items:stretch; gap:2px; margin-bottom:10px; overflow:hidden; }
+.funnel-step { position:relative; padding:12px 18px 12px 26px; flex:1; cursor:pointer; transition:filter .18s,opacity .15s; display:flex; flex-direction:column; justify-content:center; min-width:0; clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%); }
 .funnel-step:first-child { padding-left:14px; }
-.funnel-step:hover { filter:brightness(1.18); }
-.funnel-step.active { outline:2px solid rgba(255,255,255,.35); outline-offset:-2px; filter:brightness(1.22); }
+.funnel-step:hover { filter:brightness(1.22); }
+.funnel-step.active { filter:brightness(1.45); }
 .fs-num { font-size:8.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; opacity:.65; margin-bottom:2px; }
 .fs-naam { font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#e8ece8; line-height:1.25; }
 .fs-count { font-size:14px; font-weight:800; margin-top:4px; font-variant-numeric:tabular-nums; }
@@ -1657,7 +1657,7 @@ async function tLead(){
       const bedrag=bedragPerFase[f.code]||0;
       const kleur=f.kleur||'#00C9A4';
       return `<div class="funnel-step${lFase===f.code?' active':''}"
-        style="background:${kleur}28;border-right:1px solid ${kleur}33;"
+        style="background:${kleur}${lFase===f.code?'3d':'20'};"
         onclick="setPhase('${f.code}')">
         <div class="fs-num" style="color:${kleur};">${f.code}</div>
         <div class="fs-naam">${f.naam||'–'}</div>
