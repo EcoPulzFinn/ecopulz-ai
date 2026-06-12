@@ -2952,6 +2952,13 @@ function _renderIdeeExpand(idee){
   let actieKnoppen='';
   if(idee.status==='concept'){
     actieKnoppen=`<button class="btn btn-green btn-sm" onclick="openConceptPopup('${idee.id}')">📖 Bekijk alle slides</button>
+      <select id="ci-format-${idee.id}" class="btn btn-ghost btn-sm" style="padding:5px 8px;" title="Beeldformat">
+        <option value="vierkant"${(idee.media_format||'vierkant')==='vierkant'?' selected':''}>◼ Vierkant 1:1</option>
+        <option value="portret"${idee.media_format==='portret'?' selected':''}>▯ Portret 4:5</option>
+        <option value="story"${idee.media_format==='story'?' selected':''}>▮ Story 9:16</option>
+        <option value="landscape"${idee.media_format==='landscape'?' selected':''}>▭ Landscape 16:9</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="genereerVisuals('${idee.id}',this)">✨ AI visuals</button>
       ${kanPubliceren?`<button class="btn-li-pub" onclick="openLiPubliceerModal('${idee.id}')">📤 Publiceer naar LinkedIn</button>`:''}
       <button class="btn btn-ghost-red btn-sm" onclick="openAfwijsIdeeModal('${idee.id}')">Afwijzen</button>`;
   } else if(idee.status==='idee'||!idee.status){
@@ -2977,6 +2984,10 @@ function _renderIdeeExpand(idee){
     <div style="margin-top:14px;">
       <div class="ci-expand-label" style="margin-bottom:7px;">Visual</div>
       ${visualExpandHtml}
+      ${idee.carrousel_pdf_url?`<div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+        <span style="font-size:12px;color:var(--teal,#00C9A4);">📑 Carrousel-PDF klaar (${idee.media_format||'vierkant'})</span>
+        <a class="btn btn-ghost btn-sm" href="${idee.carrousel_pdf_url}" target="_blank" style="text-decoration:none;">Bekijk PDF</a>
+      </div>`:''}
     </div>
     ${actieKnoppen?`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--bd);">${actieKnoppen}</div>`:''}
   </div>`;
@@ -3005,6 +3016,30 @@ async function genereerPost(id,btn){
       document.getElementById('ci-btn-'+id).disabled=false;
       document.getElementById('ci-btn-'+id).textContent='⚡ Genereer post';
     }
+    toast('Fout: '+e.message);
+  }
+}
+
+// ─── AI Visuals (Higgsfield via genereer-visuals) ────────────────────────
+async function genereerVisuals(id,btn){
+  const format=document.getElementById('ci-format-'+id)?.value||'vierkant';
+  btn.disabled=true;
+  const orig=btn.textContent;
+  btn.textContent='Genereren... (kan ±1 min duren)';
+  try{
+    const token=localStorage.getItem('sb_token')||SB_KEY;
+    const response=await fetch(`${SB_URL}/functions/v1/genereer-visuals`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body:JSON.stringify({idee_id:id,format})
+    });
+    const result=await response.json();
+    if(!response.ok) throw new Error(result.error||'Onbekende fout');
+    await tContent();
+    toast(result.type==='carrousel'?`Carrousel-PDF klaar (${result.slides} slides) ✓`:'Visual gegenereerd ✓');
+  }catch(e){
+    btn.disabled=false;
+    btn.textContent=orig;
     toast('Fout: '+e.message);
   }
 }
