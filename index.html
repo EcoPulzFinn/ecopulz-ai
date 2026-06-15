@@ -4087,7 +4087,7 @@ function reactieKaart(r){
     ${r.waarom_relevant?`<div style="font-size:10.5px;color:var(--teal);font-style:italic;margin-bottom:4px;">&#8627; ${r.waarom_relevant}</div>`:''}
     ${r.reactie_voorstel?`<button class="reactie-voorstel-toggle" onclick="toggleVoorstel('${rvId}',this)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>Reactievoorstel</button><div id="${rvId}" class="reactie-voorstel hidden">${r.reactie_voorstel}</div>`:''}
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;">
-      <button onclick="openReageerModal('${r.id}')" class="btn btn-teal btn-sm" id="rcbtn-${r.id}">Reageer</button>
+      <button onclick="reageerHandmatig('${r.id}')" class="btn btn-teal btn-sm" id="rcbtn-${r.id}">Reageer</button>
       <button onclick="slaOver('${r.id}')" class="btn btn-ghost btn-sm" id="rcslaan-${r.id}">Overslaan</button>
       ${r.koopsignaal?`<button onclick="naarBedrijfLead('${(r.organisatie||'').replace(/'/g,"\\'")}') " class="btn btn-ghost btn-xs">&#8594; Lead</button>`:''}
     </div>
@@ -5075,6 +5075,20 @@ function openReageerModal(id){
 function closeLiCmModal(){
   document.getElementById('liCmModal').classList.remove('open');
   _liCmId=null;
+}
+
+// Tijdelijk (tot LinkedIn-API werkt): kopieer reactietekst, open de post, markeer gereageerd.
+async function reageerHandmatig(id){
+  const r=_reactiesMap[id];
+  if(!r) return;
+  const tekst=r.reactie_voorstel||'';
+  try{ if(tekst&&navigator.clipboard){ await navigator.clipboard.writeText(tekst); } }catch(_){}
+  if(r.post_url){ window.open(r.post_url,'_blank','noopener'); }
+  try{
+    await sbPatch('sector_reactions',id,{status:'gereageerd',gereageerd_op:new Date().toISOString()});
+    toast('Reactie gekopieerd & post geopend — gemarkeerd als gereageerd ✓');
+    render('reacties');
+  }catch(e){ toast('Gekopieerd & post geopend (status niet opgeslagen: '+e.message+')'); }
 }
 async function plaatsEnkelReactie(){
   if(!_liCmId) return;
