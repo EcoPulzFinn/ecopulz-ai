@@ -131,6 +131,7 @@
     .tier-b { font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:2px; flex-shrink:0; }
     .tier-b.t1{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-b);}
     .tier-b.t2{background:var(--sal-dim);color:var(--salmon);border:1px solid var(--sal-b);}
+    .tier-b.t3{background:rgba(255,255,255,.06);color:var(--t3);border:1px solid var(--bd);}
     .score-n { font-size:11px; color:var(--t3); flex-shrink:0; }
     .tp-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--bd); }
     .tp-item:last-child { border-bottom:none; }
@@ -1577,9 +1578,9 @@ async function tOvz(){
         <div class="card">
           <div class="card-title">Top leads</div>
           ${topL.length?topL.map(l=>`<div class="prev-item" onclick="naarLead('${l.id}')">
-            <div class="l-av ${l.tier===1?'t1':'t2'}">${ini(l.naam)}</div>
+            <div class="l-av ${l.tier===1?'t1':l.tier===3?'t3':'t2'}">${ini(l.naam)}</div>
             <div class="prev-inf"><div class="prev-n">${l.naam}</div><div class="prev-c">${l.organisatie}</div></div>
-            <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier}</span>
+            <span class="tier-b ${l.tier===1?'t1':l.tier===3?'t3':'t2'}">T${l.tier}</span>
             <span class="score-n">${l.icp_score??'–'}</span>
           </div>`).join(''):'<div class="empty" style="padding:24px 12px;">Nog geen leads — voeg er één toe of run de pipeline</div>'}
         </div>
@@ -1631,7 +1632,7 @@ async function tLead(){
   try{
     const [fases,alleLeads,alleContacten]=await Promise.all([
       laadFaseMapping(),
-      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at,dienst&order=icp_score.desc'),
+      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at,dienst,tier_reden&order=icp_score.desc'),
       sbGetSafe('contactpersonen','select=id,lead_id,naam,functie,linkedin_url,email_werk,telefoon_werk,status,outreach_bericht,is_primair&order=is_primair.desc')
     ]);
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
@@ -1742,7 +1743,7 @@ function leadRow(l){
         <div class="l-co">${l.dienst?l.dienst+' · ':''}${_cl.length} contactperso${_cl.length===1?'on':'nen'}${l.created_at?` · <span style="color:var(--t3);">toegev. ${fmtDatum(l.created_at)}</span>`:''}</div>
       </div>
       ${l.verwacht_bedrag||l.prijs_jaar_1?`<span style="font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap;flex-shrink:0;">€ ${fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1)}</span>`:''}
-      <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier||'?'}</span>
+      <span class="tier-b ${l.tier===1?'t1':l.tier===3?'t3':'t2'}">T${l.tier||'?'}</span>
       <span class="score-n" style="margin-right:4px">${l.icp_score??'–'}</span>
       <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
@@ -1797,6 +1798,10 @@ function leadCtx(l){
     </div>
     <div class="icp-row"><span class="icp-lbl">ICP Score</span><span class="icp-val">${l.icp_score??'–'} / 100</span></div>
     <div class="icp-trk"><div class="icp-fill" style="width:${l.icp_score??0}%"></div></div>
+    <div style="margin:10px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+      <span class="tier-b ${l.tier===1?'t1':l.tier===3?'t3':'t2'}" style="margin-top:1px;">Tier ${l.tier||'?'}</span>
+      <span style="font-size:11px;color:var(--t3);white-space:pre-line;flex:1;min-width:0;">${l.tier_reden||'Geen tier-onderbouwing'}</span>
+    </div>
     <div class="detail-grid">
       <div><div class="d-lbl">Functie</div><div class="d-val">${l.functie||'–'}</div></div>
       <div><div class="d-lbl">Status</div><div class="d-val" style="text-transform:capitalize">${l.status||'nieuw'}</div></div>
@@ -4309,9 +4314,9 @@ async function laadLeadStats() {
         <div class="card" style="padding:12px 14px;">
           <div class="card-title">Top 5 — ICP score</div>
           ${top5.map(l=>`<div class="prev-item" style="padding:5px 4px;">
-            <div class="l-av ${l.tier===1?'t1':'t2'}" style="width:26px;height:26px;font-size:10px;">${(l.naam||'?').charAt(0)}</div>
+            <div class="l-av ${l.tier===1?'t1':l.tier===3?'t3':'t2'}" style="width:26px;height:26px;font-size:10px;">${(l.naam||'?').charAt(0)}</div>
             <div class="prev-inf"><div class="prev-n" style="font-size:12px;">${l.naam||'–'}</div><div class="prev-c">${l.organisatie||'–'}</div></div>
-            <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier||'?'}</span>
+            <span class="tier-b ${l.tier===1?'t1':l.tier===3?'t3':'t2'}">T${l.tier||'?'}</span>
             <span class="score-n">${l.icp_score||'–'}</span>
           </div>`).join('')||'<div style="color:var(--t3);font-size:12px;">Geen leads</div>'}
         </div>
