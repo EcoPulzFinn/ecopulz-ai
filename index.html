@@ -799,6 +799,10 @@
         <div class="page-date" id="pgDate"></div>
       </div>
       <div class="tb-actions">
+        <button class="btn btn-ghost cc-launch" onclick="ccToggle()" title="Command Center assistent" aria-label="Assistent" style="padding:7px 11px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z"/></svg>
+          Assistent
+        </button>
         <button class="btn btn-ghost" id="themeBtn" onclick="cycleTheme()" title="Wissel thema" style="padding:7px 11px;font-size:11px;letter-spacing:.03em;">Aurora</button>
         <button class="btn btn-ghost" onclick="openLeadModal()">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -5195,6 +5199,149 @@ if (!_token) {
   function upBtn(){var b=document.getElementById('themeBtn');if(b)b.textContent=labels[t]||'Aurora';}
   upBtn();
   window.cycleTheme=function(){var i=(themes.indexOf(t)+1)%themes.length;t=themes[i];localStorage.setItem('ui-theme',t);document.documentElement.setAttribute('data-ui-theme',t==='aurora'?'':t);upBtn();};
+})();
+</script>
+<!-- ── Command Center assistent (Sprint 6) ────────────────────── -->
+<style>
+  .cc-launch svg{color:var(--teal);}
+  .cc-panel{position:fixed;top:0;right:0;bottom:0;width:390px;max-width:92vw;z-index:1200;
+    background:var(--bg);border-left:1px solid var(--bd);display:flex;flex-direction:column;
+    transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-18px 0 50px rgba(0,0,0,.35);}
+  .cc-panel.open{transform:translateX(0);}
+  .cc-hdr{display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px solid var(--bd);min-height:64px;}
+  .cc-hdr .cc-mark{width:28px;height:28px;border-radius:2px;background:var(--teal-dim);border:1px solid var(--teal-b);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .cc-hdr .cc-mark svg{width:15px;height:15px;color:var(--teal);}
+  .cc-hdr .cc-ttl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t1);}
+  .cc-hdr .cc-sub{font-size:9.5px;color:var(--t3);margin-top:1px;}
+  .cc-x{margin-left:auto;background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:var(--r);}
+  .cc-x:hover{color:var(--t1);background:var(--ch);}
+  .cc-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .cc-msg{max-width:88%;padding:9px 12px;border-radius:10px;font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;}
+  .cc-msg.user{align-self:flex-end;background:var(--teal-dim);border:1px solid var(--teal-b);color:var(--t1);border-bottom-right-radius:3px;}
+  .cc-msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--bd);color:var(--t1);border-bottom-left-radius:3px;}
+  .cc-msg.sys{align-self:center;background:none;color:var(--t3);font-size:11px;font-style:italic;padding:2px;}
+  .cc-confirm{align-self:flex-start;max-width:88%;background:var(--card);border:1px solid var(--teal-b);border-radius:10px;padding:11px 12px;font-size:12px;color:var(--t1);}
+  .cc-confirm .cc-act{font-weight:600;color:var(--teal);margin-bottom:8px;display:block;}
+  .cc-confirm .cc-btns{display:flex;gap:8px;}
+  .cc-empty{color:var(--t3);font-size:12px;text-align:center;margin:auto 8px;line-height:1.6;}
+  .cc-foot{border-top:1px solid var(--bd);padding:12px;}
+  .cc-inp-row{display:flex;gap:8px;align-items:flex-end;}
+  .cc-inp{flex:1;background:var(--inp);border:1px solid var(--bd);border-radius:var(--r);color:var(--t1);font-family:var(--f);font-size:12.5px;padding:9px 11px;resize:none;max-height:120px;line-height:1.4;}
+  .cc-inp:focus{outline:none;border-color:var(--teal-b);}
+  .cc-send{flex-shrink:0;background:var(--teal);border:none;border-radius:var(--r);color:#fff;cursor:pointer;padding:9px 12px;display:flex;align-items:center;justify-content:center;}
+  .cc-send:disabled{opacity:.4;cursor:default;}
+  .cc-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);margin:0 2px;animation:ccp 1.2s infinite ease-in-out;}
+  .cc-dot:nth-child(2){animation-delay:.2s;}.cc-dot:nth-child(3){animation-delay:.4s;}
+  @keyframes ccp{0%,60%,100%{opacity:.25;}30%{opacity:1;}}
+</style>
+<aside class="cc-panel" id="ccPanel" aria-hidden="true">
+  <div class="cc-hdr">
+    <div class="cc-mark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z"/></svg></div>
+    <div><div class="cc-ttl">Assistent</div><div class="cc-sub">Command Center</div></div>
+    <button class="cc-x" onclick="ccToggle()" aria-label="Sluiten">✕</button>
+  </div>
+  <div class="cc-body" id="ccBody">
+    <div class="cc-empty" id="ccEmpty">Vraag me iets over je leads, taken, content of sector-reacties.<br>Bijv. "hoeveel nieuwe leads in tier 1?" of "wat staat er open voor mij?"</div>
+  </div>
+  <div class="cc-foot">
+    <div class="cc-inp-row">
+      <textarea class="cc-inp" id="ccInp" rows="1" placeholder="Stel een vraag..." onkeydown="ccKey(event)" oninput="ccGrow(this)"></textarea>
+      <button class="cc-send" id="ccSendBtn" onclick="ccSend()" aria-label="Verstuur"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+  </div>
+</aside>
+<script>
+(function(){
+  const FN = `${SB_URL}/functions/v1/command-center-chat`;
+  const msgs = [];           // {role, content} — lopende conversatie
+  let bezig = false, pending = null;
+
+  function tok(){ return localStorage.getItem('sb_token') || SB_KEY; }
+  const body = () => document.getElementById('ccBody');
+  function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  function scrollDown(){ const b=body(); b.scrollTop=b.scrollHeight; }
+  function hideEmpty(){ const e=document.getElementById('ccEmpty'); if(e) e.remove(); }
+
+  function bubble(rol, tekst){
+    hideEmpty();
+    const d=document.createElement('div');
+    d.className='cc-msg '+(rol==='user'?'user':rol==='sys'?'sys':'bot');
+    d.innerHTML=esc(tekst);
+    body().appendChild(d); scrollDown(); return d;
+  }
+  function typing(){
+    hideEmpty();
+    const d=document.createElement('div'); d.className='cc-msg bot'; d.id='ccTyping';
+    d.innerHTML='<span class="cc-dot"></span><span class="cc-dot"></span><span class="cc-dot"></span>';
+    body().appendChild(d); scrollDown(); return d;
+  }
+  function stopTyping(){ const t=document.getElementById('ccTyping'); if(t) t.remove(); }
+
+  function toonBevestiging(pa){
+    pending = pa;
+    const d=document.createElement('div'); d.className='cc-confirm';
+    d.innerHTML='<span class="cc-act">Bevestiging nodig: '+esc(pa.omschrijving)+'</span>'+
+      '<div class="cc-btns"><button class="btn btn-teal btn-sm" onclick="ccDoConfirm()">Doorvoeren</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="ccCancel()">Annuleren</button></div>';
+    d.id='ccConfirmCard'; body().appendChild(d); scrollDown();
+  }
+
+  async function call(payload){
+    const r = await fetch(FN, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok()},
+      body:JSON.stringify(payload)
+    });
+    const d = await r.json().catch(()=>({error:'Ongeldig antwoord'}));
+    if(!r.ok) throw new Error(d.error || ('Fout '+r.status));
+    return d;
+  }
+
+  window.ccSend = async function(){
+    const inp=document.getElementById('ccInp');
+    const tekst=(inp.value||'').trim();
+    if(!tekst || bezig) return;
+    inp.value=''; ccGrow(inp);
+    bubble('user', tekst);
+    msgs.push({role:'user', content:tekst});
+    bezig=true; document.getElementById('ccSendBtn').disabled=true;
+    typing();
+    try{
+      const d = await call({messages: msgs});
+      stopTyping();
+      if(d.reply){ bubble('bot', d.reply); msgs.push({role:'assistant', content:d.reply}); }
+      if(d.pending_action){ toonBevestiging(d.pending_action); }
+    }catch(e){ stopTyping(); bubble('bot','⚠️ '+e.message); }
+    bezig=false; document.getElementById('ccSendBtn').disabled=false;
+  };
+
+  window.ccDoConfirm = async function(){
+    if(!pending) return;
+    const card=document.getElementById('ccConfirmCard'); if(card) card.remove();
+    const pa=pending; pending=null;
+    typing();
+    try{
+      const d = await call({confirm_action:{tool:pa.tool, args:pa.args}});
+      stopTyping();
+      const note = d.bericht || (d.executed?'Uitgevoerd.':'Niet uitgevoerd.');
+      bubble('sys', (d.executed?'✓ ':'✕ ')+note);
+      msgs.push({role:'assistant', content:'(actie uitgevoerd: '+pa.omschrijving+' — '+note+')'});
+    }catch(e){ stopTyping(); bubble('bot','⚠️ '+e.message); }
+  };
+  window.ccCancel = function(){
+    const card=document.getElementById('ccConfirmCard'); if(card) card.remove();
+    if(pending){ msgs.push({role:'assistant', content:'(actie geannuleerd door Finn: '+pending.omschrijving+')'}); }
+    pending=null; bubble('sys','Geannuleerd.');
+  };
+
+  window.ccToggle = function(){
+    const p=document.getElementById('ccPanel');
+    const open=p.classList.toggle('open');
+    p.setAttribute('aria-hidden', open?'false':'true');
+    if(open) setTimeout(()=>document.getElementById('ccInp').focus(), 280);
+  };
+  window.ccKey = function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); ccSend(); } };
+  window.ccGrow = function(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; };
 })();
 </script>
 </body></html>
