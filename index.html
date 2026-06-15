@@ -1631,7 +1631,7 @@ async function tLead(){
   try{
     const [fases,alleLeads,alleContacten]=await Promise.all([
       laadFaseMapping(),
-      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at&order=icp_score.desc'),
+      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at,dienst&order=icp_score.desc'),
       sbGetSafe('contactpersonen','select=id,lead_id,naam,functie,linkedin_url,email_werk,telefoon_werk,status,outreach_bericht,is_primair&order=is_primair.desc')
     ]);
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
@@ -1721,6 +1721,8 @@ function contactenSectie(l){
 
 function leadRow(l){
   const exp=expanded.has(l.id);
+  const _cl=_contactenPerLead[l.id]||[];
+  const pc=_cl.find(c=>c.is_primair)||_cl[0]||null;
   const _cg=parseInt(l.afas_fase_code||'000')>=2;
   const actieBtns=_cg
     ?`<span style="font-size:12px;font-weight:600;color:var(--teal);">&#10003; Contact gelegd</span>`
@@ -1733,11 +1735,11 @@ function leadRow(l){
       <div class="sdot ${l.status||'nieuw'}"></div>
       <div class="l-name-blk">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <div class="l-name">${l.naam}</div>
+          <div class="l-name">${l.organisatie||'Onbekend bedrijf'}</div>
           ${faseBadge(l)}
           ${(l.afas_relatienummer||l.afas_opportunity_id)?'<span class="afas-mini" title="Gesynchroniseerd met AFAS">&#10003; AFAS</span>':''}
         </div>
-        <div class="l-co">${l.organisatie||'–'} · ${l.functie||'–'}${l.created_at?` · <span style="color:var(--t3);">toegev. ${fmtDatum(l.created_at)}</span>`:''}</div>
+        <div class="l-co">${l.dienst?l.dienst+' · ':''}${_cl.length} contactperso${_cl.length===1?'on':'nen'}${l.created_at?` · <span style="color:var(--t3);">toegev. ${fmtDatum(l.created_at)}</span>`:''}</div>
       </div>
       ${l.verwacht_bedrag||l.prijs_jaar_1?`<span style="font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap;flex-shrink:0;">€ ${fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1)}</span>`:''}
       <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier||'?'}</span>
