@@ -1395,7 +1395,7 @@ async function sbDelete(table, id) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-let tab='overzicht', lFase='000', lFilter='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
+let tab='overzicht', lFase='000', lFilter='alle', lPeriode='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
 let expanded=new Set();
 let ciIdeeën=[], ciActiveIdee=null;
 let expandedReeksen=new Set(), _reeksIdeeënCache={};
@@ -1607,6 +1607,7 @@ function naarLead(id){
 
 // ── LEAD FUNNEL ────────────────────────────────────────
 const _leadDataMap={};
+let _contactenPerLead={};
 let _faseMappingCache=null;
 async function laadFaseMapping(){
   if(_faseMappingCache&&_faseMappingCache.length) return _faseMappingCache;
@@ -1628,11 +1629,14 @@ async function tLead(){
     <div class="skel" style="height:34px;margin-bottom:18px;"></div>
     <div style="display:flex;flex-direction:column;gap:6px;">${[0,1,2,3,4].map(()=>'<div class="skel" style="height:56px;"></div>').join('')}</div>`;
   try{
-    const [fases,alleLeads]=await Promise.all([
+    const [fases,alleLeads,alleContacten]=await Promise.all([
       laadFaseMapping(),
-      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen&order=icp_score.desc')
+      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at&order=icp_score.desc'),
+      sbGetSafe('contactpersonen','select=id,lead_id,naam,functie,linkedin_url,email_werk,telefoon_werk,status,outreach_bericht,is_primair&order=is_primair.desc')
     ]);
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
+    _contactenPerLead={};
+    (alleContacten||[]).forEach(c=>{ (_contactenPerLead[c.lead_id]=_contactenPerLead[c.lead_id]||[]).push(c); });
 
     const actieveFases=fases.filter(f=>f.code!=='100'&&f.code!=='999');
     const cntPerFase={},bedragPerFase={};
@@ -1655,6 +1659,11 @@ async function tLead(){
     let filtered=alleLeads.filter(l=>(l.afas_fase_code||'000')===lFase);
     if(lFilter==='afgewezen') filtered=filtered.filter(l=>l.status==='afgewezen');
     else if(lFilter!=='alle') filtered=filtered.filter(l=>l.status===lFilter);
+    if(lPeriode!=='alle'){
+      const dagen=Number(lPeriode);
+      const cutoff=Date.now()-dagen*86400000;
+      filtered=filtered.filter(l=>l.created_at && new Date(l.created_at).getTime()>=cutoff);
+    }
 
     const funnelHtml=actieveFases.length?actieveFases.map(f=>{
       const cnt=cntPerFase[f.code]||0;
@@ -1679,13 +1688,36 @@ async function tLead(){
         </div>
       </div>
       <div class="filter-row">${['Alle','Nieuw','Benaderd','Gereageerd','Afgewezen'].map(f=>`<button class="fbtn${lFilter===f.toLowerCase()?' active':''}" onclick="setLF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
-      <div class="leads-list">${filtered.length?filtered.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase</div>'}</div>`;
+      <div class="filter-row" style="border-bottom:none;margin-bottom:14px;gap:2px;">
+        <span style="font-size:11px;color:var(--t3);align-self:center;margin-right:8px;letter-spacing:.04em;">TOEGEVOEGD</span>
+        ${[['alle','Alle'],['1','Vandaag'],['7','7 dagen'],['30','30 dagen']].map(([v,lab])=>`<button class="fbtn${lPeriode===v?' active':''}" onclick="setPeriode('${v}')">${lab}</button>`).join('')}
+      </div>
+      <div class="leads-list">${filtered.length?filtered.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase/periode</div>'}</div>`;
     animateNums();
   }catch(e){el.innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 
 function setPhase(code){lFase=code;lFilter='alle';render('leadfunnel');}
 function setLF(f){lFilter=f;render('leadfunnel');}
+function setPeriode(p){lPeriode=p;render('leadfunnel');}
+function fmtDatum(d){ if(!d) return ''; try{ return new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short'}); }catch{ return ''; } }
+function contactenSectie(l){
+  const cs=_contactenPerLead[l.id]||[];
+  const rij=c=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bd);">
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:12.5px;font-weight:600;color:var(--t1);">${c.naam||'–'}${c.is_primair?' <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);">primair</span>':''}</div>
+      <div style="font-size:11px;color:var(--t3);">${c.functie||'–'}${c.email_werk?' · '+c.email_werk:''}${c.telefoon_werk?' · '+c.telefoon_werk:''}</div>
+    </div>
+    ${c.email_werk?`<a class="btn btn-ghost btn-sm" href="mailto:${c.email_werk}${c.outreach_bericht?'?body='+encodeURIComponent(c.outreach_bericht):''}" style="text-decoration:none;">Mail</a>`:''}
+    ${c.linkedin_url?`<a class="btn btn-ghost btn-sm" href="${c.linkedin_url}" target="_blank" rel="noopener" style="text-decoration:none;">LinkedIn</a>`:''}
+    <span class="tier-b ${c.status==='gereageerd'?'t1':'t2'}" style="text-transform:capitalize;">${c.status||'nieuw'}</span>
+  </div>`;
+  const inner=cs.length?cs.map(rij).join(''):`<div style="color:var(--t3);font-size:12px;padding:6px 0;">Nog geen contactpersoon — dit is een bedrijf/traject zonder contact. Toevoegen of verrijken via AFAS/Apollo.</div>`;
+  return `<div style="margin:14px 0;padding:12px 14px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);">
+    <div class="card-title" style="margin-bottom:2px;">Contactpersonen (${cs.length})</div>
+    ${inner}
+  </div>`;
+}
 
 function leadRow(l){
   const exp=expanded.has(l.id);
@@ -1705,7 +1737,7 @@ function leadRow(l){
           ${faseBadge(l)}
           ${(l.afas_relatienummer||l.afas_opportunity_id)?'<span class="afas-mini" title="Gesynchroniseerd met AFAS">&#10003; AFAS</span>':''}
         </div>
-        <div class="l-co">${l.organisatie||'–'} · ${l.functie||'–'}</div>
+        <div class="l-co">${l.organisatie||'–'} · ${l.functie||'–'}${l.created_at?` · <span style="color:var(--t3);">toegev. ${fmtDatum(l.created_at)}</span>`:''}</div>
       </div>
       ${l.verwacht_bedrag||l.prijs_jaar_1?`<span style="font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap;flex-shrink:0;">€ ${fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1)}</span>`:''}
       <span class="tier-b ${l.tier===1?'t1':'t2'}">T${l.tier||'?'}</span>
@@ -1715,6 +1747,7 @@ function leadRow(l){
     <div class="lead-body${exp?' show':''}" id="lb-${l.id}">
       <div class="lead-bdy-inner">
         ${leadCtx(l)}
+        ${contactenSectie(l)}
         <div class="lead-actions" style="margin-bottom:16px;">
           ${actieBtns}
         </div>
