@@ -2917,7 +2917,7 @@ function ciKaart(idee){
     </div>`;
   }
 
-  const kanPubliceren=idee.platform==='linkedin'&&idee.slide_1_tekst&&(idee.status==='gepland'||idee.status==='concept');
+  const kanPubliceren=idee.platform==='linkedin'&&(idee.caption||idee.slide_1_tekst)&&(idee.status==='gepland'||idee.status==='concept');
   const liGepost=idee.platform==='linkedin'&&idee.status==='gepost';
   const badge=idee.status==='concept'?`<span class="ci-badge ci-badge-concept">✓ Concept klaar</span>`:
                idee.status==='gepland' ?`<span class="ci-badge ci-badge-gepland">Gepland</span>`:
@@ -3007,10 +3007,10 @@ function autoSaveCaption(ideeId,tekst){
   clearTimeout(_captionTimers[ideeId]);
   _captionTimers[ideeId]=setTimeout(async()=>{
     try{
-      await sbPatch('content_ideas',ideeId,{slide_1_tekst:tekst});
+      await sbPatch('content_ideas',ideeId,{caption:tekst});
       const flat=[...ciIdeeën,...[].concat(...Object.values(_reeksIdeeënCache)).filter(Boolean)];
       const idee=flat.find(i=>i.id===ideeId);
-      if(idee) idee.slide_1_tekst=tekst;
+      if(idee) idee.caption=tekst;
       const ind=document.getElementById('ci-saved-ind-'+ideeId);
       if(ind){ind.style.opacity='1';setTimeout(()=>{if(ind)ind.style.opacity='0';},2000);}
     }catch(e){ console.error('Auto-save caption fout:',e); }
@@ -3019,8 +3019,8 @@ function autoSaveCaption(ideeId,tekst){
 
 function _renderIdeeExpand(idee){
   const ondEsc=(idee.onderwerp||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-  const capEsc=(idee.slide_1_tekst||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const kanPubliceren=idee.platform==='linkedin'&&idee.slide_1_tekst&&(idee.status==='gepland'||idee.status==='concept');
+  const capEsc=(idee.caption||idee.slide_1_tekst||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const kanPubliceren=idee.platform==='linkedin'&&(idee.caption||idee.slide_1_tekst)&&(idee.status==='gepland'||idee.status==='concept');
 
   const videoExpandHtml=idee.video_url
     ?`<div style="margin-top:8px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
@@ -3074,7 +3074,7 @@ function _renderIdeeExpand(idee){
       onblur="slaOnderwerpOp('${idee.id}')"
       onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}if(event.key==='Escape'){this.value=this.dataset.orig.replace(/&amp;/g,'&').replace(/&quot;/g,'&quot;');this.blur();}">
     <div style="display:flex;align-items:center;gap:6px;margin-top:12px;margin-bottom:5px;">
-      <span class="ci-expand-label" style="margin:0;">Caption (slide 1)</span>
+      <span class="ci-expand-label" style="margin:0;">Caption</span>
       <span class="ci-saved-ind" id="ci-saved-ind-${idee.id}">✓ Opgeslagen</span>
     </div>
     <textarea class="ci-caption-ta" id="ci-cap-ta-${idee.id}"
@@ -3473,9 +3473,10 @@ function openLiPubliceerModal(ideeId){
       if(Array.isArray(arr)){ const gevonden=arr.find(i=>i.id===ideeId); if(gevonden){idee=gevonden;break;} }
     }
   }
-  if(!idee||!idee.slide_1_tekst) return;
+  if(!idee||!(idee.caption||idee.slide_1_tekst)) return;
   document.getElementById('li-idee-id').value=ideeId;
-  document.getElementById('li-preview-tekst').textContent=(idee.slide_1_tekst||'').substring(0,300)+(idee.slide_1_tekst?.length>300?'…':'');
+  const _liTekst=(idee.caption||idee.slide_1_tekst||'');
+  document.getElementById('li-preview-tekst').textContent=_liTekst.substring(0,300)+(_liTekst.length>300?'…':'');
   // Visual preview of warning
   const liVisEl=document.getElementById('li-visual-blok');
   if(liVisEl){
