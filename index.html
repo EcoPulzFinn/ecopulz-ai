@@ -4199,19 +4199,19 @@ function tAnalyse() {
       <div class="analyse-header">
         <div class="analyse-header-left">
           <h2 class="analyse-title">Analyse dashboard</h2>
-          <p class="analyse-subtitle">Lead statistieken, content prestaties en AI-maandrapport</p>
+          <p class="analyse-subtitle">Lead statistieken, content prestaties en AI-rapport</p>
         </div>
       </div>
       <div id="analyseLoading" class="analyse-loading" style="display:none">
         <div class="loading-pulse"></div>
-        <p>Claude analyseert de afgelopen 30 dagen... Dit duurt ~30 seconden.</p>
+        <p id="analyseLoadingTekst">Claude analyseert de afgelopen 7 dagen... Dit duurt ~30 seconden.</p>
       </div>
       <div id="analyseError" class="analyse-error" style="display:none"></div>
       <div id="analyseSuccess" class="analyse-success" style="display:none"></div>
       <div class="rapport-subtabs">
         <button class="subtab-btn active" id="subtab-leads" onclick="switchSubtab('leads')">Lead statistieken</button>
         <button class="subtab-btn" id="subtab-contentstats" onclick="switchSubtab('contentstats')">Content statistieken</button>
-        <button class="subtab-btn" id="subtab-rapport" onclick="switchSubtab('rapport')">AI Maandrapport</button>
+        <button class="subtab-btn" id="subtab-rapport" onclick="switchSubtab('rapport')">AI Rapport</button>
         <button class="subtab-btn" id="subtab-geschiedenis" onclick="switchSubtab('geschiedenis')">Geschiedenis</button>
       </div>
       <div id="subtab-content-leads">
@@ -4221,13 +4221,17 @@ function tAnalyse() {
         <div id="contentStatsContainer"><div class="loading">Statistieken laden...</div></div>
       </div>
       <div id="subtab-content-rapport" style="display:none">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-          <button class="btn-genereer" id="btnGenereerRapport" onclick="genereerRapport()"><span class="btn-icon">⚡</span>Genereer maandoverzicht</button>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:14px;">
+          <div class="periode-toggle" style="display:inline-flex;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:2px;">
+            <button class="periode-btn active" id="periode-week" data-periode="week" onclick="setRapportPeriode('week')" style="padding:0.45rem 0.9rem;border:none;background:transparent;color:var(--t2);font-size:0.82rem;font-weight:600;border-radius:6px;cursor:pointer;font-family:var(--f);">Week</button>
+            <button class="periode-btn" id="periode-maand" data-periode="maand" onclick="setRapportPeriode('maand')" style="padding:0.45rem 0.9rem;border:none;background:transparent;color:var(--t2);font-size:0.82rem;font-weight:600;border-radius:6px;cursor:pointer;font-family:var(--f);">Maand</button>
+          </div>
+          <button class="btn-genereer" id="btnGenereerRapport" onclick="genereerRapport()"><span class="btn-icon">⚡</span>Genereer weekoverzicht</button>
         </div>
         <div id="rapportContainer">
           <div class="rapport-empty">
             <div class="rapport-empty-icon">📋</div>
-            <p>Nog geen rapport gegenereerd.<br>Klik op "Genereer maandoverzicht" om te beginnen.</p>
+            <p>Nog geen rapport gegenereerd.<br>Kies week of maand en klik op "Genereer overzicht" om te beginnen.</p>
           </div>
         </div>
       </div>
@@ -4249,7 +4253,7 @@ function switchSubtab(t) {
     document.getElementById('subtab-content-'+id).style.display = t === id ? 'block' : 'none';
     document.getElementById('subtab-'+id).classList.toggle('active', t === id);
   });
-  if (t === 'rapport') laadLaatstRapport();
+  if (t === 'rapport') { setRapportPeriode(_rapportPeriode); laadLaatstRapport(); }
   if (t === 'geschiedenis') laadGeschiedenis();
   if (t === 'leads') laadLeadStats();
   if (t === 'contentstats') laadContentStats();
@@ -4420,16 +4424,18 @@ async function laadContentStats() {
   el.innerHTML = '<div class="loading">Statistieken laden...</div>';
   try {
     const [posts, ideeën] = await Promise.all([
-      sbGetSafe('content_posts','select=id,platform,status,pillar,created_at').catch(()=>[]),
-      sbGetSafe('content_ideas','select=id,platform,status,pillar,created_at').catch(()=>[])
+      sbGetSafe('content_posts','select=id,platform,status,pilaar,datum_gepost,datum_gepland').catch(()=>[]),
+      sbGetSafe('content_ideas','select=id,platform,status,pilaar,created_at').catch(()=>[])
     ]);
     const nu = Date.now();
     const d30 = new Date(nu - 30*864e5);
+    // content_posts heeft geen created_at; gebruik gepost- of geplande datum
+    const postDatum = p => new Date(p.datum_gepost || p.datum_gepland || 0);
     const totaalPosts  = posts.length;
     const gepost       = posts.filter(p=>p.status==='gepost').length;
     const gepland      = posts.filter(p=>p.status==='gepland').length;
     const concept      = posts.filter(p=>p.status==='concept').length;
-    const dezeMaand    = posts.filter(p=>new Date(p.created_at)>=d30).length;
+    const dezeMaand    = posts.filter(p=>postDatum(p)>=d30).length;
     const totaalIdeeën = ideeën.length;
     const actieveIdeeën   = ideeën.filter(i=>!['afgewezen','gepost'].includes(i.status)).length;
     const afgewezenIdeeën = ideeën.filter(i=>i.status==='afgewezen').length;
@@ -4442,9 +4448,9 @@ async function laadContentStats() {
     const platTot   = platKeys.map(p=>posts.filter(x=>x.platform===p).length);
     const platGep   = platKeys.map(p=>posts.filter(x=>x.platform===p&&x.status==='gepost').length);
 
-    // Pillar data (ideas table because posts may be empty)
+    // Pillar data (ideas table because posts may be empty) — kolom heet 'pilaar'
     const pillarMap = {};
-    [...posts,...ideeën].forEach(p=>{const k=p.pillar||'Onbekend';pillarMap[k]=(pillarMap[k]||0)+1;});
+    [...posts,...ideeën].forEach(p=>{const k=p.pilaar||'Onbekend';pillarMap[k]=(pillarMap[k]||0)+1;});
     const pillarE   = Object.entries(pillarMap).sort((a,b)=>b[1]-a[1]);
     const pillarLbl = pillarE.map(([k])=>k);
     const pillarVal = pillarE.map(([,v])=>v);
@@ -4460,8 +4466,8 @@ async function laadContentStats() {
     for(let i=7;i>=0;i--){
       const ws=new Date(nu-(i+1)*7*864e5),we=new Date(nu-i*7*864e5);
       wkLbl.push(ws.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}));
-      wkNew.push(posts.filter(p=>{const d=new Date(p.created_at);return d>=ws&&d<we;}).length);
-      wkGep.push(posts.filter(p=>{const d=new Date(p.created_at);return d>=ws&&d<we&&p.status==='gepost';}).length);
+      wkNew.push(posts.filter(p=>{const d=postDatum(p);return d>=ws&&d<we;}).length);
+      wkGep.push(posts.filter(p=>{const d=postDatum(p);return d>=ws&&d<we&&p.status==='gepost';}).length);
     }
 
     el.innerHTML = `
@@ -4532,6 +4538,23 @@ async function laadContentStats() {
   } catch(e) { el.innerHTML = `<div class="err">Fout bij laden: ${e.message}</div>`; }
 }
 
+let _rapportPeriode = 'week';
+function setRapportPeriode(p) {
+  _rapportPeriode = p;
+  ['week','maand'].forEach(x => {
+    const b = document.getElementById('periode-'+x);
+    if (!b) return;
+    const on = x === p;
+    b.classList.toggle('active', on);
+    b.style.background = on ? 'rgba(34,197,94,0.18)' : 'transparent';
+    b.style.color = on ? '#86efac' : 'var(--t2)';
+  });
+  const btn = document.getElementById('btnGenereerRapport');
+  if (btn) btn.innerHTML = `<span class="btn-icon">⚡</span>Genereer ${p === 'maand' ? 'maand' : 'week'}overzicht`;
+  const lt = document.getElementById('analyseLoadingTekst');
+  if (lt) lt.textContent = `Claude analyseert de afgelopen ${p === 'maand' ? 30 : 7} dagen... Dit duurt ~30 seconden.`;
+}
+
 async function genereerRapport() {
   const btn = document.getElementById('btnGenereerRapport');
   const loading = document.getElementById('analyseLoading');
@@ -4546,13 +4569,15 @@ async function genereerRapport() {
     const response = await fetch(`${SB_URL}/functions/v1/analyse-agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ periode: 'maand' })
+      body: JSON.stringify({ periode: _rapportPeriode })
     });
     const result = await response.json();
     if (!result.success) throw new Error(result.error || 'Onbekende fout');
-    successEl.style.display = 'block';
-    successEl.textContent = `✅ Rapport gegenereerd! ${result.geanalyseerd.posts} posts en ${result.geanalyseerd.signalen} signalen geanalyseerd.`;
     await laadLaatstRapport();
+    const r = await sbGetSafe('content_reports', 'select=posts_geanalyseerd,signalen_geanalyseerd&order=created_at.desc&limit=1').catch(()=>[]);
+    const stats = (r && r[0]) || {};
+    successEl.style.display = 'block';
+    successEl.textContent = `✅ ${_rapportPeriode === 'maand' ? 'Maand' : 'Week'}rapport gegenereerd! ${stats.posts_geanalyseerd ?? 0} posts en ${stats.signalen_geanalyseerd ?? 0} signalen geanalyseerd.`;
   } catch (err) {
     errorEl.style.display = 'block';
     errorEl.textContent = `❌ Fout: ${err.message}`;
@@ -4655,7 +4680,12 @@ async function openGeschiedenisRapport(id) {
   try {
     const data = await sbGetSafe('content_reports', `select=*&id=eq.${id}&limit=1`);
     if (!data || !data.length) return;
-    switchSubtab('huidig');
+    // Wissel naar de rapport-tab zonder laadLaatstRapport() te triggeren (anders
+    // overschrijft het laatste rapport het aangeklikte historische rapport).
+    ANALYSE_TABS.forEach(id => {
+      document.getElementById('subtab-content-'+id).style.display = id === 'rapport' ? 'block' : 'none';
+      document.getElementById('subtab-'+id).classList.toggle('active', id === 'rapport');
+    });
     renderRapport(data[0], 'rapportContainer');
     document.getElementById('ca').scrollTop = 0;
   } catch(e) {}
