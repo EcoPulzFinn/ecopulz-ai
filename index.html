@@ -333,6 +333,10 @@
     .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color:var(--teal); }
     .form-row textarea { resize:vertical; min-height:80px; }
     .form-row select option { background:var(--sb); }
+    /* Dropdown-opties: leesbaar contrast (donkere achtergrond, lichte tekst) op alle selects */
+    select option { background-color:#1e2124; color:#eef0f2; }
+    select option:checked { background-color:#0e3a33; color:#ffffff; }
+    select option:disabled { color:#9aa0a6; }
     .modal-ft { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
 
 /* === LinkedIn Reacties grid === */
@@ -3121,22 +3125,17 @@ async function openAdobeExpress(){
   if(!_visualIdeeId) return;
   const flat=[...ciIdeeën,...[].concat(...Object.values(_reeksIdeeënCache)).filter(Boolean)];
   const idee=flat.find(i=>i.id===_visualIdeeId);
-  const platform=idee?.platform||'linkedin';
   const ideeId=_visualIdeeId;
 
   const btn=document.getElementById('vm-adobe-btn');
   if(btn){btn.disabled=true;btn.textContent='Laden...';}
   const cc=await initAdobeExpress();
   if(btn){btn.disabled=false;btn.textContent='🎨 Maak in Adobe Express';}
-  if(!cc){ toast('Adobe Express kon niet geladen worden'); return; }
+  if(!cc||!cc.editor){ toast('Adobe Express kon niet geladen worden'); return; }
 
-  const canvasSizes={
-    linkedin:{width:1200,height:627},
-    instagram:{width:1080,height:1080},
-    website:{width:1200,height:630},
-  };
-
-  cc.editor.create({
+  // Embed SDK v4: argumenten zijn positioneel (docConfig, appConfig, exportConfig,
+  // containerConfig) en callbacks horen IN appConfig — niet op het topniveau.
+  const appConfig={
     callbacks:{
       onCancel:()=>{},
       onPublish:async(intent,publishParams)=>{
@@ -3166,17 +3165,26 @@ async function openAdobeExpress(){
       },
       onError:(err)=>{ console.error('Adobe Express error:',err); toast('Adobe Express fout'); },
     },
-    docConfig:{
-      canvasSize:canvasSizes[platform]||{width:1080,height:1080},
-    },
-    appConfig:{
-      selectedCategory:'social-media',
-    },
-    exportConfig:[{
-      type:'image',
-      acceptedFileTypes:['image/png'],
-    }],
-  });
+  };
+
+  // Workflow: Higgsfield-visual → aanpassen in Adobe Express.
+  // Als er al een visual_url is (door Higgsfield gegenereerd of eerder geüpload),
+  // openen we die als startdocument via createWithAsset. Anders een leeg canvas.
+  const bestaandeUrl=idee?.visual_url;
+  if(bestaandeUrl){
+    try{
+      const blob=await fetch(bestaandeUrl).then(r=>{ if(!r.ok) throw new Error('Kon visual niet laden ('+r.status+')'); return r.blob(); });
+      const base64=await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.onerror=rej; fr.readAsDataURL(blob); });
+      const docConfig={ asset:{ data:base64, dataType:'base64', type:'image' } };
+      cc.editor.createWithAsset(docConfig, appConfig);
+      return;
+    }catch(e){
+      console.error('Kon bestaande visual niet inladen, val terug op leeg canvas:',e);
+      toast('Kon visual niet inladen — open leeg canvas');
+    }
+  }
+  // Geen visual (of inladen mislukt): leeg canvas
+  cc.editor.create(undefined, appConfig);
 }
 // ─────────────────────────────────────────────────────────────────────────
 
