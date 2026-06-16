@@ -3022,14 +3022,26 @@ function _renderIdeeExpand(idee){
   const capEsc=(idee.slide_1_tekst||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const kanPubliceren=idee.platform==='linkedin'&&idee.slide_1_tekst&&(idee.status==='gepland'||idee.status==='concept');
 
+  const videoExpandHtml=idee.video_url
+    ?`<div style="margin-top:8px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
+        <video src="${idee.video_url}" controls playsinline style="max-width:240px;border-radius:6px;"></video>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <a class="btn btn-ghost btn-sm" href="${idee.video_url}" target="_blank" style="text-decoration:none;">⬇ Download video</a>
+          <button class="btn btn-ghost btn-sm" onclick="openVideoModal('${idee.id}')">🎬 Opnieuw</button>
+          <button class="btn btn-ghost-red btn-sm" onclick="verwijderVideo('${idee.id}')">Verwijder video</button>
+        </div>
+      </div>`
+    :'';
   const visualExpandHtml=idee.visual_url
     ?`<div style="display:flex;flex-direction:column;align-items:flex-start;gap:7px;">
         <img src="${idee.visual_url}" style="max-width:200px;border-radius:6px;object-fit:cover;cursor:pointer;" onclick="openLightbox('${idee.visual_url}')">
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" onclick="openVisualModal('${idee.id}')">🔄 Vervang</button>
           <button class="btn-adobe" style="padding:5px 10px;font-size:11px;" onclick="_visualIdeeId='${idee.id}';openAdobeExpress()">🎨 Adobe Express</button>
+          ${idee.video_url?'':`<button class="btn btn-ghost btn-sm" onclick="openVideoModal('${idee.id}')">🎬 Maak video</button>`}
           <button class="btn btn-ghost-red btn-sm" onclick="verwijderVisual('${idee.id}')">Verwijder</button>
         </div>
+        ${videoExpandHtml}
       </div>`
     :`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="openVisualModal('${idee.id}')">📷 Upload visual</button>
@@ -3041,7 +3053,7 @@ function _renderIdeeExpand(idee){
     actieKnoppen=`<button class="btn btn-green btn-sm" onclick="openConceptPopup('${idee.id}')">📖 Bekijk alle slides</button>
       <select id="ci-format-${idee.id}" class="btn btn-ghost btn-sm" style="padding:5px 8px;" title="Beeldformat">
         <option value="vierkant"${(idee.media_format||'vierkant')==='vierkant'?' selected':''}>◼ Vierkant 1:1</option>
-        <option value="portret"${idee.media_format==='portret'?' selected':''}>▯ Portret 4:5</option>
+        <option value="portret"${idee.media_format==='portret'?' selected':''}>▯ Portret 3:4</option>
         <option value="story"${idee.media_format==='story'?' selected':''}>▮ Story 9:16</option>
         <option value="landscape"${idee.media_format==='landscape'?' selected':''}>▭ Landscape 16:9</option>
       </select>
@@ -3129,6 +3141,107 @@ async function genereerVisuals(id,btn){
     btn.textContent=orig;
     toast('Fout: '+e.message);
   }
+}
+
+// ─── Higgsfield video (DoP image-to-video) ───────────────────────────────
+// Video gaat van een bestaand beeld naar een korte cinematische clip.
+// De UI vraagt eerst de camerabeweging + wens, dan pas genereren.
+const _CAM_MOTIES={
+  pushin:'slow cinematic push-in toward the subject',
+  craneup:'smooth crane shot rising upward to reveal the scene',
+  orbit:'slow orbit slowly circling around the subject',
+  dolly:'steady dolly move forward through the scene',
+  crashzoom:'fast dramatic crash zoom toward the subject',
+  subtiel:'almost static shot with subtle parallax and gentle natural motion',
+};
+function openVideoModal(ideeId){
+  const flat=[...ciIdeeën,...[].concat(...Object.values(_reeksIdeeënCache)).filter(Boolean)];
+  const idee=flat.find(i=>i.id===ideeId);
+  if(!idee||!idee.visual_url){ toast('Maak eerst een visual — video gaat van beeld naar bewegend beeld'); return; }
+  const old=document.getElementById('videoModalWrap'); if(old) old.remove();
+  const el=document.createElement('div');
+  el.id='videoModalWrap';
+  el.innerHTML=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;" onclick="if(event.target===this)sluitVideoModal()">
+    <div style="width:420px;max-width:92vw;background:var(--sb);border:1px solid var(--bdm);border-radius:var(--r);padding:22px;">
+      <div style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:4px;">🎬 Video maken van deze visual</div>
+      <div style="font-size:11.5px;color:var(--t3);margin-bottom:16px;">Higgsfield zet je beeld om in een korte cinematische clip (±5s). Vertel wat je wilt zien.</div>
+      <div class="form-row"><label>Camerabeweging</label>
+        <select id="vid-motie">
+          <option value="pushin">Langzame push-in</option>
+          <option value="craneup">Crane omhoog</option>
+          <option value="orbit">Orbit (rondcirkelen)</option>
+          <option value="dolly">Dolly vooruit</option>
+          <option value="crashzoom">Crash zoom</option>
+          <option value="subtiel">Subtiel / bijna statisch</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Extra (optioneel) — wat moet er bewegen?</label>
+        <textarea id="vid-extra" placeholder="bv. stoom uit een leiding, monteur loopt door beeld, licht dat aangaat..." style="min-height:60px;"></textarea>
+      </div>
+      <div class="form-row"><label>Duur</label>
+        <select id="vid-duur"><option value="5">5 seconden</option></select>
+      </div>
+      <div id="vid-err" style="font-size:11.5px;color:var(--red);min-height:16px;"></div>
+      <div class="modal-ft" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-ghost" onclick="sluitVideoModal()">Annuleren</button>
+        <button class="btn btn-teal" id="vid-gen-btn" onclick="genereerVideo('${ideeId}')">🎬 Genereer video</button>
+      </div>
+    </div></div>`;
+  document.body.appendChild(el);
+}
+function sluitVideoModal(){ const el=document.getElementById('videoModalWrap'); if(el) el.remove(); }
+
+async function genereerVideo(ideeId){
+  const flat=[...ciIdeeën,...[].concat(...Object.values(_reeksIdeeënCache)).filter(Boolean)];
+  const idee=flat.find(i=>i.id===ideeId);
+  if(!idee||!idee.visual_url){ toast('Geen visual gevonden'); return; }
+  const motie=document.getElementById('vid-motie')?.value||'subtiel';
+  const extra=(document.getElementById('vid-extra')?.value||'').trim();
+  const duur=parseInt(document.getElementById('vid-duur')?.value||'5',10);
+  const prompt=`${_CAM_MOTIES[motie]||_CAM_MOTIES.subtiel}.${extra?' '+extra:''}`;
+  const btn=document.getElementById('vid-gen-btn');
+  const err=document.getElementById('vid-err');
+  if(err) err.textContent='';
+  if(btn){ btn.disabled=true; btn.textContent='Bezig… (kan paar minuten duren)'; }
+  const token=localStorage.getItem('sb_token')||SB_KEY;
+  const naam=`idee-${ideeId}-video`;
+  const callHf=(payload)=>fetch(`${SB_URL}/functions/v1/higgsfield-generate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(payload)});
+  try{
+    let resp=await callHf({type:'video',image_url:idee.visual_url,prompt,duration:duur,bestandsnaam:naam,wait_seconds:120});
+    let data=await resp.json();
+    if(data.error && !data.request_id && !data.url) throw new Error(data.error);
+    let pogingen=0;
+    while(!data.url && pogingen<60){
+      if(data.status==='failed'||data.status==='nsfw') throw new Error('Generatie '+data.status);
+      if(!data.request_id) throw new Error(data.error||'Geen request_id van Higgsfield');
+      pogingen++;
+      if(btn) btn.textContent=`Renderen… (${pogingen})`;
+      await new Promise(r=>setTimeout(r,6000));
+      resp=await callHf({action:'status',request_id:data.request_id,bestandsnaam:naam});
+      data=await resp.json();
+    }
+    if(!data.url) throw new Error('Video niet op tijd klaar — probeer het later opnieuw');
+    await sbPatch('content_ideas',ideeId,{video_url:data.url});
+    idee.video_url=data.url;
+    sluitVideoModal();
+    toast('Video klaar ✓');
+    if(typeof expandedIdee!=='undefined'&&expandedIdee===ideeId) _renderEénKaart(ideeId); else await tContent();
+  }catch(e){
+    if(err) err.textContent='Fout: '+e.message;
+    if(btn){ btn.disabled=false; btn.textContent='🎬 Genereer video'; }
+    toast('Fout: '+e.message);
+  }
+}
+
+async function verwijderVideo(ideeId){
+  if(!confirm('Video verwijderen?')) return;
+  try{
+    await sbPatch('content_ideas',ideeId,{video_url:null});
+    const flat=[...ciIdeeën,...[].concat(...Object.values(_reeksIdeeënCache)).filter(Boolean)];
+    const idee=flat.find(i=>i.id===ideeId); if(idee) idee.video_url=null;
+    toast('Video verwijderd');
+    if(typeof expandedIdee!=='undefined'&&expandedIdee===ideeId) _renderEénKaart(ideeId); else await tContent();
+  }catch(e){ toast('Fout: '+e.message); }
 }
 
 // ─── Adobe Express Embed SDK ─────────────────────────────────────────────
