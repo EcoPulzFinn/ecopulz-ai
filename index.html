@@ -5015,8 +5015,13 @@ async function slaNotitiesOp(leadId){
 }
 
 // ── F14: FORECAST & PRICING ──────────────────────────
+const _pcardOpen=new Set();
+function dienstLabel(d){return ({smp:'Storingsmeldpunt (SMP)',bvc:'Bedrijfsvoeringscentrum (BVC)',advies:'Advies & Interim',onderhoud:'Onderhoud (meerjarig)'})[d]||'Geen dienst';}
+function togglePcard(id){ if(_pcardOpen.has(id))_pcardOpen.delete(id); else _pcardOpen.add(id); const el=document.getElementById('pcard-'+id),l=_leadDataMap[id]; if(el&&l) el.outerHTML=forecastCard(l); }
 function forecastCard(l){
   const dienst=l.dienst_type||'';
+  const open=_pcardOpen.has(l.id);
+  const looptijd=l.contract_looptijd_jaren||0, jaarbedrag=l.contract_jaarbedrag||0;
   const impl=l.prijs_implementatie||0;
   const perMaand=l.prijs_per_maand||0;
   const jaar1=l.prijs_jaar_1||0;
@@ -5035,15 +5040,20 @@ function forecastCard(l){
   } else if(dienst==='bvc'){
     velden=`<div class="pf-row"><span class="pf-lbl">Aantal projecten</span><input class="pf-inp" type="number" min="1" value="${l.aantal_projecten||''}" placeholder="bijv. 1" oninput="updatePricingVeld('${l.id}','aantal_projecten',+this.value)"></div>`;
   } else if(dienst==='advies'){
-    const rollen=['Partner','Senior','Medior','Junior','Uitvoeringscoördinatie'];
-    velden=`<div class="pf-row"><span class="pf-lbl">Rol</span><select class="pf-inp" onchange="updatePricingVeld('${l.id}','advies_rol',this.value)">${rollen.map(r=>`<option value="${r}"${(l.advies_rol||'')==r?' selected':''}>${r}</option>`).join('')}</select></div>
-    <div class="pf-row"><span class="pf-lbl">Dagen</span><input class="pf-inp" type="number" min="0" value="${l.advies_dagen||''}" placeholder="bijv. 10" oninput="updatePricingVeld('${l.id}','advies_dagen',+this.value)"></div>`;
+    const rollen=['Partner / Principal','Senior','Medior','Junior','Uitvoeringscoördinatie'];
+    const amodus=l.advies_modus||'eenmalig';
+    velden=`<div class="pf-row"><span class="pf-lbl">Rol</span><select class="pf-inp" onchange="updatePricingVeld('${l.id}','advies_rol',this.value)">${rollen.map(r=>`<option${(l.advies_rol||'')===r?' selected':''}>${r}</option>`).join('')}</select></div>
+    <div class="pf-row"><span class="pf-lbl">Type</span><select class="pf-inp" onchange="updatePricingVeld('${l.id}','advies_modus',this.value)"><option value="eenmalig"${amodus==='eenmalig'?' selected':''}>Eenmalig</option><option value="interim"${amodus==='interim'?' selected':''}>Interim</option></select></div>`+(amodus==='interim'
+      ?`<div class="pf-row"><span class="pf-lbl">Dagen per maand</span><input class="pf-inp" type="number" min="0" value="${l.advies_dagen_per_maand||''}" oninput="updatePricingVeld('${l.id}','advies_dagen_per_maand',+this.value)"></div><div class="pf-row"><span class="pf-lbl">Aantal maanden</span><input class="pf-inp" type="number" min="0" value="${l.advies_maanden||''}" oninput="updatePricingVeld('${l.id}','advies_maanden',+this.value)"></div>`
+      :`<div class="pf-row"><span class="pf-lbl">Aantal dagen</span><input class="pf-inp" type="number" min="0" value="${l.advies_dagen||''}" oninput="updatePricingVeld('${l.id}','advies_dagen',+this.value)"></div>`);
   } else if(dienst==='onderhoud'){
-    velden=`<div class="pf-row"><span class="pf-lbl">Bedrag (op aanvraag)</span><input class="pf-inp" type="number" value="${jaar1||''}" placeholder="0" oninput="updatePricingDirect('${l.id}',+this.value)"></div>`;
+    velden=`<div class="pf-row"><span class="pf-lbl">Looptijd (jaren)</span><input class="pf-inp" type="number" min="1" value="${looptijd||''}" oninput="updatePricingVeld('${l.id}','contract_looptijd_jaren',+this.value)"></div><div class="pf-row"><span class="pf-lbl">Jaarbedrag (€)</span><input class="pf-inp" type="number" min="0" value="${jaarbedrag||''}" oninput="updatePricingVeld('${l.id}','contract_jaarbedrag',+this.value)"></div>`;
   }
 
+  const _som = dienst ? `${dienstLabel(dienst)} · € ${fmtBedrag(dienst==='onderhoud'?(looptijd*jaarbedrag):jaar1)}` : 'Geen dienst gekozen';
   return `<div class="pricing-card" id="pcard-${l.id}">
-    <div class="card-title">Forecast &amp; Pricing</div>
+    <div class="card-title" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;" onclick="togglePcard('${l.id}')"><span>Forecast &amp; Pricing</span><span style="font-size:11px;font-weight:400;color:var(--t3);">${_som} ${open?'&#9662;':'&#9656;'}</span></div>
+    <div style="display:${open?'block':'none'};">
     <div class="pf-row">
       <span class="pf-lbl">Dienst</span>
       <select class="pf-inp" onchange="updateDienst('${l.id}',this.value)">${dienstOpts}</select>
@@ -5051,7 +5061,7 @@ function forecastCard(l){
     ${velden?`<div class="pricing-form">${velden}</div>`:''}
     <div class="pricing-nums">
       <div class="pricing-num-block">
-        <div class="pricing-num-lbl">Implementatie</div>
+        <div class="pricing-num-lbl">${dienst==='onderhoud'?'Jaarbedrag':'Implementatie'}</div>
         <div class="pricing-num-val" id="pn-impl-${l.id}">&#8364; ${fmtBedrag(impl)}</div>
       </div>
       <div class="pricing-num-block">
@@ -5059,10 +5069,11 @@ function forecastCard(l){
         <div class="pricing-num-val" id="pn-maand-${l.id}">&#8364; ${fmtBedrag(perMaand)}</div>
       </div>
       <div class="pricing-num-block" style="background:rgba(0,201,164,.08);border-color:rgba(0,201,164,.35);">
-        <div class="pricing-num-lbl">Jaar 1 totaal</div>
+        <div class="pricing-num-lbl">${dienst==='onderhoud'?'Contractwaarde':(dienst==='advies'?'Totaal':'Jaar 1 totaal')}</div>
         <div class="pricing-num-val" id="pn-jaar-${l.id}" style="font-size:26px;">&#8364; ${fmtBedrag(jaar1)}</div>
         ${kans?`<div class="pricing-num-sub">Forecast: &#8364; ${fmtBedrag(forecast)} &middot; ${kans}%</div>`:''}
       </div>
+    </div>
     </div>
   </div>`;
 }
@@ -5177,53 +5188,55 @@ function updatePricingDirect(leadId, bedrag){
 
 async function berekenEnSlaOp(leadId){
   const l=_leadDataMap[leadId];
-  if(!l||!l.dienst_type||l.dienst_type==='onderhoud') return;
-  const p=await berekenPricing(l.dienst_type,l.aantal_projecten||0,l.aantal_aansluitingen||0,l.advies_rol||'Partner',0,l.advies_dagen||0);
+  if(!l||!l.dienst_type) return;
+  const p=await berekenPricing(l);
   l.prijs_implementatie=p.implementatie;l.prijs_per_maand=p.perMaand;l.prijs_jaar_1=p.jaar1;
   const kans=l.scoringskans||0;
-  l.forecast_bedrag=Math.round(p.jaar1*(kans/100));
-  l.verwacht_bedrag=p.jaar1;
-  const upd=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=`€ ${fmtBedrag(val)}`;};
-  upd(`pn-impl-${leadId}`,p.implementatie);
-  upd(`pn-maand-${leadId}`,p.perMaand);
-  upd(`pn-jaar-${leadId}`,p.jaar1);
+  l.verwacht_bedrag=p.dealwaarde;
+  l.forecast_bedrag=Math.round(p.dealwaarde*(kans/100));
   try{
     await sbPatch('leads',leadId,{
-      dienst_type:l.dienst_type,aantal_projecten:l.aantal_projecten||null,
-      aantal_aansluitingen:l.aantal_aansluitingen||null,advies_rol:l.advies_rol||null,
-      advies_dagen:l.advies_dagen||null,prijs_implementatie:p.implementatie||null,
-      prijs_per_maand:p.perMaand||null,prijs_jaar_1:p.jaar1||null,
-      verwacht_bedrag:p.jaar1||null,forecast_bedrag:l.forecast_bedrag||null
+      dienst_type:l.dienst_type,aantal_projecten:l.aantal_projecten||null,aantal_aansluitingen:l.aantal_aansluitingen||null,
+      advies_rol:l.advies_rol||null,advies_modus:l.advies_modus||null,advies_dagen:l.advies_dagen||null,
+      advies_dagen_per_maand:l.advies_dagen_per_maand||null,advies_maanden:l.advies_maanden||null,
+      contract_looptijd_jaren:l.contract_looptijd_jaren||null,contract_jaarbedrag:l.contract_jaarbedrag||null,
+      prijs_implementatie:p.implementatie||null,prijs_per_maand:p.perMaand||null,prijs_jaar_1:p.jaar1||null,
+      verwacht_bedrag:p.dealwaarde||null,forecast_bedrag:l.forecast_bedrag||null
     });
+    const el=document.getElementById('pcard-'+leadId); if(el) el.outerHTML=forecastCard(l);
     toast('Pricing bijgewerkt &#10003;');
   }catch(e){toast('Fout bij opslaan: '+e.message);}
 }
 
-async function berekenPricing(dienstType,aantalProjecten,aantalAansluitingen,adviesRol,adviesUren,adviesDagen){
-  let implementatie=0,perMaand=0,jaar1=0;
+async function berekenPricing(l){
+  let implementatie=0,perMaand=0,jaar1=0,dealwaarde=0;
+  const dt=l.dienst_type;
   try{
-    if(dienstType==='smp'&&aantalProjecten>0){
-      const impl=await sbGetSafe('pricing_smp_implementatie',`select=tarief&projecten_van=lte.${aantalProjecten}&projecten_tot=gte.${aantalProjecten}&limit=1`);
-      implementatie=(impl[0]?.tarief||0)*aantalProjecten;
-      if(aantalAansluitingen>0){
-        const abo=await sbGetSafe('pricing_smp_abonnement',`select=tarief_per_aansluiting&aansluitingen_van=lte.${aantalAansluitingen}&aansluitingen_tot=gte.${aantalAansluitingen}&limit=1`);
-        perMaand=(abo[0]?.tarief_per_aansluiting||0)*aantalAansluitingen;
+    if(dt==='smp'&&(l.aantal_projecten||0)>0){
+      const impl=await sbGetSafe('pricing_smp_implementatie',`select=tarief&projecten_van=lte.${l.aantal_projecten}&projecten_tot=gte.${l.aantal_projecten}&limit=1`);
+      implementatie=(impl[0]?.tarief||0)*l.aantal_projecten;
+      if((l.aantal_aansluitingen||0)>0){
+        const abo=await sbGetSafe('pricing_smp_abonnement',`select=tarief_per_aansluiting&aansluitingen_van=lte.${l.aantal_aansluitingen}&aansluitingen_tot=gte.${l.aantal_aansluitingen}&limit=1`);
+        perMaand=(abo[0]?.tarief_per_aansluiting||0)*l.aantal_aansluitingen;
       }
-      jaar1=implementatie+(perMaand*12);
+      jaar1=implementatie+(perMaand*12); dealwaarde=jaar1;
+    } else if(dt==='bvc'&&(l.aantal_projecten||0)>0){
+      const impl=await sbGetSafe('pricing_bvc_implementatie',`select=tarief&projecten_van=lte.${l.aantal_projecten}&projecten_tot=gte.${l.aantal_projecten}&limit=1`);
+      const abo=await sbGetSafe('pricing_bvc_abonnement',`select=tarief_per_maand&projecten_van=lte.${l.aantal_projecten}&projecten_tot=gte.${l.aantal_projecten}&limit=1`);
+      implementatie=(impl[0]?.tarief||0)*l.aantal_projecten; perMaand=abo[0]?.tarief_per_maand||0;
+      jaar1=implementatie+(perMaand*12); dealwaarde=jaar1;
+    } else if(dt==='advies'&&l.advies_rol){
+      const tarief=await sbGetSafe('pricing_advies',`select=dagtarief&rol=eq.${encodeURIComponent(l.advies_rol)}&limit=1`);
+      const dag=tarief[0]?.dagtarief||0;
+      if((l.advies_modus||'eenmalig')==='interim'){ perMaand=dag*(l.advies_dagen_per_maand||0); jaar1=perMaand*(l.advies_maanden||0); }
+      else { jaar1=dag*(l.advies_dagen||0); }
+      dealwaarde=jaar1;
+    } else if(dt==='onderhoud'){
+      const jb=l.contract_jaarbedrag||0, lt=l.contract_looptijd_jaren||0;
+      implementatie=jb; perMaand=0; jaar1=lt>0?jb*lt:jb; dealwaarde=jaar1;
     }
-    if(dienstType==='bvc'&&aantalProjecten>0){
-      const impl=await sbGetSafe('pricing_bvc_implementatie',`select=tarief&projecten_van=lte.${aantalProjecten}&projecten_tot=gte.${aantalProjecten}&limit=1`);
-      const abo=await sbGetSafe('pricing_bvc_abonnement',`select=tarief_per_maand&projecten_van=lte.${aantalProjecten}&projecten_tot=gte.${aantalProjecten}&limit=1`);
-      implementatie=(impl[0]?.tarief||0)*aantalProjecten;
-      perMaand=abo[0]?.tarief_per_maand||0;
-      jaar1=implementatie+(perMaand*12);
-    }
-    if(dienstType==='advies'&&adviesRol){
-      const tarief=await sbGetSafe('pricing_advies',`select=uurtarief,dagtarief&rol=eq.${encodeURIComponent(adviesRol)}&limit=1`);
-      jaar1=adviesDagen>0?(tarief[0]?.dagtarief||0)*adviesDagen:(tarief[0]?.uurtarief||0)*(adviesUren||0);
-    }
-  }catch(e){/* pricing tabellen nog niet aanwezig */}
-  return{implementatie,perMaand,jaar1};
+  }catch(e){/* */}
+  return{implementatie,perMaand,jaar1,dealwaarde};
 }
 
 async function slaAdminOp(leadId, admin){
