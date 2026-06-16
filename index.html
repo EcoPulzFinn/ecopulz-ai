@@ -1380,24 +1380,43 @@ async function doLogin() {
   }
 }
 
+// Centrale REST-helper: vernieuwt bij een verlopen JWT automatisch het token
+// en probeert de call één keer opnieuw. Geldt voor GET én alle schrijfacties.
+async function _sbReq(method, path, body) {
+  const build = () => {
+    const o = { method, headers: H };
+    if (body !== undefined) o.body = JSON.stringify(body);
+    return o;
+  };
+  let r = await fetch(`${SB_URL}/rest/v1/${path}`, build());
+  if (!r.ok) {
+    const txt = await r.text();
+    if (/JWT|expired|PGRST30\d/i.test(txt)) {
+      const ok = await refreshToken();
+      if (ok) {
+        r = await fetch(`${SB_URL}/rest/v1/${path}`, build());
+        if (!r.ok) throw new Error(await r.text());
+        return r;
+      }
+    }
+    throw new Error(txt);
+  }
+  return r;
+}
 async function sbGet(table, params='') {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {headers:H});
-  if (!r.ok) throw new Error(await r.text());
+  const r = await _sbReq('GET', `${table}?${params}`);
   return r.json();
 }
 async function sbPatch(table, id, body) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'PATCH',headers:H,body:JSON.stringify(body)});
-  if (!r.ok) throw new Error(await r.text());
+  const r = await _sbReq('PATCH', `${table}?id=eq.${id}`, body);
   return r.json();
 }
 async function sbPost(table, body) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST',headers:H,body:JSON.stringify(body)});
-  if (!r.ok) throw new Error(await r.text());
+  const r = await _sbReq('POST', `${table}`, body);
   return r.json();
 }
 async function sbDelete(table, id) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'DELETE',headers:H});
-  if (!r.ok) throw new Error(await r.text());
+  await _sbReq('DELETE', `${table}?id=eq.${id}`);
 }
 
 let tab='overzicht', lFase='000', lFilter='alle', lPeriode='alle', cFilter='alle', mTab='content', tFilterStatus='open', tFilterPersoon='iedereen', rFilter='alle', rReacties='nieuw', rBedrijven='alle';
