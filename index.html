@@ -1656,7 +1656,7 @@ async function tLead(){
     const [fases,alleLeads,alleContacten]=await Promise.all([
       laadFaseMapping(),
       sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at,dienst,tier_reden&order=icp_score.desc'),
-      sbGetSafe('contactpersonen','select=id,lead_id,naam,functie,linkedin_url,email_werk,telefoon_werk,status,outreach_bericht,is_primair&order=is_primair.desc')
+      sbGetSafe('contactpersonen','select=id,lead_id,naam,functie,linkedin_url,email_werk,telefoon_werk,status,outreach_bericht,is_primair,apollo_person_id&order=is_primair.desc')
     ]);
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
     _contactenPerLead={};
@@ -1725,6 +1725,26 @@ function setPhase(code){lFase=code;lFilter='alle';render('leadfunnel');}
 function setLF(f){lFilter=f;render('leadfunnel');}
 function setPeriode(p){lPeriode=p;render('leadfunnel');}
 function fmtDatum(d){ if(!d) return ''; try{ return new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short'}); }catch{ return ''; } }
+async function apolloCall(payload){
+  const token=localStorage.getItem('sb_token')||SB_KEY;
+  const r=await fetch(`${SB_URL}/functions/v1/apollo-contact-discovery`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(payload)});
+  const d=await r.json(); if(!r.ok) throw new Error(d.error||('Fout '+r.status)); return d;
+}
+async function apolloZoek(leadId,btn){
+  if(btn){btn.disabled=true;btn.textContent='Zoeken...';}
+  try{ const d=await apolloCall({action:'zoek_contact',lead_id:leadId});
+    if(d.gevonden){ toast('Kandidaat: '+d.kandidaat.naam+' ('+d.kandidaat.functie+')'); render('leadfunnel'); }
+    else { toast(d.bericht||'Geen kandidaat bij Apollo'); if(btn){btn.disabled=false;btn.innerHTML='&#128269; Zoek via Apollo (gratis)';} }
+  }catch(e){ toast('Fout: '+e.message); if(btn){btn.disabled=false;btn.innerHTML='&#128269; Zoek via Apollo (gratis)';} }
+}
+async function apolloReveal(contactId,btn){
+  if(!confirm('E-mailadres onthullen via Apollo? Dit kost 1 credit.')) return;
+  if(btn){btn.disabled=true;btn.textContent='Onthullen...';}
+  try{ const d=await apolloCall({action:'reveal_contact',contactpersoon_id:contactId});
+    if(d.gevonden){ toast('E-mail gevonden: '+d.email); render('leadfunnel'); }
+    else { toast(d.bericht||'Geen e-mail gevonden'); if(btn){btn.disabled=false;btn.innerHTML='&#9993; Genereer e-mail (1 credit)';} }
+  }catch(e){ toast('Fout: '+e.message); if(btn){btn.disabled=false;btn.innerHTML='&#9993; Genereer e-mail (1 credit)';} }
+}
 function contactenSectie(l){
   const cs=_contactenPerLead[l.id]||[];
   const rij=c=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bd);">
@@ -1732,11 +1752,11 @@ function contactenSectie(l){
       <div style="font-size:12.5px;font-weight:600;color:var(--t1);">${c.naam||'–'}${c.is_primair?' <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);">primair</span>':''}</div>
       <div style="font-size:11px;color:var(--t3);">${c.functie||'–'}${c.email_werk?' · '+c.email_werk:''}${c.telefoon_werk?' · '+c.telefoon_werk:''}</div>
     </div>
-    ${c.email_werk?`<a class="btn btn-ghost btn-sm" href="mailto:${c.email_werk}${c.outreach_bericht?'?body='+encodeURIComponent(c.outreach_bericht):''}" style="text-decoration:none;">Mail</a>`:''}
+    ${c.email_werk?`<a class="btn btn-ghost btn-sm" href="mailto:${c.email_werk}${c.outreach_bericht?'?body='+encodeURIComponent(c.outreach_bericht):''}" style="text-decoration:none;">Mail</a>`:`<button class="btn btn-teal btn-sm" onclick="apolloReveal('${c.id}',this)" title="Onthult werk-e-mail via Apollo (1 credit)">&#9993; Genereer e-mail (1 credit)</button>`}
     ${c.linkedin_url?`<a class="btn btn-ghost btn-sm" href="${c.linkedin_url}" target="_blank" rel="noopener" style="text-decoration:none;">LinkedIn</a>`:''}
     <span class="tier-b ${c.status==='gereageerd'?'t1':'t2'}" style="text-transform:capitalize;">${c.status||'nieuw'}</span>
   </div>`;
-  const inner=cs.length?cs.map(rij).join(''):`<div style="color:var(--t3);font-size:12px;padding:6px 0;">Nog geen contactpersoon — dit is een bedrijf/traject zonder contact. Toevoegen of verrijken via AFAS/Apollo.</div>`;
+  const inner=cs.length?cs.map(rij).join(''):`<div style="color:var(--t3);font-size:12px;padding:6px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">Nog geen contactpersoon.<button class="btn btn-ghost btn-sm" onclick="apolloZoek('${l.id}',this)">&#128269; Zoek via Apollo (gratis)</button></div>`;
   return `<div style="margin:14px 0;padding:12px 14px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);">
     <div class="card-title" style="margin-bottom:2px;">Contactpersonen (${cs.length})</div>
     ${inner}
