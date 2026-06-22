@@ -1206,6 +1206,7 @@
         <option value="warm_netwerk">Warm netwerk</option>
         <option value="website">Website</option>
         <option value="email">Email</option>
+        <option value="linkedin_engagement">LinkedIn engagement</option>
       </select>
     </div>
     <div class="form-row"><label>Verantwoordelijke</label>
@@ -1655,7 +1656,7 @@ async function tLead(){
   try{
     const [fases,alleLeads,alleContacten]=await Promise.all([
       laadFaseMapping(),
-      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at,dienst,tier_reden&order=icp_score.desc'),
+      sbGetSafe('leads','select=id,naam,organisatie,functie,tier,icp_score,status,fase,fase_detail,afas_fase_code,verwacht_bedrag,prijs_jaar_1,prijs_implementatie,prijs_per_maand,forecast_bedrag,scoringskans,reden,outreach_bericht,linkedin_url,benaderd_at,notities,notities_intern,admin,afas_relatienummer,afas_opportunity_id,afas_last_sync,dienst_type,aantal_projecten,aantal_aansluitingen,advies_rol,advies_dagen,created_at,dienst,tier_reden,instroompunt,aanleiding&order=icp_score.desc'),
       sbGetSafe('contactpersonen','select=id,lead_id,naam,functie,linkedin_url,email_werk,telefoon_werk,status,outreach_bericht,is_primair,apollo_person_id&order=is_primair.desc')
     ]);
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
@@ -1857,6 +1858,7 @@ function leadCtx(l){
       </div>
       <div><div class="d-lbl">Verwacht bedrag</div><div class="d-val" style="color:var(--teal);font-weight:700;">${l.verwacht_bedrag||l.prijs_jaar_1?'&#8364; '+fmtBedrag(l.verwacht_bedrag||l.prijs_jaar_1):'–'}</div></div>
       ${l.status==='afgewezen'&&l.notities?`<div class="fspan"><div class="d-lbl" style="color:#e57575">Reden afwijzing</div><div class="d-val m" style="color:#e57575">${l.notities}</div></div>`:''}
+      ${l.instroompunt?`<div><div class="d-lbl">Bron</div><div class="d-val">${({handmatig:'Handmatig',sdr:'SDR Pipeline',warm_netwerk:'Warm netwerk',website:'Website',email:'Email',linkedin_engagement:'LinkedIn engagement'})[l.instroompunt]||l.instroompunt}</div></div>`:''}
       ${l.reden?`<div class="fspan"><div class="d-lbl">Reden tot aanschrijven</div><div class="d-val m">${l.reden}</div></div>`:''}
       ${(parseInt(l.afas_fase_code||'000')<2&&l.outreach_bericht)?`<div class="fspan"><div class="d-lbl">Outreach bericht</div><div class="msg-blk">${l.outreach_bericht}</div></div>`:''}
       <div class="fspan">
@@ -4433,7 +4435,7 @@ async function laadLeadStats() {
     // Instroompunten
     const iMap={};
     leads.forEach(l=>{const k=l.instroompunt||'onbekend';iMap[k]=(iMap[k]||0)+1;});
-    const iLab={handmatig:'Handmatig',sdr:'SDR Pipeline',warm_netwerk:'Warm netwerk',website:'Website',email:'Email',onbekend:'Onbekend'};
+    const iLab={handmatig:'Handmatig',sdr:'SDR Pipeline',warm_netwerk:'Warm netwerk',website:'Website',email:'Email',linkedin_engagement:'LinkedIn engagement',onbekend:'Onbekend'};
     const iKeys=Object.keys(iMap);
     const iVals=iKeys.map(k=>iMap[k]);
     const iPalette=['rgba(0,181,147,.85)','rgba(168,224,224,.85)','rgba(251,146,60,.85)','rgba(167,139,250,.85)','rgba(245,197,66,.85)','rgba(87,96,87,.85)'];
