@@ -4537,10 +4537,42 @@ async function laadContentStats() {
   if (!el) return;
   el.innerHTML = '<div class="loading">Statistieken laden...</div>';
   try {
-    const [posts, ideeën] = await Promise.all([
+    const [posts, ideeën, volgersRij, engagers] = await Promise.all([
       sbGetSafe('content_posts','select=id,platform,status,pilaar,datum_gepost,datum_gepland').catch(()=>[]),
-      sbGetSafe('content_ideas','select=id,platform,status,pilaar,created_at').catch(()=>[])
+      sbGetSafe('content_ideas','select=id,platform,status,pilaar,created_at').catch(()=>[]),
+      sbGetSafe('linkedin_follower_stats','select=datum,volgers&order=datum.asc').catch(()=>[]),
+      sbGetSafe('linkedin_engagers','select=id,naam,headline,linkedin_url,post_url,type,reactie_type,relevant&status=eq.nieuw&order=relevant.desc,aangemaakt_op.desc&limit=40').catch(()=>[])
     ]);
+    const engagersRel = (engagers||[]).filter(e=>e.relevant);
+    const engagersHtml = (engagers&&engagers.length) ? `
+      <div class="card" style="padding:14px 16px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div class="card-title" style="font-size:12px;">Engagement op je posts — nieuwe contacten (${engagersRel.length} ICP-relevant van ${engagers.length})</div>
+          <span style="font-size:10px;color:var(--t3);">likers &amp; reageerders, eigen team uitgefilterd</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto;">
+          ${engagers.map(e=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;${e.relevant?'background:rgba(0,181,147,.05);':''}">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;">${e.naam||'–'} ${e.relevant?'<span style="font-size:9px;color:#00B593;border:1px solid var(--teal-b);border-radius:3px;padding:1px 5px;">ICP</span>':''} <span style="font-size:9px;color:var(--t3);border:1px solid var(--line);border-radius:3px;padding:1px 5px;">${e.type==='comment'?'💬 reactie':'👍 '+(e.reactie_type||'like').toLowerCase()}</span></div>
+                <div style="font-size:10.5px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.headline||''}</div>
+              </div>
+              ${e.linkedin_url?`<a href="${e.linkedin_url}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">Profiel ↗</a>`:''}
+              <button class="btn btn-teal btn-xs" onclick="engagerNaarLead('${e.id}')">→ Lead</button>
+              <button class="btn btn-ghost btn-xs" onclick="engagerOverslaan('${e.id}')">✕</button>
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+    // LinkedIn volgergroei
+    const vRij = volgersRij || [];
+    const huidigeVolgers = vRij.length ? vRij[vRij.length-1].volgers : null;
+    const startVolgers   = vRij.length ? vRij[0].volgers : null;
+    const volgersDelta   = (huidigeVolgers!=null && startVolgers!=null) ? huidigeVolgers - startVolgers : null;
+    const volgersLabels  = vRij.map(v=>new Date(v.datum).toLocaleDateString('nl-NL',{day:'numeric',month:'short'}));
+    const volgersData    = vRij.map(v=>v.volgers);
+    const volgersSub     = (volgersDelta==null) ? 'nog geen meting'
+                          : (vRij.length<2) ? 'meting gestart vandaag'
+                          : `${volgersDelta>=0?'+':''}${volgersDelta} sinds ${volgersLabels[0]}`;
     const nu = Date.now();
     const d30 = new Date(nu - 30*864e5);
     // content_posts heeft geen created_at; gebruik gepost- of geplande datum
@@ -4585,12 +4617,20 @@ async function laadContentStats() {
     }
 
     el.innerHTML = `
-      <div class="w-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+      <div class="w-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px;">
+        <div class="widget w-teal"><div class="w-num">${huidigeVolgers!=null?huidigeVolgers.toLocaleString('nl-NL'):'—'}</div><div class="w-label">LinkedIn volgers</div><div class="w-sub">${volgersSub}</div></div>
         <div class="widget w-teal"><div class="w-num">${gepost}</div><div class="w-label">Gepost</div><div class="w-sub">${dezeMaand} deze maand</div></div>
         <div class="widget w-blue"><div class="w-num">${gepland}</div><div class="w-label">Ingepland</div><div class="w-sub">Klaar voor publicatie</div></div>
         <div class="widget w-sal"><div class="w-num">${concept}</div><div class="w-label">Concept</div><div class="w-sub">In bewerking</div></div>
         <div class="widget w-gray"><div class="w-num">${totaalIdeeën}</div><div class="w-label">Ideeën totaal</div><div class="w-sub">${actieveIdeeën} actief · ${afgewezenIdeeën} afgewezen</div></div>
       </div>
+      <div style="margin-bottom:10px;">
+        <div class="card" style="padding:12px 14px;">
+          <div class="card-title" style="font-size:11px;margin-bottom:6px;">LinkedIn volgergroei${huidigeVolgers!=null?` — ${huidigeVolgers.toLocaleString('nl-NL')} volgers`:''}</div>
+          <canvas id="ch-followers" height="64"></canvas>
+        </div>
+      </div>
+      ${engagersHtml}
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
         <div class="card" style="padding:12px 14px;">
           <div class="card-title" style="font-size:11px;margin-bottom:6px;">Per platform</div>
@@ -4648,6 +4688,18 @@ async function laadContentStats() {
       {responsive:true,plugins:{legend:{position:'bottom',labels:_cLeg}},
        scales:{x:{ticks:_cTick,grid:_cGrid},y:{ticks:{..._cTick,stepSize:1},grid:_cGrid,beginAtZero:true}}}
     );
+
+    // LinkedIn volgergroei — line
+    if (volgersData.length) {
+      _mkChart('ch-followers','line',
+        {labels:volgersLabels,datasets:[{label:'Volgers',data:volgersData,borderColor:'#5BA4E8',backgroundColor:'rgba(91,164,232,.12)',tension:.35,fill:true,pointBackgroundColor:'#5BA4E8',pointRadius:3,borderWidth:2}]},
+        {responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toLocaleString('nl-NL')} volgers`}}},
+         scales:{x:{ticks:_cTick,grid:_cGrid},y:{ticks:_cTick,grid:_cGrid}}}
+      );
+    } else {
+      const fc=document.getElementById('ch-followers');
+      if(fc) fc.parentElement.innerHTML='<div class="card-title" style="font-size:11px;">LinkedIn volgergroei</div><div style="font-size:11px;color:var(--t3);padding:8px 0;">Nog geen metingen — de eerste snapshot is vandaag vastgelegd, de grafiek vult zich vanaf nu dagelijks.</div>';
+    }
 
   } catch(e) { el.innerHTML = `<div class="err">Fout bij laden: ${e.message}</div>`; }
 }
@@ -5281,18 +5333,33 @@ function closeLiCmModal(){
   _liCmId=null;
 }
 
-// Tijdelijk (tot LinkedIn-API werkt): kopieer reactietekst, open de post, markeer gereageerd.
+// Plaatst de reactie direct via de Community Management API, namens de Ecopulz-pagina.
+// Bij een fout: terugval op tekst kopiëren + post openen (de oude methode).
 async function reageerHandmatig(id){
   const r=_reactiesMap[id];
   if(!r) return;
   const tekst=r.reactie_voorstel||'';
-  try{ if(tekst&&navigator.clipboard){ await navigator.clipboard.writeText(tekst); } }catch(_){}
-  if(r.post_url){ window.open(r.post_url,'_blank','noopener'); }
+  if(!tekst){ toast('Geen reactievoorstel op deze reactie'); return; }
+  if(!confirm(`Reactie plaatsen namens de Ecopulz-pagina op de post van ${r.auteur||'deze auteur'}?\n\n"${tekst.slice(0,180)}${tekst.length>180?'…':''}"`)) return;
+  const btn=document.getElementById('rcbtn-'+id);
+  if(btn){ btn.disabled=true; btn.textContent='Bezig...'; }
+  const token=localStorage.getItem('sb_token');
   try{
-    await sbPatch('sector_reactions',id,{status:'gereageerd',gereageerd_op:new Date().toISOString()});
-    toast('Reactie gekopieerd & post geopend — gemarkeerd als gereageerd ✓');
+    const res=await fetch(`${SB_URL}/functions/v1/linkedin-comment`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(token||SB_KEY)},
+      body:JSON.stringify({sector_reaction_id:id,comment_text:tekst})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||data.message||'Onbekende fout');
+    toast('&#10003; Reactie geplaatst namens de pagina');
     render('reacties');
-  }catch(e){ toast('Gekopieerd & post geopend (status niet opgeslagen: '+e.message+')'); }
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent='Reageer'; }
+    try{ if(navigator.clipboard) await navigator.clipboard.writeText(tekst); }catch(_){}
+    if(r.post_url) window.open(r.post_url,'_blank','noopener');
+    toast('Plaatsen mislukt ('+e.message+') — tekst gekopieerd & post geopend');
+  }
 }
 async function plaatsEnkelReactie(){
   if(!_liCmId) return;
@@ -5326,6 +5393,29 @@ async function plaatsEnkelReactie(){
       ${postUrl?`<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('liCmTa').value);window.open('${postUrl.replace(/'/g,"\\'")}','_blank');toast('Gekopieerd — post geopend &#10003;')">Naar post gaan</button>`:''}
     </div>`);
   }
+}
+
+// ── LinkedIn engagers → leads ──────────────────────────
+async function engagerNaarLead(id){
+  try{
+    const rows=await sbGetSafe('linkedin_engagers',`select=*&id=eq.${id}`);
+    const e=rows&&rows[0]; if(!e){toast('Engager niet gevonden');return;}
+    const lead=await sbPost('leads',{
+      naam:e.naam, functie:e.headline||null, linkedin_url:e.linkedin_url,
+      status:'nieuw', fase:'leads', instroompunt:'linkedin_engagement',
+      signaaltype:'persoon', verwerkt:false,
+      reden:`${e.type==='comment'?'Reageerde op':'Likete'} een Ecopulz-post`,
+      aanleiding:'LinkedIn engagement op eigen content'
+    });
+    const leadId=Array.isArray(lead)?(lead[0]&&lead[0].id):(lead&&lead.id);
+    await sbPatch('linkedin_engagers',id,{status:'lead',lead_id:leadId||null});
+    toast('✓ Toegevoegd als lead — de SDR-pijplijn verrijkt \'m verder');
+    laadContentStats();
+  }catch(err){ toast('Fout: '+err.message); }
+}
+async function engagerOverslaan(id){
+  try{ await sbPatch('linkedin_engagers',id,{status:'overgeslagen'}); laadContentStats(); }
+  catch(err){ toast('Fout: '+err.message); }
 }
 
 function openBulkModal(){
