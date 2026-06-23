@@ -1506,7 +1506,11 @@ function renderNav(){
     </div>`).join('');
 }
 function go(id){tab=id;document.getElementById('pgTitle').textContent=NAV.find(n=>n.id===id).label;renderNav();render(id);}
+// ── TAB DATA CACHES (filter-wijzigingen hergebruiken gecachte data) ──
+let _tLeadCache=null,_tTakenCache=null,_tReactiesCache=null,_tBedrijvenCache=null,_tRadarCache=null;
+
 function render(id){
+  _tLeadCache=null;_tTakenCache=null;_tReactiesCache=null;_tBedrijvenCache=null;_tRadarCache=null;
   document.getElementById('ca').innerHTML=skelPage();
   ({overzicht:tOvz,leadfunnel:tLead,content:tContent,taken:tTaken,radar:tRadar,agents:tAgents,reacties:tReacties,bedrijven:tBedrijven,analyse:tAnalyse})[id]();
 }
@@ -1539,9 +1543,9 @@ function animateNums(){
 async function tOvz(){
   try{
     const [leads,tasks,signals,content,reacties,bedrijven,fases]=await Promise.all([
-      sbGetSafe('leads','select=id,afas_fase_code'),
-      sbGetSafe('tasks','select=id,status,urgent'),
-      sbGetSafe('sector_signals','select=id,datum&order=datum.desc&limit=3'),
+      sbGetSafe('leads','select=id,naam,organisatie,tier,icp_score,afas_fase_code&order=icp_score.desc'),
+      sbGetSafe('tasks','select=id,titel,status,urgent,deadline&order=urgent.desc,deadline.asc'),
+      sbGetSafe('sector_signals','select=id,type,titel,bron,datum,relevantie_score,url&order=datum.desc&limit=3'),
       sbGetSafe('content_posts','select=id,status'),
       sbGetSafe('sector_reactions','select=id,status'),
       sbGetSafe('company_leads','select=id,status'),
@@ -1552,11 +1556,9 @@ async function tOvz(){
     const gepland=content.filter(c=>c.status==='gepland').length;
     const openReacties=reacties.filter(r=>r.status==='nieuw').length;
     const openBedrijven=bedrijven.filter(b=>b.status==='nieuw').length;
-    const [topL,topT,topS]=await Promise.all([
-      sbGetSafe('leads','select=id,naam,organisatie,tier,icp_score&order=icp_score.desc&limit=4'),
-      sbGetSafe('tasks','select=titel,urgent,deadline,status&order=urgent.desc,deadline.asc&limit=5'),
-      sbGetSafe('sector_signals','select=type,titel,bron,datum,relevantie_score,url&order=datum.desc&limit=3')
-    ]);
+    const topL=leads.slice(0,4);
+    const topT=tasks.slice(0,5);
+    const topS=signals;
     const ovzSigRow=s=>{
       const base=sigRow(s);
       return s.url
@@ -1662,7 +1664,13 @@ async function tLead(){
     alleLeads.forEach(l=>{ _leadDataMap[l.id]=l; });
     _contactenPerLead={};
     (alleContacten||[]).forEach(c=>{ (_contactenPerLead[c.lead_id]=_contactenPerLead[c.lead_id]||[]).push(c); });
+    _tLeadCache={fases,alleLeads};
+    _tLeadRender(fases,alleLeads);
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
 
+function _tLeadRender(fases,alleLeads){
+    const el=document.getElementById('ca');
     const actieveFases=fases.filter(f=>f.code!=='100'&&f.code!=='999');
     const cntPerFase={},bedragPerFase={};
     fases.forEach(f=>{cntPerFase[f.code]=0;bedragPerFase[f.code]=0;});
@@ -1719,12 +1727,11 @@ async function tLead(){
       </div>
       <div class="leads-list">${filtered.length?filtered.map(leadRow).join(''):'<div class="empty">Geen leads in deze fase/periode</div>'}</div>`;
     animateNums();
-  }catch(e){el.innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 
-function setPhase(code){lFase=code;lFilter='alle';render('leadfunnel');}
-function setLF(f){lFilter=f;render('leadfunnel');}
-function setPeriode(p){lPeriode=p;render('leadfunnel');}
+function setPhase(code){lFase=code;lFilter='alle';if(_tLeadCache)_tLeadRender(_tLeadCache.fases,_tLeadCache.alleLeads);else render('leadfunnel');}
+function setLF(f){lFilter=f;if(_tLeadCache)_tLeadRender(_tLeadCache.fases,_tLeadCache.alleLeads);else render('leadfunnel');}
+function setPeriode(p){lPeriode=p;if(_tLeadCache)_tLeadRender(_tLeadCache.fases,_tLeadCache.alleLeads);else render('leadfunnel');}
 function fmtDatum(d){ if(!d) return ''; try{ return new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short'}); }catch{ return ''; } }
 async function apolloCall(payload){
   const token=localStorage.getItem('sb_token')||SB_KEY;
@@ -3945,6 +3952,12 @@ function _kalenderPostClick(id){
 async function tTaken(){
   try{
     const all=await sbGetSafe('tasks','select=id,titel,categorie,type,prioriteit,toegewezen_aan,deadline,status,urgent,bron,bron_id');
+    _tTakenCache=all;
+    _tTakenRender(all);
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function _tTakenRender(all){
     const today=new Date();today.setHours(0,0,0,0);
     // filter
     let tasks=all.filter(t=>{
@@ -4007,11 +4020,10 @@ async function tTaken(){
         <div class="filter-row">${['Iedereen','Finn','Olaf','Niet toegewezen'].map(f=>`<button class="fbtn${tFilterPersoon===f.toLowerCase().replace(' ','_')?' active':''}" onclick="setTFP('${f.toLowerCase().replace(' ','_')}')">${f}</button>`).join('')}</div>
       </div>
       <div class="tasks-list">${rows||'<div class="empty">Geen taken gevonden</div>'}</div>`;
-  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
 const _taakDataMap={};
-function setTFS(f){tFilterStatus=f;render('taken');}
-function setTFP(f){tFilterPersoon=f;render('taken');}
+function setTFS(f){tFilterStatus=f;if(_tTakenCache)_tTakenRender(_tTakenCache);else render('taken');}
+function setTFP(f){tFilterPersoon=f;if(_tTakenCache)_tTakenRender(_tTakenCache);else render('taken');}
 function taakNavigeer(id){
   const t=_taakDataMap[id];
   if(!t||!t.bron_id) return;
@@ -4068,15 +4080,20 @@ async function saveTaak(){
 // ── SECTOR RADAR ───────────────────────────────────────
 async function tRadar(){
   try{
-    let q='select=id,type,titel,bron,datum,relevantie_score,actie_genomen,url,content_idee,samenvatting&order=datum.desc';
-    if(rFilter!=='alle'){const fm={aanbestedingen:'aanbesteding',nieuws:'nieuws',kansen:'kans',concurrent:'concurrent'};q+=`&type=eq.${fm[rFilter]||rFilter}`;}
-    const signals=await sbGetSafe('sector_signals',q);
+    const allSignals=await sbGetSafe('sector_signals','select=id,type,titel,bron,datum,relevantie_score,actie_genomen,url,content_idee,samenvatting&order=datum.desc');
+    _tRadarCache=allSignals;
+    _tRadarRender(allSignals);
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function _tRadarRender(allSignals){
+    const fm={aanbestedingen:'aanbesteding',nieuws:'nieuws',kansen:'kans',concurrent:'concurrent'};
+    const signals=rFilter!=='alle'?allSignals.filter(s=>s.type===(fm[rFilter]||rFilter)):allSignals;
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${['Alle','Aanbestedingen','Nieuws','Kansen','Concurrent'].map(f=>`<button class="fbtn${rFilter===f.toLowerCase()?' active':''}" onclick="setRF('${f.toLowerCase()}')">${f}</button>`).join('')}</div>
       <div class="card" style="padding:0 20px">${signals.length?signals.map(sigRow).join(''):'<div class="empty" style="padding:30px 0">Geen signalen gevonden</div>'}</div>`;
-  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
-function setRF(f){rFilter=f;render('radar');}
+function setRF(f){rFilter=f;if(_tRadarCache)_tRadarRender(_tRadarCache);else render('radar');}
 
 // ── LINKEDIN REACTIES ──────────────────────────────────
 const _reactiesMap={};
@@ -4104,11 +4121,16 @@ function datumValtBinnen(datumStr,filter){
 
 async function tReacties(){
   try{
-    let q='select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at,gereageerd_op&order=created_at.desc';
-    if(rReacties!=='alle') q+=`&status=eq.${rReacties}`;
-    const allItems=await sbGetSafe('sector_reactions',q);
+    const allItems=await sbGetSafe('sector_reactions','select=id,post_url,auteur,organisatie,post_tekst,samenvatting,waarom_relevant,reactie_voorstel,koopsignaal,status,datum_post,created_at,gereageerd_op&order=created_at.desc');
     allItems.forEach(r=>{ _reactiesMap[r.id]=r; });
+    _tReactiesCache=allItems;
+    _tReactiesRender(allItems);
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function _tReactiesRender(allItems){
     const items=allItems.filter(r=>{
+      if(rReacties!=='alle'&&r.status!==rReacties)return false;
       if(rTaal!=='alle'&&detectTaal(r.post_tekst||'')!==rTaal)return false;
       if(!datumValtBinnen(r.datum_post,rDatumPost))return false;
       if(!datumValtBinnen(r.created_at,rDatumSysteem))return false;
@@ -4159,12 +4181,11 @@ async function tReacties(){
         <button class="btn btn-ghost-red btn-sm" onclick="bulkOverslaanSelected()">Overslaan</button>
       </div>
       ${items.length?groepHTML:'<div class="empty">Geen reacties gevonden</div>'}`;
-  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
-function setReactiesFilter(f){rReacties=f;_selectedReacties.clear();render('reacties');}
-function setRTaal(t){rTaal=t;_selectedReacties.clear();render('reacties');}
-function setRDatumPost(t){rDatumPost=t;_selectedReacties.clear();render('reacties');}
-function setRDatumSysteem(t){rDatumSysteem=t;_selectedReacties.clear();render('reacties');}
+function setReactiesFilter(f){rReacties=f;_selectedReacties.clear();if(_tReactiesCache)_tReactiesRender(_tReactiesCache);else render('reacties');}
+function setRTaal(t){rTaal=t;_selectedReacties.clear();if(_tReactiesCache)_tReactiesRender(_tReactiesCache);else render('reacties');}
+function setRDatumPost(t){rDatumPost=t;_selectedReacties.clear();if(_tReactiesCache)_tReactiesRender(_tReactiesCache);else render('reacties');}
+function setRDatumSysteem(t){rDatumSysteem=t;_selectedReacties.clear();if(_tReactiesCache)_tReactiesRender(_tReactiesCache);else render('reacties');}
 
 function toggleSelectReactie(id,checked){
   if(checked)_selectedReacties.add(id);
@@ -4271,9 +4292,14 @@ function toggleVoorstel(id,btn){
 // ── BEDRIJF LEADS ──────────────────────────────────────
 async function tBedrijven(){
   try{
-    let q='select=id,bedrijfsnaam,bron,signaaltype,relevantiescore,samenvatting,url,koopsignaal_reden,status,datum_signaal&order=datum_signaal.desc';
-    if(rBedrijven!=='alle') q+=`&status=eq.${rBedrijven}`;
-    const items=await sbGetSafe('company_leads',q);
+    const allItems=await sbGetSafe('company_leads','select=id,bedrijfsnaam,bron,signaaltype,relevantiescore,samenvatting,url,koopsignaal_reden,status,datum_signaal&order=datum_signaal.desc');
+    _tBedrijvenCache=allItems;
+    _tBedrijvenRender(allItems);
+  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
+}
+
+function _tBedrijvenRender(allItems){
+    const items=rBedrijven!=='alle'?allItems.filter(b=>b.status===rBedrijven):allItems;
     const filters=['alle','nieuw','onderzocht','toegevoegd','overgeslagen'];
     document.getElementById('ca').innerHTML=`
       <div class="filter-row">${filters.map(f=>`<button class="fbtn${rBedrijven===f?' active':''}" onclick="setBedrijvenFilter('${f}')">${cap(f)}</button>`).join('')}</div>
@@ -4294,9 +4320,8 @@ async function tBedrijven(){
             <button onclick="slaOverBedrijf('${b.id}')" class="btn btn-ghost btn-sm">Overslaan</button>
           </div>
         </div>`).join(''):'<div class="empty">Geen bedrijf leads gevonden</div>'}`;
-  }catch(e){document.getElementById('ca').innerHTML=`<div class="err">Fout: ${e.message}</div>`;}
 }
-function setBedrijvenFilter(f){rBedrijven=f;render('bedrijven');}
+function setBedrijvenFilter(f){rBedrijven=f;if(_tBedrijvenCache)_tBedrijvenRender(_tBedrijvenCache);else render('bedrijven');}
 function signaalBadge(type){
   const m={'vacature':'📋 Vacature','linkedin_post':'📡 LinkedIn post','sector_monitoring':'🔍 Sector'};
   return m[type]?`<span class="badge-overgeslagen">${m[type]}</span>`:'';
@@ -4873,13 +4898,12 @@ const _agentData={};
 async function tAgents(){
   try{
     const agents=await sbGetSafe('agents','select=id,nummer,naam,instructies&order=nummer.asc');
-    const runsPerAgent=await Promise.all((agents||[]).map(a=>
-      sbGetSafe('agent_runs',`select=status,resultaat,fout_melding,created_at&agent_nummer=eq.${a.nummer}&order=created_at.desc&limit=20`)
-        .catch(()=>[])
-    ));
+    const nummers=(agents||[]).map(a=>a.nummer).join(',');
+    const allRuns=nummers?await sbGetSafe('agent_runs',`select=agent_nummer,status,resultaat,fout_melding,created_at&agent_nummer=in.(${nummers})&order=created_at.desc`).catch(()=>[]):[];
+    const runsMap={};(allRuns||[]).forEach(r=>{if(!runsMap[r.agent_nummer])runsMap[r.agent_nummer]=[];if(runsMap[r.agent_nummer].length<20)runsMap[r.agent_nummer].push(r);});
     (agents||[]).forEach(a=>{ _agentData[a.id]=a; });
     const cards=(agents||[]).map((a,i)=>{
-      const runs=Array.isArray(runsPerAgent[i])?runsPerAgent[i]:[];
+      const runs=runsMap[a.nummer]||[];
       const laatste=runs[0]||null;
       const succesCount=runs.filter(r=>r.status==='succes').length;
       const succesRate=runs.length?Math.round(succesCount/runs.length*100):null;
