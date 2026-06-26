@@ -5511,8 +5511,8 @@ async function bulkReageer(ids){
       done++;
       const msg=err.name==='AbortError'?'Timeout (post mogelijk verwijderd)':err.message;
       updateBulkProgress(done,total,`&#10060; ${_reactiesMap[id]?.auteur||'Reactie'} — overgeslagen: ${msg}`);
-      // Markeer als mislukt zodat het duidelijk is in de UI
-      try{ await sbPatch('sector_reactions',id,{status:'mislukt'}); }catch(_){}
+      // Post kon niet geplaatst worden → overslaan
+      try{ await sbPatch('sector_reactions',id,{status:'overgeslagen'}); }catch(_){}
     }
     // Interval: Date.now()-based, werkt ook in achtergrondtabs
     if(done<total&&!_bulkStopped){
