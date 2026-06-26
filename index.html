@@ -1257,6 +1257,7 @@
     <span class="bulk-progress-txt" id="bulkProgressTxt">Bezig...</span>
     <span class="bulk-progress-flash" id="bulkProgressFlash"></span>
     <button class="btn btn-ghost btn-sm" id="bulkPauseBtn" onclick="toggleBulkPause()" style="font-size:10px;padding:3px 9px;">Pauzeer</button>
+    <button class="btn btn-ghost btn-sm" id="bulkStopBtn" onclick="stopBulk()" style="font-size:10px;padding:3px 9px;color:var(--red);">Stop</button>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -5338,7 +5339,7 @@ function sigRow(s){
 }
 // ── LINKEDIN REAGEER ────────────────────────────────────
 let _liCmId=null;
-let _bulkRunning=false, _bulkPaused=false, _bulkIds=[];
+let _bulkRunning=false, _bulkPaused=false, _bulkStopped=false, _bulkIds=[], _bulkAbort=null;
 
 function openReageerModal(id){
   const r=_reactiesMap[id];
@@ -5448,7 +5449,7 @@ function openBulkModal(){
   const nieuw=Object.values(_reactiesMap).filter(r=>r.status==='nieuw');
   if(!nieuw.length){toast('Geen nieuw reacties om te plaatsen');return;}
   document.getElementById('bulkModalDesc').textContent=
-    `Er worden maximaal ${nieuw.length} reacties geplaatst namens de Ecopulz bedrijfspagina met intervallen van 45–90 seconden.`;
+    `Er worden maximaal ${nieuw.length} reacties geplaatst namens de Ecopulz bedrijfspagina met intervallen van 20–40 seconden.`;
   document.getElementById('bulkCheckList').innerHTML=nieuw.map(r=>`
     <label class="bulk-check-row" for="bck-${r.id}">
       <input type="checkbox" id="bck-${r.id}" value="${r.id}" checked>
@@ -5466,7 +5467,7 @@ async function startBulkReageer(){
   _bulkIds=checkboxes.map(c=>c.value);
   if(!_bulkIds.length){toast('Selecteer minstens 1 reactie');return;}
   closeBulkModal();
-  _bulkRunning=true;_bulkPaused=false;
+  _bulkRunning=true;_bulkPaused=false;_bulkStopped=false;_bulkAbort=null;
   const wrap=document.getElementById('bulkProgressWrap');
   wrap.classList.add('visible');
   render('reacties');
@@ -5474,48 +5475,66 @@ async function startBulkReageer(){
 }
 
 async function bulkReageer(ids){
-  const total=ids.length;let done=0;
+  const total=ids.length;let done=0;let geplaatst=0;
   const token=localStorage.getItem('sb_token');
   window.onbeforeunload=()=>'Er worden nog reacties geplaatst. Weet je zeker dat je de pagina wilt verlaten?';
   for(const id of ids){
+    // stop check
+    if(_bulkStopped) break;
     // wacht als gepauzeerd
-    while(_bulkPaused){ await new Promise(r=>setTimeout(r,500)); }
+    while(_bulkPaused&&!_bulkStopped){ await new Promise(r=>setTimeout(r,300)); }
+    if(_bulkStopped) break;
     updateBulkProgress(done,total,`Bezig met ${_reactiesMap[id]?.auteur||'reactie'}...`);
     try{
       const r=_reactiesMap[id];
       const tekst=r?.reactie_voorstel||'';
+      // AbortController met 30s timeout
+      _bulkAbort=new AbortController();
+      const timer=setTimeout(()=>_bulkAbort.abort(),30000);
       const res=await fetch(`${SB_URL}/functions/v1/linkedin-comment`,{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+(token||SB_KEY)},
-        body:JSON.stringify({sector_reaction_id:id,comment_text:tekst})
+        body:JSON.stringify({sector_reaction_id:id,comment_text:tekst}),
+        signal:_bulkAbort.signal
       });
+      clearTimeout(timer);
+      _bulkAbort=null;
       const data=await res.json();
       if(!res.ok) throw new Error(data.error||data.message||'Fout');
       await sbPatch('sector_reactions',id,{status:'gereageerd',gereageerd_op:new Date().toISOString()});
-      done++;
+      done++;geplaatst++;
       updateBulkProgress(done,total,`&#10003; ${r?.auteur||'Reactie'} — geplaatst`);
       const card=document.querySelector(`#rcbtn-${id}`)?.closest('.reactie-card');
       if(card) card.style.opacity='0.3';
     }catch(err){
+      _bulkAbort=null;
       done++;
-      updateBulkProgress(done,total,`&#10060; Fout: ${err.message}`);
+      const msg=err.name==='AbortError'?'Timeout (post mogelijk verwijderd)':err.message;
+      updateBulkProgress(done,total,`&#10060; ${_reactiesMap[id]?.auteur||'Reactie'} — overgeslagen: ${msg}`);
+      // Markeer als mislukt zodat het duidelijk is in de UI
+      try{ await sbPatch('sector_reactions',id,{status:'mislukt'}); }catch(_){}
     }
-    if(done<total){
-      const wacht=45000+Math.random()*45000;
-      const stappen=Math.ceil(wacht/500);
-      for(let s=0;s<stappen;s++){
-        while(_bulkPaused){ await new Promise(r=>setTimeout(r,500)); }
-        await new Promise(r=>setTimeout(r,500));
+    // Interval: Date.now()-based, werkt ook in achtergrondtabs
+    if(done<total&&!_bulkStopped){
+      const wacht=20000+Math.random()*20000;
+      const start=Date.now();
+      while(Date.now()-start<wacht&&!_bulkStopped){
+        while(_bulkPaused&&!_bulkStopped){ await new Promise(r=>setTimeout(r,300)); }
+        if(_bulkStopped) break;
+        const rest=Math.max(0,wacht-(Date.now()-start));
+        updateBulkProgress(done,total,`Wachten... ${Math.ceil(rest/1000)}s`);
+        await new Promise(r=>setTimeout(r,Math.min(1000,rest||1)));
       }
     }
   }
-  _bulkRunning=false;_bulkIds=[];
+  const gestopt=_bulkStopped;
+  _bulkRunning=false;_bulkIds=[];_bulkStopped=false;_bulkAbort=null;
   window.onbeforeunload=null;
-  toast(`&#10003; Klaar! ${done} reacties geplaatst.`);
+  toast(gestopt?`Gestopt — ${geplaatst} van ${total} geplaatst.`:`&#10003; Klaar! ${geplaatst} reacties geplaatst.`);
   setTimeout(()=>{
     document.getElementById('bulkProgressWrap').classList.remove('visible');
     render('reacties');
-  },5000);
+  },3000);
 }
 
 function updateBulkProgress(done,total,flash){
@@ -5529,6 +5548,11 @@ function toggleBulkPause(){
   _bulkPaused=!_bulkPaused;
   const btn=document.getElementById('bulkPauseBtn');
   if(btn) btn.textContent=_bulkPaused?'Hervat':'Pauzeer';
+}
+function stopBulk(){
+  _bulkStopped=true;_bulkPaused=false;
+  if(_bulkAbort) try{_bulkAbort.abort();}catch(_){}
+  updateBulkProgress(0,0,'Stoppen...');
 }
 
 async function slaOver(id){
